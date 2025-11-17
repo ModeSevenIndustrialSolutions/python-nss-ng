@@ -3,17 +3,16 @@
 
 import os
 import sys
-import errno
-import signal
 import time
+import threading
+import socket
 
-import unittest
+import pytest
 
 from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
 import nss.ssl as ssl
-from conftest import get_test_db_path
 
 # -----------------------------------------------------------------------------
 NO_CLIENT_CERT             = 0
@@ -27,13 +26,13 @@ info = True
 password = 'DB_passwd'
 use_ssl = True
 client_cert_action = NO_CLIENT_CERT
-db_name = get_test_db_path()
+
 hostname = os.uname()[1]
 server_nickname = 'test_server'
 client_nickname = 'test_user'
-port = 1234
 timeout_secs = 10
-sleep_time = 5
+sleep_time = 0.5
+server_ready = threading.Event()
 
 
 # -----------------------------------------------------------------------------
@@ -155,7 +154,7 @@ def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
 # Client Implementation
 # -----------------------------------------------------------------------------
 
-def client(request):
+def client(request, test_port):
     if use_ssl:
         if info:
             print("client: using SSL")
@@ -169,7 +168,7 @@ def client(request):
         return
 
     for net_addr in addr_info:
-        net_addr.port = port
+        net_addr.port = test_port
 
         if use_ssl:
             sock = ssl.SSLSocket(net_addr.family)
@@ -244,13 +243,21 @@ def client(request):
 # Server Implementation
 # -----------------------------------------------------------------------------
 
-def server():
+def get_free_port():
+    """Get a free port by binding to port 0 and letting the OS choose."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+    return port
+
+def server(test_port):
     if verbose:
         print("starting server:")
 
     # Initialize
     # Setup an IP Address to listen on any of our interfaces
-    net_addr = io.NetworkAddress(io.PR_IpAddrAny, port)
+    net_addr = io.NetworkAddress(io.PR_IpAddrAny, test_port)
 
     if use_ssl:
         if info:
@@ -296,86 +303,91 @@ def server():
         print("listening on: %s" % (net_addr))
     sock.listen()
 
-    while True:
-        # Accept a connection from a client
-        client_sock, client_addr = sock.accept()
-        if use_ssl:
-            client_sock.set_handshake_callback(handshake_callback)
+    # Signal that server is ready
+    server_ready.set()
 
-        if verbose:
-            print("client connect from: %s" % (client_addr))
+    # Accept a single connection from a client
+    client_sock, client_addr = sock.accept()
+    if use_ssl:
+        client_sock.set_handshake_callback(handshake_callback)
 
-        while True:
-            try:
-                # Handle the client connection
-                buf = client_sock.readline()   # newline is protocol record separator
-                if not buf:
-                    print("server: lost lost connection to %s" % (client_addr), file=sys.stderr)
-                    break
-                buf = buf.decode('utf-8')
-                buf = buf.rstrip()             # remove newline record separator
+    if verbose:
+        print("client connect from: %s" % (client_addr))
 
-                if info:
-                    print("server: received \"%s\"" % (buf))
-                reply = "{%s}" % buf           # echo embedded inside braces
-                if info:
-                    print("server: sending \"%s\"" % (reply))
-                data = reply + "\n" # send echo with record separator
-                client_sock.send(data.encode('utf-8'))
+    try:
+        # Handle the client connection
+        buf = client_sock.readline()   # newline is protocol record separator
+        if not buf:
+            print("server: lost connection to %s" % (client_addr), file=sys.stderr)
+        else:
+            buf = buf.decode('utf-8')
+            buf = buf.rstrip()             # remove newline record separator
 
-                time.sleep(sleep_time)
-                client_sock.shutdown()
-                client_sock.close()
-                break
-            except Exception as e:
-                print("server: %s" % e, file=sys.stderr)
-                break
-        break
+            if info:
+                print("server: received \"%s\"" % (buf))
+            reply = "{%s}" % buf           # echo embedded inside braces
+            if info:
+                print("server: sending \"%s\"" % (reply))
+            data = reply + "\n" # send echo with record separator
+            client_sock.send(data.encode('utf-8'))
+
+        try:
+            client_sock.shutdown()
+        except:
+            pass
+        client_sock.close()
+    except Exception as e:
+        print("server: %s" % e, file=sys.stderr)
+        try:
+            client_sock.close()
+        except:
+            pass
 
     # Clean up
-    sock.shutdown()
+    try:
+        sock.shutdown()
+    except:
+        pass
     sock.close()
     if use_ssl:
         ssl.shutdown_server_session_id_cache()
 
 # -----------------------------------------------------------------------------
 
-def run_server():
-    pid = os.fork()
-    if pid == 0:
-        nss.nss_init(db_name)
-        server()
-        nss.nss_shutdown()
-    time.sleep(sleep_time)
-    return pid
+def run_server_thread(port):
+    """Run server in a background thread."""
+    server_ready.clear()
+    thread = threading.Thread(target=server, args=(port,), daemon=True)
+    thread.start()
+    # Wait for server to be ready (with timeout)
+    if not server_ready.wait(timeout=5):
+        raise RuntimeError("Server failed to start within timeout")
+    time.sleep(sleep_time)  # Give server a moment to fully initialize
+    return thread
 
-def cleanup_server(pid):
-    try:
-        wait_pid, wait_status = os.waitpid(pid, os.WNOHANG)
-        if wait_pid == 0:
-            os.kill(pid, signal.SIGKILL)
-    except OSError as e:
-        if e.errno == errno.ECHILD:
-            pass                # child already exited
-        else:
-            print("cleanup_server: %s" % e, file=sys.stderr)
+class TestSSL:
+    """Test SSL client-server communication."""
 
-class TestSSL(unittest.TestCase):
+    def test_ssl(self, nss_db_context):
+        """Test SSL client-server communication using threading."""
+        # Get a free port for this test
+        global port
+        port = get_free_port()
 
-    def setUp(self):
-        print()
-        self.server_pid = run_server()
+        # NSS is already initialized by nss_db_context fixture
 
-    def tearDown(self):
-        cleanup_server(self.server_pid)
+        # Start server in background thread
+        server_thread = run_server_thread(port)
 
-    def test_ssl(self):
+        # Run client
         request = "foo"
-        nss.nss_init(db_name)
-        reply = client(request)
-        nss.nss_shutdown()
-        self.assertEqual("{%s}" % request, reply)
+        reply = client(request, port)
 
+        # Verify response
+        assert "{%s}" % request == reply
 
-if __name__ == '__main__':
-    unittest.main()
+        # Wait for server thread to complete
+        server_thread.join(timeout=2)
+
+        # Give NSS time to clean up resources
+        time.sleep(0.5)

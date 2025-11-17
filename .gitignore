@@ -181,7 +181,7 @@ test/.DS_Store
 cython_debug/
 
 # python-nss specific
-test/pki/
+test/pki*/
 doc/examples/pki/
 pki/
 test/*.p12
@@ -190,3 +190,4 @@ exported_*.p12
 *.p12
 setup.py.old
 setup.cfg.old
+*.p12
