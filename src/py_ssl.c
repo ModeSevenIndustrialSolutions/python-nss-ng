@@ -4345,8 +4345,6 @@ enabled at the time of the call, the same way\n\
 to keep the set of enabled versions contiguous.\n\
 ");
 
-#if PY_MAJOR_VERSION >= 3
-
 static struct PyModuleDef module_def = {
     PyModuleDef_HEAD_INIT,
     NSS_SSL_MODULE_NAME,        /* m_name */
@@ -4358,9 +4356,6 @@ static struct PyModuleDef module_def = {
     NULL,                       /* m_clear */
     NULL                        /* m_free */
 };
-
-#else /* PY_MAOR_VERSION < 3 */
-#endif /* PY_MAJOR_VERSION */
 
 MOD_INIT(ssl)
 {
@@ -4379,11 +4374,7 @@ MOD_INIT(ssl)
 
     SSLSocketType.tp_base = &SocketType;
 
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&module_def);
-#else
-    m = Py_InitModule3(NSS_SSL_MODULE_NAME, module_methods, module_doc);
-#endif
 
     if (m == NULL) {
         return MOD_ERROR_VAL;

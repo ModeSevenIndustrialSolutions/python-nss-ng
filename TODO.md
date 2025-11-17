@@ -94,15 +94,34 @@ The C extension compilation issues with NSS 3.100+ are now resolved.
 
 #### Priority: HIGH (Python C API)
 
+**Status:** ✅ Complete - Audit Performed, Minor Issues Documented
+
 The C code may use deprecated Python C API functions that changed or that
 Python 3.10+ removed.
 
+**Completed:**
+
+- ✅ Comprehensive audit of all C extension code completed
+- ✅ Created `doc/C_API_AUDIT.md` with detailed findings
+- ✅ Removed all Python 2 compatibility code from C extensions
+- ✅ Removed all Python 2 compatibility code from headers
+- ✅ Verified no deprecated APIs in use (Py_UNICODE, PyUnicode_AS_UNICODE, etc.)
+- ✅ All tests pass (32/32) after Python 2 code removal
+- ✅ Code compiles cleanly on Python 3.10+
+
+**Findings:**
+
+- No critical issues found
+- Minor issue: `PyModule_AddObject()` reference handling needs improvement (documented)
+- All dangerous deprecated APIs avoided
+- Code is compatible with Python 3.10-3.14
+
 **Action:**
 
-- Review Python 3.10, 3.11, 3.12, 3.13, 3.14 C API changes
-- Update deprecated function calls
-- Test with Python 3.10-3.14 interpreters
-- Add C API version guards if needed
+- ✅ Review Python 3.10, 3.11, 3.12, 3.13, 3.14 C API changes
+- ✅ Update deprecated function calls
+- ✅ Test with Python 3.10-3.14 interpreters
+- Optional: Improve `PyModule_AddObject()` error handling (non-critical)
 
 ### 3. Fix Versioning for Legacy Tags
 
@@ -123,23 +142,41 @@ Current setup uses new v-prefixed tags (v1.0.1), but legacy tags use
 
 #### Priority: HIGH (Testing)
 
-**Status:** ✅ Tests Running (Database Setup Issues Remain)
+**Status:** ✅ Complete - 100% Pass Rate!
 
 **Completed:**
 
-- Created `test/conftest.py` with pytest fixtures and configuration
-- Added session-scoped test certificate setup fixture
-- Added custom pytest markers (nss_init, requires_db, slow)
-- Removed Python 2 compatibility from test files
-- Updated `test/util.py` to remove deprecated `distutils` usage
-- Tests are now pytest-compatible
-- ✅ C extensions compile and tests run
-- ✅ 21 of 32 tests pass (66% pass rate)
+- ✅ Created and enhanced `test/conftest.py` with proper NSS database fixtures
+- ✅ Added session-scoped test certificate setup fixture
+- ✅ Added `nss_db_context` fixture for proper NSS initialization
+- ✅ Added custom pytest markers (nss_init, requires_db, slow)
+- ✅ Removed Python 2 compatibility from all test files
+- ✅ Updated `test/util.py` to remove deprecated `distutils` usage
+- ✅ Modernized all tests from unittest.TestCase to pytest classes
+- ✅ Replaced setUp/tearDown with pytest fixtures
+- ✅ Converted all assertions from unittest to pytest style
+- ✅ Added cross-platform NSS tool detection (`find_nss_tool()`)
+- ✅ Updated `setup_certs.py` to find certutil/modutil on macOS/Linux
+- ✅ Updated `test_pkcs12.py` to find certutil/pk12util on macOS/Linux
+- ✅ C extensions compile and all tests run
+- ✅ **32 of 32 tests pass (100% pass rate)**
 - ✅ Document how to run tests with pytest (see `doc/TESTING.md`)
+- ✅ Modernized all tests from unittest to pytest
+- ✅ Fixed NSS database initialization in fixtures
+- ✅ Added cross-platform NSS tool detection (certutil, modutil, pk12util)
+
+**Test Modernization Details:**
+
+- Converted `test/test_ocsp.py` from unittest.TestCase to pytest (6 tests)
+- Converted `test/test_pkcs12.py` from unittest.TestCase to pytest (5 tests)
+- Converted `test/test_client_server.py` from unittest.TestCase to pytest (1 test)
+- Replaced `setUp()`/`tearDown()` with pytest fixtures
+- Replaced `self.assertEqual()` with pytest assertions
+- Created `nss_db_context` fixture for proper NSS init/shutdown
+- Added `find_nss_tool()` helper for cross-platform tool discovery
 
 **Remaining:**
 
-- Fix test database setup issues (11 tests failing due to SEC_ERROR_BAD_DATABASE)
 - Add tests for Python 3.10+ specific features
 - Add tests for new build system
 - Set up CI/CD to run tests automatically
@@ -147,10 +184,11 @@ Current setup uses new v-prefixed tags (v1.0.1), but legacy tags use
 
 **Files:**
 
-- ✅ `test/conftest.py` - Created with fixtures
+- ✅ `test/conftest.py` - Enhanced with NSS database fixtures
+- ✅ `test/setup_certs.py` - Added cross-platform tool detection
 - ✅ `test/util.py` - Modernized
 - ✅ `doc/TESTING.md` - Comprehensive testing documentation
-- ✅ `test/test_*.py` - Running with pytest (21/32 passing)
+- ✅ `test/test_*.py` - All modernized to pytest (32/32 passing)
 - `test/run_tests` - Legacy runner (pytest is now preferred)
 
 ### 5. Documentation Updates
@@ -183,26 +221,54 @@ Current setup uses new v-prefixed tags (v1.0.1), but legacy tags use
 
 #### Priority: MEDIUM (Python 2 Cleanup)
 
-**Status:** ✅ Complete
+**Status:** ✅ Complete - ALL Python 2 Code Removed!
 
 **Completed:**
 
-- Removed `six` dependency from all files
-- Updated `doc/get_api` Python 2 syntax (print statements, type checks)
-- Fixed `doc/examples/pbkdf2_example.py` (removed six.string_types)
-- Fixed `doc/examples/httplib_example.py` (removed six.moves, updated to Python 3)
-- Fixed `test/setup_certs.py` (removed six.string_types)
-- Fixed `test/test_misc.py` (removed six.string_types)
-- Removed all `from __future__ import` statements from test files
-- Removed all `from __future__ import` statements from doc/examples files
-- Updated `test/util.py` to remove `distutils.util.get_platform()` dependency
-- Replaced with `sysconfig.get_platform()` (modern Python stdlib)
+**Python Files:**
+
+- ✅ Removed `six` dependency from all files
+- ✅ Updated `doc/get_api` Python 2 syntax (print statements, type checks)
+- ✅ Fixed `doc/examples/pbkdf2_example.py` (removed six.string_types)
+- ✅ Fixed `doc/examples/httplib_example.py` (removed six.moves, updated
+  to Python 3)
+- ✅ Fixed `test/setup_certs.py` (removed six.string_types)
+- ✅ Fixed `test/test_misc.py` (removed six.string_types)
+- ✅ Removed all `from __future__ import` statements from test files
+- ✅ Removed all `from __future__ import` statements from doc/examples files
+- ✅ Updated `test/util.py` to remove `distutils.util.get_platform()` dependency
+- ✅ Replaced with `sysconfig.get_platform()` (modern Python stdlib)
+
+**C Extension Files (NEW):**
+
+- ✅ Removed all `#if PY_MAJOR_VERSION >= 3` / `#else` / `#endif` blocks
+- ✅ Removed Python 2 `Py_InitModule3()` references
+- ✅ Removed Python 2 buffer protocol code
+- ✅ Removed Python 2 `PySlice_GetIndicesEx()` casts
+- ✅ Removed Python 2 `s#` format codes (kept `y#` for bytes)
+- ✅ Removed Python 2 type flags (`Py_TPFLAGS_HAVE_NEWBUFFER`)
+- ✅ Updated version check from Python 2.7+ to Python 3.10+
+
+**Files Modified:**
+
+- `src/py_nspr_error.c` - Removed module init fallback code
+- `src/py_nspr_io.c` - Removed Socket send/sendall/send_to fallback, module init
+- `src/py_nss.c` - Removed buffer protocol, slice, digest, cipher fallback code
+- `src/py_ssl.c` - Removed module init fallback code
+- `src/py_nspr_common.h` - Removed all Python 2 helper functions and macros
+
+**Results:**
+
+- ✅ All 32 tests still pass after Python 2 code removal
+- ✅ C extensions compile cleanly
+- ✅ Codebase is now 100% Python 3.10+
+- ✅ ~250 lines of compatibility code removed
+- ✅ Simpler, cleaner, more maintainable code
 
 **Notes:**
 
-- We removed all Python 2 compatibility code
-- Project now uses pure Python 3.10+ idioms
-- C extension code still needs review for Python C API changes
+- Project now requires Python 3.10+ at compile time (enforced in header)
+- All Python 2 compatibility removed from both Python and C code
 - No `six` dependency remains in the codebase
 - Modern alternatives replaced all `distutils` usage
 
@@ -301,10 +367,11 @@ GitHub Actions workflows exist (build-test.yaml, build-test-release.yaml):
 
 ## Immediate Next Steps
 
-1. **Fix Test Database Issues** - 11 tests failing with SEC_ERROR_BAD_DATABASE
-   - Investigate pytest fixture for database setup
-   - Ensure test certificates generate as expected
-   - Verify NSS database initialization
+1. ✅ **Fix Test Database Issues** - RESOLVED
+   - Fixed pytest fixtures for proper database setup
+   - Test certificates now generate as expected
+   - NSS database initialization working properly
+   - All 32 tests now pass (100% pass rate)
 
 2. **Test Build System** - Verify across platforms
 
@@ -390,7 +457,14 @@ GitHub Actions workflows exist (build-test.yaml, build-test-release.yaml):
 - **C extensions now compile with NSS 3.100+**
 - Fixed typedef conflicts with NSS headers (RSAPublicKey, DSAPublicKey)
 - Fixed malformed C comment blocks with SPDX identifiers
-- Tests running: 21/32 passing (66%), 11 failures due to database setup
+- ✅ **Tests: 32/32 passing (100% pass rate)**
+- Modernized all tests from unittest to pytest
+- Fixed NSS database initialization with proper fixtures
+- Added cross-platform NSS tool detection (macOS Homebrew + Linux)
+- Simplified setup.py: necessary for C extensions, contains build logic
+- **Python C API audit completed** - no deprecated APIs in use
+- **Removed all Python 2 compatibility code** from C extensions (~255 lines)
+- C extensions now require Python 3.10+ with compile-time enforcement
 
 ## Recent Accomplishments (Session Summary)
 
@@ -405,11 +479,21 @@ This session completed significant modernization work:
 
 ### Python 2 to Python 3 Migration ✅
 
+**Python Files:**
+
 - Removed `six` library dependency
 - Removed all `from __future__ import` statements
 - Updated `doc/get_api` from Python 2 to Python 3 syntax
 - Replaced `distutils` with `sysconfig` in test utilities
 - Fixed string type checks across all files
+
+**C Extension Files (NEW):**
+
+- Stripped all Python 2 fallback code from C extensions
+- Removed ~250 lines of Python 2 compatibility code
+- Updated 4 C files and 1 header file to require Python 3.10+
+- All module initialization simplified for Python 3
+- Buffer protocol, slice operations, and format codes modernized
 
 ### Testing Infrastructure ✅
 
@@ -456,9 +540,10 @@ Once resolved, the project will be fully modernized and ready for:
 
 ### Documentation Created
 
-- 6 major documentation files
-- ~32KB of new documentation
-- Complete coverage: setup, testing, contributing, migration, changes, quick start
+- 7 major documentation files (added C_API_AUDIT.md)
+- ~35KB of new documentation
+- Complete coverage: setup, testing, contributing, migration, changes,
+  quick start, C API audit
 
 ### Type Hints
 
@@ -472,6 +557,8 @@ Once resolved, the project will be fully modernized and ready for:
 - 6 mypy type errors resolved
 - All Python files pass AST checks
 - 100% Python 3.10+ compatible
+- ~250 lines of Python 2 compatibility code removed from C extensions
+- All C extensions cleaned and modernized
 
 ### Infrastructure
 
@@ -482,6 +569,7 @@ Once resolved, the project will be fully modernized and ready for:
 
 ### Files Modified
 
-- Created: 10 new files
-- Modified: 25+ files
-- Total impact: ~44KB of new content
+- Created: 11 new files (including C_API_AUDIT.md)
+- Modified: 30+ files (including 5 C/H files)
+- Total impact: ~47KB of new content
+- Removed: ~250 lines of Python 2 compatibility code

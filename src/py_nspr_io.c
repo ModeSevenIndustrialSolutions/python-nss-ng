@@ -2830,17 +2830,10 @@ Socket_send(Socket *self, PyObject *args, PyObject *kwds)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
     // Py3 uses y# for bytes parameter
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "y#|I:send", kwlist,
                                      &buf, &len, &timeout))
         return NULL;
-#else
-    // Py2 uses s# for string parameter
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s#|I:send", kwlist,
-                                     &buf, &len, &timeout))
-        return NULL;
-#endif
 
     Py_BEGIN_ALLOW_THREADS
     amount = PR_Send(self->pr_socket, buf, len, 0, timeout);
@@ -2880,17 +2873,10 @@ Socket_sendall(Socket *self, PyObject *args, PyObject *kwds)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
     // Py3 uses y# for bytes parameter
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "y#|I:sendall", kwlist,
                                      &buf, &len, &timeout))
         return NULL;
-#else
-    // Py2 uses s# for string parameter
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s#|I:sendall", kwlist,
-                                     &buf, &len, &timeout))
-        return NULL;
-#endif
 
     Py_BEGIN_ALLOW_THREADS
     amount = PR_Send(self->pr_socket, buf, len, 0, timeout);
@@ -2935,17 +2921,10 @@ Socket_send_to(Socket *self, PyObject *args, PyObject *kwds)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
     // Py3 uses y# for bytes parameter
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "y#O!|I:send_to", kwlist,
                                      &buf, &len, &NetworkAddressType, &py_netaddr, &timeout))
         return NULL;
-#else
-    // Py2 uses s# for string parameter
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s#O!|I:send_to", kwlist,
-                                     &buf, &len, &NetworkAddressType, &py_netaddr, &timeout))
-        return NULL;
-#endif
 
     SOCKET_CHECK_FAMILY(py_netaddr);
 
@@ -3819,8 +3798,6 @@ PyDoc_STRVAR(module_doc,
 \n\
 ");
 
-#if PY_MAJOR_VERSION >= 3
-
 static struct PyModuleDef module_def = {
     PyModuleDef_HEAD_INIT,
     NSS_IO_MODULE_NAME,         /* m_name */
@@ -3833,9 +3810,6 @@ static struct PyModuleDef module_def = {
     NULL                        /* m_free */
 };
 
-#else /* PY_MAOR_VERSION < 3 */
-#endif /* PY_MAJOR_VERSION */
-
 MOD_INIT(io)
 {
     PyObject *m;
@@ -3843,11 +3817,7 @@ MOD_INIT(io)
     if (import_nspr_error_c_api() < 0)
         return MOD_ERROR_VAL;
 
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&module_def);
-#else
-    m = Py_InitModule3(NSS_IO_MODULE_NAME, module_methods, module_doc);
-#endif
 
     if (m == NULL) {
         return MOD_ERROR_VAL;

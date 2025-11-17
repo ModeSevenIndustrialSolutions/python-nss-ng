@@ -61,3 +61,51 @@ def insert_build_dir_into_path():
     build_dir = get_build_dir()
     if build_dir:
         sys.path.insert(0, build_dir)
+
+
+def find_nss_tool(tool_name):
+    """
+    Find an NSS tool (certutil, modutil, pk12util, etc.) in the system.
+
+    Tries multiple locations:
+    1. /usr/bin/ (Linux/Unix default)
+    2. /opt/homebrew/bin/ (macOS Apple Silicon Homebrew)
+    3. /usr/local/bin/ (macOS Intel Homebrew)
+    4. Search PATH environment variable
+
+    Args:
+        tool_name: Name of the tool (e.g., 'certutil', 'modutil', 'pk12util')
+
+    Returns:
+        str: Full path to the tool
+
+    Raises:
+        RuntimeError: If the tool cannot be found
+    """
+    import shutil
+
+    # List of directories to check in order
+    search_paths = [
+        '/usr/bin',
+        '/opt/homebrew/bin',  # macOS Apple Silicon Homebrew
+        '/usr/local/bin',     # macOS Intel Homebrew
+    ]
+
+    # First, try common locations
+    for base_dir in search_paths:
+        tool_path = os.path.join(base_dir, tool_name)
+        if os.path.exists(tool_path) and os.access(tool_path, os.X_OK):
+            return tool_path
+
+    # If not found in common locations, search PATH
+    tool_path = shutil.which(tool_name)
+    if tool_path:
+        return tool_path
+
+    # Not found anywhere
+    raise RuntimeError(
+        f"NSS tool '{tool_name}' not found. Please install NSS utilities.\n"
+        f"  macOS: brew install nss\n"
+        f"  Fedora/RHEL: dnf install nss-tools\n"
+        f"  Debian/Ubuntu: apt-get install libnss3-tools"
+    )

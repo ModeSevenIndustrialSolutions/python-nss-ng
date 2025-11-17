@@ -12,6 +12,18 @@ import sys
 import pytest
 
 
+def get_test_db_path():
+    """
+    Get the absolute path to the test PKI database.
+
+    Returns the path 'sql:<test_dir>/pki' where test_dir is the
+    directory containing this conftest.py file.
+    """
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    pki_dir = os.path.join(test_dir, 'pki')
+    return f'sql:{pki_dir}'
+
+
 def pytest_configure(config):
     """Configure pytest for python-nss tests."""
     # Add custom markers
