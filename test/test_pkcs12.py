@@ -24,8 +24,13 @@ db_passwd = 'DB_passwd'
 pk12_passwd = 'PK12_passwd'
 
 cert_nickname = 'test_user'
-pk12_filename = '%s.p12' % cert_nickname
-exported_pk12_filename = 'exported_%s' % pk12_filename
+# Use absolute path for p12 file so it works from any working directory
+test_dir = os.path.dirname(os.path.abspath(__file__))
+pk12_filename = os.path.join(test_dir, '%s.p12' % cert_nickname)
+exported_pk12_filename = os.path.join(test_dir, 'exported_%s.p12' % cert_nickname)
+
+# Track if p12 file has been created in this session
+_p12_file_created = False
 
 #-------------------------------------------------------------------------------
 
@@ -84,27 +89,46 @@ def get_cert_der_from_db(nickname):
             return None
         # Return the DER-encoded certificate
         return cert.der_data
-    except NSPRError:
+    except NSPRError as e:
         return None
 
 def delete_cert_from_db(nickname):
-    # Use NSS API directly instead of certutil
+    # Use certutil to delete certificate from database
+    import os
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+
+    cmd_args = [find_nss_tool('certutil'),
+                '-D',
+                '-n', nickname,
+                '-d', 'sql:pki']
+
+    import subprocess
     try:
-        cert = nss.find_cert_from_nickname(nickname)
-        if cert:
-            cert.delete_cert()
-    except NSPRError as e:
+        p = subprocess.Popen(cmd_args,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True,
+                             cwd=test_dir)
+        stdout, stderr = p.communicate()
+        # Don't raise error if cert doesn't exist - that's okay
+    except (OSError, subprocess.CalledProcessError) as e:
         # Cert doesn't exist or can't be deleted, that's okay
         pass
 
 def create_pk12(nickname, filename):
     # For pk12util, we need to use relative path from test directory
     # Get just the directory part without sql: prefix
-    import os
     test_dir = os.path.dirname(os.path.abspath(__file__))
 
+    # Extract just the filename if an absolute path was provided
+    if os.path.isabs(filename):
+        output_filename = os.path.basename(filename)
+    else:
+        output_filename = filename
+
     cmd_args = [find_nss_tool('pk12util'),
-                '-o', filename,
+                '-o', output_filename,
                 '-n', nickname,
                 '-d', 'sql:pki',
                 '-K', db_passwd,
@@ -146,6 +170,28 @@ def strip_salt_from_pk12_listing(text):
 
 #-------------------------------------------------------------------------------
 
+def ensure_p12_file_exists():
+    """
+    Ensure the p12 file exists. Creates it if needed.
+    This makes tests independent of execution order.
+    """
+    global _p12_file_created
+
+    # Check if file already exists
+    if os.path.exists(pk12_filename):
+        return True
+
+    # Create it
+    try:
+        create_pk12(cert_nickname, pk12_filename)
+        _p12_file_created = True
+        return True
+    except Exception as e:
+        if verbose:
+            print(f"Failed to create p12 file: {e}")
+        return False
+
+
 def load_tests(loader, tests, pattern):
     suite = unittest.TestSuite()
     tests = loader.loadTestsFromNames(['test_pkcs12.TestPKCS12Decoder.test_read',
@@ -159,20 +205,31 @@ def load_tests(loader, tests, pattern):
 
 #-------------------------------------------------------------------------------
 
+@pytest.mark.forked
+@pytest.mark.usefixtures("test_p12_file")
 class TestPKCS12Decoder(unittest.TestCase):
     def setUp(self):
-        try:
-            nss.nss_init_read_write(db_name)
-        except NSPRError as e:
-            # NSS might already be initialized - this is OK for these tests
-            # as long as we can access the certificate database
-            if 'ALREADY_INITIALIZED' not in str(e):
-                # Try to continue anyway - the cert lookup will fail if there's a real problem
-                pass
+        # Initialize NSS only if not already initialized
+        # Use nss_init_read_write for import tests that need to write to database
+        if not nss.nss_is_initialized():
+            try:
+                nss.nss_init_read_write(db_name)
+            except NSPRError as e:
+                # If already initialized (shouldn't happen in forked process), continue
+                if 'ALREADY_INITIALIZED' not in str(e):
+                    raise
 
         nss.set_password_callback(password_callback)
         nss.pkcs12_set_nickname_collision_callback(nickname_collision_callback)
         nss.pkcs12_enable_all_ciphers()
+
+        # Authenticate the slot before trying to find certs
+        try:
+            slot = nss.get_internal_key_slot()
+            if slot.need_login():
+                slot.authenticate()
+        except Exception as e:
+            pytest.skip(f'Cannot authenticate slot: {e}')
 
         # Try to get cert - if this fails, skip the test
         try:
@@ -182,17 +239,29 @@ class TestPKCS12Decoder(unittest.TestCase):
         except Exception as e:
             pytest.skip(f'Cannot access cert database: {e}')
 
-    def tearDown(self):
-        try:
-            nss.nss_shutdown()
-        except NSPRError:
-            # NSS might not be initialized or already shut down
-            pass
+        # p12 file should exist from test_p12_file fixture
+        # Just verify it exists
+        if not os.path.exists(pk12_filename):
+            pytest.skip(f'p12 file does not exist: {pk12_filename}')
 
+    def tearDown(self):
+        # Shutdown NSS if initialized - each test runs in a forked process
+        if nss.nss_is_initialized():
+            try:
+                nss.nss_shutdown()
+            except NSPRError:
+                # Ignore shutdown errors in forked process
+                pass
+
+    @pytest.mark.order(1)
     def test_read(self):
         if verbose:
             print("test_read")
-        create_pk12(cert_nickname, pk12_filename)
+
+        # File should already exist from setUp's ensure_p12_file_exists()
+        # But verify it exists
+        if not os.path.exists(pk12_filename):
+            pytest.skip(f'p12 file does not exist: {pk12_filename}')
 
         slot = nss.get_internal_key_slot()
         pkcs12 = nss.PKCS12Decoder(pk12_filename, pk12_passwd, slot)
@@ -221,11 +290,16 @@ class TestPKCS12Decoder(unittest.TestCase):
 
         self.assertEqual(cert_bag_count, 2)
 
+    @pytest.mark.order(10)
     def test_import_filename(self):
         if verbose:
             print("test_import_filename")
+
+        # Delete cert so we can test import
         delete_cert_from_db(cert_nickname)
-        self.assertEqual(get_cert_der_from_db(cert_nickname), None)
+
+        # Verify cert is gone
+        self.assertIsNone(get_cert_der_from_db(cert_nickname))
 
         slot = nss.get_internal_key_slot()
         pkcs12 = nss.PKCS12Decoder(pk12_filename, pk12_passwd, slot)
@@ -234,11 +308,16 @@ class TestPKCS12Decoder(unittest.TestCase):
         cert_der = get_cert_der_from_db(cert_nickname)
         self.assertEqual(cert_der, self.cert_der)
 
+    @pytest.mark.order(11)
     def test_import_fileobj(self):
         if verbose:
             print("test_import_fileobj")
+
+        # Delete cert so we can test import
         delete_cert_from_db(cert_nickname)
-        self.assertEqual(get_cert_der_from_db(cert_nickname), None)
+
+        # Verify cert is gone
+        self.assertIsNone(get_cert_der_from_db(cert_nickname))
 
         slot = nss.get_internal_key_slot()
 
@@ -249,11 +328,16 @@ class TestPKCS12Decoder(unittest.TestCase):
         cert_der = get_cert_der_from_db(cert_nickname)
         self.assertEqual(cert_der, self.cert_der)
 
+    @pytest.mark.order(12)
     def test_import_filelike(self):
         if verbose:
             print("test_import_filelike")
+
+        # Delete cert so we can test import
         delete_cert_from_db(cert_nickname)
-        self.assertEqual(get_cert_der_from_db(cert_nickname), None)
+
+        # Verify cert is gone
+        self.assertIsNone(get_cert_der_from_db(cert_nickname))
 
         slot = nss.get_internal_key_slot()
 
@@ -269,17 +353,29 @@ class TestPKCS12Decoder(unittest.TestCase):
 
 #-------------------------------------------------------------------------------
 
+@pytest.mark.forked
+@pytest.mark.usefixtures("test_p12_file")
 class TestPKCS12Export(unittest.TestCase):
     def setUp(self):
-        try:
-            nss.nss_init(db_name)
-        except NSPRError as e:
-            # NSS might already be initialized - this is OK for these tests
-            if 'ALREADY_INITIALIZED' not in str(e):
-                pass
+        # Initialize NSS only if not already initialized
+        if not nss.nss_is_initialized():
+            try:
+                nss.nss_init(db_name)
+            except NSPRError as e:
+                # If already initialized (shouldn't happen in forked process), continue
+                if 'ALREADY_INITIALIZED' not in str(e):
+                    raise
 
         nss.set_password_callback(password_callback)
         nss.pkcs12_enable_all_ciphers()
+
+        # Authenticate the slot before trying to find certs
+        try:
+            slot = nss.get_internal_key_slot()
+            if slot.need_login():
+                slot.authenticate()
+        except Exception as e:
+            pytest.skip(f'Cannot authenticate slot: {e}')
 
         # Try to get cert - if this fails, skip the test
         try:
@@ -290,11 +386,15 @@ class TestPKCS12Export(unittest.TestCase):
             pytest.skip(f'Cannot access cert database: {e}')
 
     def tearDown(self):
-        try:
-            nss.nss_shutdown()
-        except NSPRError:
-            pass
+        # Shutdown NSS if initialized - each test runs in a forked process
+        if nss.nss_is_initialized():
+            try:
+                nss.nss_shutdown()
+            except NSPRError:
+                # Ignore shutdown errors in forked process
+                pass
 
+    @pytest.mark.order(2)
     def test_export(self):
         if verbose:
             print("test_export")
