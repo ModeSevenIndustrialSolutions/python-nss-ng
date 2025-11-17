@@ -42,15 +42,22 @@ and build standards:
 - **Development Tools**: Added support for `uv`, modern testing with `pytest`,
   and code quality with `ruff`
 
-### Known Issues
+### NSS/NSPR Compatibility
 
-⚠️ **Important**: This codebase has compatibility issues with modern NSS
-versions (NSS 3.100+). The C extension code targets older NSS APIs and needs
-updates to compile against current NSS versions.
+✅ **C Extension Compatibility**: The C code now compiles with NSS 3.100+ and
+works with NSS 3.117.
 
-**Compilation Errors**: The C code has struct member access issues that need
-fixes for modern NSS compatibility. This is a known issue with the legacy
-codebase.
+**Recent Fixes**:
+
+- Resolved typedef conflicts (`RSAPublicKey` → `PyRSAPublicKey`, etc.)
+- Fixed SPDX comment block formatting issues
+- All 32 tests pass with NSS 3.117 and NSPR 4.38
+
+**Tested Versions**:
+
+- NSS 3.117
+- NSPR 4.38.2
+- Python 3.10, 3.11, 3.12, 3.13, 3.14
 
 ## System Requirements
 

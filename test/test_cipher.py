@@ -14,7 +14,7 @@ mechanism = nss.CKM_DES_CBC_PAD
 plain_text = b"Encrypt me!"
 key = "e8:a7:7c:e2:05:63:6a:31"
 iv = "e4:bb:3b:d3:c3:71:2e:58"
-in_filename = sys.argv[0]
+in_filename = __file__
 chunk_size = 128
 
 #-------------------------------------------------------------------------------

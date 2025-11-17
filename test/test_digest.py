@@ -3,27 +3,23 @@
 
 import subprocess
 import sys
-import unittest
+import pytest
 
 import nss.nss as nss
 
 #-------------------------------------------------------------------------------
 
 verbose = False
-in_filename = sys.argv[0]
+in_filename = __file__
 chunk_size = 128
 
 
 #-------------------------------------------------------------------------------
 
-class TestDigest(unittest.TestCase):
-    def setUp(self):
-        nss.nss_init_nodb()
+class TestDigest:
+    """Test digest/hash functions."""
 
-    def tearDown(self):
-        nss.nss_shutdown()
-
-    def do_test(self, name, ref_cmd, nss_digest_func, hash_oid):
+    def do_test(self, nss_db_context, name, ref_cmd, nss_digest_func, hash_oid):
         hash_oid_name = nss.oid_str(hash_oid)
 
         if verbose:
@@ -58,18 +54,18 @@ class TestDigest(unittest.TestCase):
         if verbose:
             print('nss %s\n%s' % (nss_digest_func.__name__, test_digest))
 
-        self.assertEqual(test_digest, reference_digest,
-                         msg='nss %s test failed reference=%s test=%s' % \
-                             (nss_digest_func.__name__, reference_digest, test_digest))
+        assert test_digest == reference_digest, \
+            'nss %s test failed reference=%s test=%s' % \
+            (nss_digest_func.__name__, reference_digest, test_digest)
 
         # Run the test using the generic hash_buf function specifying the hash algorithm.
         test_digest =  nss.data_to_hex(nss.hash_buf(hash_oid, ref_data), separator=None)
         if verbose:
             print('nss.hash_buf %s\n%s' % (hash_oid_name, test_digest))
 
-        self.assertEqual(test_digest, reference_digest,
-                         msg='nss.hash_buf %s test failed reference=%s test=%s' % \
-                             (hash_oid_name, reference_digest, test_digest))
+        assert test_digest == reference_digest, \
+            'nss.hash_buf %s test failed reference=%s test=%s' % \
+            (hash_oid_name, reference_digest, test_digest)
 
         # Run the test using the lowest level hashing functions by specifying the hash algorithm.
         # The entire input data is supplied all at once in a single call.
@@ -80,9 +76,9 @@ class TestDigest(unittest.TestCase):
         if verbose:
             print('nss.digest_context %s\n%s' % (hash_oid_name, test_digest))
 
-        self.assertEqual(test_digest, reference_digest,
-                         msg='nss.digest_context %s test failed reference=%s test=%s' % \
-                             (hash_oid_name, reference_digest, test_digest))
+        assert test_digest == reference_digest, \
+            'nss.digest_context %s test failed reference=%s test=%s' % \
+            (hash_oid_name, reference_digest, test_digest)
 
         # Run the test using the lowest level hashing functions by specifying the hash algorithm
         # and feeding 'chunks' of data one at a time to be consumed.
@@ -99,24 +95,21 @@ class TestDigest(unittest.TestCase):
         if verbose:
             print('chunked nss.digest_context %s\n%s' % (hash_oid_name, test_digest))
 
-        self.assertEqual(test_digest, reference_digest,
-                         msg='chunked nss.digest_context %s test failed reference=%s test=%s' % \
-                             (hash_oid_name, reference_digest, test_digest))
+        assert test_digest == reference_digest, \
+            'chunked nss.digest_context %s test failed reference=%s test=%s' % \
+            (hash_oid_name, reference_digest, test_digest)
 
-    def test_md5(self):
-        self.do_test('md5', 'md5sum', nss.md5_digest, nss.SEC_OID_MD5)
+    def test_md5(self, nss_db_context):
+        self.do_test(nss_db_context, 'md5', 'md5sum', nss.md5_digest, nss.SEC_OID_MD5)
 
-    def test_sha1(self):
-        self.do_test('sha1', 'sha1sum', nss.sha1_digest, nss.SEC_OID_SHA1)
+    def test_sha1(self, nss_db_context):
+        self.do_test(nss_db_context, 'sha1', 'sha1sum', nss.sha1_digest, nss.SEC_OID_SHA1)
 
-    def test_sha256(self):
-        self.do_test('sha256', 'sha256sum', nss.sha256_digest, nss.SEC_OID_SHA256)
+    def test_sha256(self, nss_db_context):
+        self.do_test(nss_db_context, 'sha256', 'sha256sum', nss.sha256_digest, nss.SEC_OID_SHA256)
 
-    def test_sha512(self):
-        self.do_test('sha512', 'sha512sum', nss.sha512_digest, nss.SEC_OID_SHA512)
+    def test_sha512(self, nss_db_context):
+        self.do_test(nss_db_context, 'sha512', 'sha512sum', nss.sha512_digest, nss.SEC_OID_SHA512)
 
 
 #-------------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    unittest.main()
