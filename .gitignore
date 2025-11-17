@@ -183,5 +183,10 @@ cython_debug/
 # python-nss specific
 test/pki/
 doc/examples/pki/
+pki/
+test/*.p12
+test/debug_cert_lookup.py
+exported_*.p12
+*.p12
 setup.py.old
 setup.cfg.old

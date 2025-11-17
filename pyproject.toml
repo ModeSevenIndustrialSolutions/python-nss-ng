@@ -56,10 +56,16 @@ classifiers = [
 test = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "pytest-forked>=1.6.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-order>=1.0.0",
 ]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "pytest-forked>=1.6.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-order>=1.0.0",
     "ruff>=0.1.0",
     "build>=1.0.0",
 ]
@@ -102,6 +108,14 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
+    "--forked",
+]
+markers = [
+    "nss_init: mark test as requiring NSS initialization",
+    "requires_db: mark test as requiring NSS database",
+    "slow: mark test as slow running",
+    "forked: mark test to run in forked process for isolation",
+    "order: specify test execution order",
 ]
 
 [tool.coverage.run]
