@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * SPDX-License-Identifier: MPL-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
 #if 0
 
@@ -688,7 +690,7 @@ which simply returned a single string with all the indentation and\n\
 formatting pre-applied. The indentation width may not be what is\n\
 desired. Or more importantly you might not be outputting to text\n\
 display. It might be a GUI which desires to display the\n\
-information. Most GUI's want to handle each string seperately and\n\
+information. Most GUI's want to handle each string separately and\n\
 control indentation and the visibility of each item (e.g. a tree\n\
 control).\n\
 \n\
@@ -697,12 +699,12 @@ output. This routine will do that, e.g.:\n\
 \n\
     print indented_format(obj.format_lines())\n\
 \n\
-To accomodate necessary flexibility the object formatting methods\n\
+To accommodate necessary flexibility the object formatting methods\n\
 (format_lines()) return a list of tuples. Each tuple represents a\n\
 single line with the first tuple item being the indentation level for\n\
 the line. There may be 0,1 or 2 additional strings in the tuple which\n\
 are to be output on the line. A single string are usually one of two\n\
-things, either a section header or data that has been continuted onto\n\
+things, either a section header or data that has been continued onto\n\
 multiple lines. Two strings usually represent a <attribute,value> pair\n\
 with the first string being a label (e.g. attribute name).\n\
 \n\
@@ -718,7 +720,7 @@ Each tuple may be:\n\
         3-value tuple, first string is a label, second string is a\n\
         value.  Starting at the indent level output the label, then\n\
         follow with the value. By keeping the label separate from the\n\
-        value the ouput formatter may elect to align the values in\n\
+        value the output formatter may elect to align the values in\n\
         vertical columns for adjacent lines.\n\
 \n\
 Example::\n                                     \
@@ -808,11 +810,11 @@ py_indented_format(PyObject *self, PyObject *args, PyObject *kwds)
      *     sort of internal representation, the specification chooses
      *     UTF-8 as the recommended way of exposing strings to C code.
      *
-     * Thus the original stategy of converting all strings to utf-8,
+     * Thus the original strategy of converting all strings to utf-8,
      * computing their size and subsequently copying them is
      * retained. The only difference is the final utf-8 string is
      * decoded into unicode prior to returning it. This protects us
-     * against future changes to the internal represention of a
+     * against future changes to the internal representation of a
      * unicode character.
      */
 
@@ -827,8 +829,8 @@ py_indented_format(PyObject *self, PyObject *args, PyObject *kwds)
     /*
      * Because we interrogate the length of the various strings
      * multiple times in the various loops we don't want to repeatedly
-     * dereference and query the Pyton objects each time. So we
-     * allocate an array to cache the information for efficency
+     * dereference and query the Python objects each time. So we
+     * allocate an array to cache the information for efficiency
      * purposes.
      */
 
@@ -840,7 +842,7 @@ py_indented_format(PyObject *self, PyObject *args, PyObject *kwds)
      * Step 1: Scan all the lines and get the string sizes.  Do all
      * error checking in this loop so we don't have to do it again
      * later. Cache the size information for faster access in
-     * subseqent loops.
+     * subsequent loops.
      */
 
     for (i = 0; i < num_lines; i++) {
@@ -928,7 +930,7 @@ py_indented_format(PyObject *self, PyObject *args, PyObject *kwds)
      * the purpose of computing the alignment, if a line has only a
      * label we ignore it when establishing value alignment.
      *
-     * A change in the indendation level resets the alignment.
+     * A change in the indentation level resets the alignment.
      */
     for (i = 0; i < num_lines;) {
         cur_indent_len = line_info[i].indent_len;
@@ -940,7 +942,7 @@ py_indented_format(PyObject *self, PyObject *args, PyObject *kwds)
 
         /*
          * Search forward for consecutive lines that share the same
-         * indendation level.  If the line has value then use it's
+         * indentation level.  If the line has value then use it's
          * label to compute the maximum width of all labels in this
          * group of lines.
          */
@@ -2113,7 +2115,7 @@ secport_ucs2_to_utf8(PRBool to_unicode,
     SECItem *swapped_item = NULL;
     PRBool result;
 
-    /* If converting Unicode to ASCII, swap bytes before conversion as neccessary. */
+    /* If converting Unicode to ASCII, swap bytes before conversion as necessary. */
     if (!to_unicode && swap_bytes) {
         SECItem in_buf_item = {siBuffer, NULL, 0};
 
@@ -2212,7 +2214,7 @@ der_bitstring_to_nss_bitstring(SECItem *dst, SECItem *src) {
  * a table of predined values for the bit string. The repr_kind
  * enumeration specifies what type of item should be put in the tuple, for
  * example the string name for the bit position, or the enumerated constant
- * representing that bit postion, or the bit posisiton.
+ * representing that bit position, or the bit posisiton.
  */
 static PyObject *
 bitstr_table_to_tuple(SECItem *bitstr, BitStringTable *table,
@@ -3724,7 +3726,7 @@ PyDoc_STRVAR(cert_data_to_hex_doc,
         Number of octets formatted on one line, if 0 then\n\
         return a single string instead of an array of lines\n\
     separator : string\n\
-        String used to seperate each octet\n\
+        String used to separate each octet\n\
         If None it will be as if the empty string had been\n\
         passed and no separator will be used.\n\
 \n\
@@ -4309,7 +4311,7 @@ time_choice_secitem_to_prtime(SECItem *item)
         DER_GeneralizedTimeToTime(&pr_time, item);
         break;
     default:
-        PyErr_SetString(PyExc_ValueError, "unknown sec ANS.1 time type");
+        PyErr_SetString(PyExc_ValueError, "unknown sec ASN.1 time type");
     }
     return pr_time;
 }
@@ -4521,7 +4523,7 @@ PyDoc_STRVAR(cert_der_universal_secitem_fmt_lines_doc,
         Number of octets formatted on one line, if 0 then\n\
         return a single string instead of an array of lines\n\
     separator : string\n\
-        String used to seperate each octet\n\
+        String used to separate each octet\n\
         If None it will be as if the empty string had been\n\
         passed and no separator will be used.\n\
 \n\
@@ -4998,7 +5000,7 @@ key_usage_flags(unsigned int flags, RepresentationKind repr_kind)
     /*
      * The following flags are not present in certs but appear in
      * CERTVerifyNode when the error is
-     * SEC_ERROR_INADEQUATE_KEY_USAGE. This rountine is also used
+     * SEC_ERROR_INADEQUATE_KEY_USAGE. This routine is also used
      * to print those flags.
      */
     BIT_FLAGS_TO_LIST(KU_DIGITAL_SIGNATURE_OR_NON_REPUDIATION, _("Digital Signature or Non-Repudiation"));
@@ -5203,7 +5205,7 @@ PyDoc_STRVAR(SecItem_to_hex_doc,
         Number of octets formatted on one line, if 0 then\n\
         return a single string instead of an array of lines\n\
     separator : string\n\
-        String used to seperate each octet\n\
+        String used to separate each octet\n\
         If None it will be as if the empty string had been\n\
         passed and no separator will be used.\n\
 \n\
@@ -5332,14 +5334,14 @@ PyDoc_STRVAR(SecItem_der_to_hex_doc,
         Number of octets formatted on one line, if 0 then\n\
         return a single string instead of an array of lines\n\
     separator : string\n\
-        String used to seperate each octet\n\
+        String used to separate each octet\n\
         If None it will be as if the empty string had been\n\
         passed and no separator will be used.\n\
 \n\
 Interpret the SecItem as containing DER encoded data consisting\n\
 of a <type,length,value> triplet (e.g. TLV). This function skips\n\
 the type and length components and returns the value component as\n\
-a hexadecimal string or a list of hexidecimal strings with a\n\
+a hexadecimal string or a list of hexadecimal strings with a\n\
 maximum of octets_per_line in each list element. See data_to_hex()\n\
 for a more detailed explanation.\n\
 ");
@@ -5476,7 +5478,7 @@ PyDoc_STRVAR(SecItem_doc,
     type : int\n\
         SECItemType constant (e.g. si*)\n\
     ascii : bool\n\
-        If true then data is interpretted as base64 encoded.\n\
+        If true then data is interpreted as base64 encoded.\n\
         A PEM header and footer is permissible, if present the\n\
         base64 data will be found inside the PEM delimiters.\n\
 \n\
@@ -6954,7 +6956,7 @@ An object representing DSA key parameters\n\
     - base (also known as g)\n\
 \n\
 If no parameters are passed the default PQG the KeyPQGParams will\n\
-be intialized to default values. If you pass any initialization\n\
+be initialized to default values. If you pass any initialization\n\
 parameters then they must all be passed.\n\
 ");
 
@@ -9508,7 +9510,7 @@ D. Then the nickname will be tested for existence in the database.\n\
    If it does not exist it will be returned as the nickname.\n\
    Else a loop is entered where the nickname will have \" #%d\" appended\n\
    to it where %d is an integer beginning at 1. The generated nickname is\n\
-   tested for existence in the dabase until a unique name is found.\n\
+   tested for existence in the database until a unique name is found.\n\
 \n\
 "
 );
@@ -9537,7 +9539,7 @@ A restricted regular expression syntax is used to test if the common\n\
 name specified in the subject DN of the certificate is a match,\n\
 returning True if so, False otherwise.\n\
 \n\
-The regular expression systax is:\n\
+The regular expression syntax is:\n\
     \\*\n\
         matches anything\n\
     \\?\n\
@@ -9677,7 +9679,7 @@ is_ca_cert(True) -> boolean, cert_type\n\
 \n\
 :Parameters:\n\
     return_cert_type : boolean\n\
-        If True returns both boolean result and certficate\n\
+        If True returns both boolean result and certificate\n\
         type bitmask. If False return only boolean result\n\
 \n\
 Returns True if the cert is a CA cert, False otherwise.\n\
@@ -10125,7 +10127,7 @@ certificate and return it as generic `CertificateExtension` object. If\n\
 the extension is not present raise a KeyError.\n\
 \n\
 The generic `CertificateExtension` object is not terribly useful on\n\
-it's own, howerver it's value property can be used to intialize\n\
+it's own, however it's value property can be used to initialize\n\
 instances of a class representing the extension.  Or it may be passed\n\
 to functions that convert the value into some other usable format.\n\
 Although one might believe this function should do these conversions\n\
@@ -10156,7 +10158,7 @@ not be complete).\n\
 \n\
 :Parameters:\n\
      oid : may be one of integer, string, SecItem\n\
-         The OID of the certification extension to retreive\n\
+         The OID of the certification extension to retrieve\n\
          May be one of:\n\
 \n\
          * integer: A SEC OID enumeration constant (i.e. SEC_OID\\_*)\n\
@@ -11122,7 +11124,7 @@ CERTAVA_compare(CERTAVA *a, CERTAVA *b)
         return 0;
     }
 
-    /* Values are not equal, compare as case insenstive strings */
+    /* Values are not equal, compare as case insensitive strings */
     a_val_str = CERTAVA_value_to_pystr(a);
     b_val_str = CERTAVA_value_to_pystr(b);
     if (a_val_str == NULL || b_val_str == NULL) {
@@ -11233,7 +11235,7 @@ RDN's (Relative Distinguished Name) are composed from AVA's.\n\
 An `RDN` is a sequence of AVA's.\n\
 \n\
 An example of an AVA is \"CN=www.redhat.com\" where CN is the X500\n\
-directory abbrevation for \"Common Name\".\n\
+directory abbreviation for \"Common Name\".\n\
 \n\
 An AVA is composed of two items:\n\
 \n\
@@ -11778,7 +11780,7 @@ If you index by string the string may be either a canonical name for\n\
 the AVA type (e.g. 'cn') or the dotted-decimal notation for the OID\n\
 (e.g. 2.5.4.3). There may be multiple AVA's in a RDN whose type matches\n\
 (e.g. OU=engineering+OU=boston). It is not common to have more than\n\
-one AVA in a RDN with the same type. However because of the possiblity\n\
+one AVA in a RDN with the same type. However because of the possibility\n\
 of being multi-valued when indexing by type a list is always returned\n\
 containing the matching AVA's. Thus::\n\
 \n\
@@ -12514,7 +12516,7 @@ If you index by string the string may be either a canonical name for\n\
 the RDN type (e.g. 'cn') or the dotted-decimal notation for the OID\n\
 (e.g. 2.5.4.3). There may be multiple RDN's in a DN whose type matches\n\
 (e.g. OU=engineering, OU=boston). It is not common to have more than\n\
-one RDN in a DN with the same type. However because of the possiblity\n\
+one RDN in a DN with the same type. However because of the possibility\n\
 of being multi-valued when indexing by type a list is always returned\n\
 containing the matching RDN's. Thus::\n\
 \n\
@@ -12554,7 +12556,7 @@ Examples::\n\
         because 2.5.4.3 is the dotted-decimal OID for common name (i.e. cn)\n\
     name.common_name\n\
         returns the string www.redhat.com\n\
-        common_name is easy shorthand property, it only retuns a single string\n\
+        common_name is easy shorthand property, it only returns a single string\n\
         value or None, if it was multi-valued the most appropriate item is selected.\n\
     name.has_key('cn')\n\
         returns True because the DN has a common name RDN\n\
@@ -13234,7 +13236,7 @@ PyDoc_STRVAR(pk11_hash_buf_doc,
 Computes a digest according to the hash_alg type.\n\
 Return the digest data as buffer object.\n\
 \n\
-Note, if a hexidecimal string representation is desired then pass\n\
+Note, if a hexadecimal string representation is desired then pass\n\
 result to data_to_hex()\n\
 ");
 static PyObject *
@@ -13292,7 +13294,7 @@ PyDoc_STRVAR(pk11_md5_digest_doc,
 \n\
 Returns 16 octet MD5 digest data as buffer object.\n\
 \n\
-Note, if a hexidecimal string representation is desired then pass\n\
+Note, if a hexadecimal string representation is desired then pass\n\
 result to data_to_hex()\n\
 ");
 static PyObject *
@@ -13338,7 +13340,7 @@ PyDoc_STRVAR(pk11_sha1_digest_doc,
 \n\
 Returns 20 octet SHA1 digest data as buffer object.\n\
 \n\
-Note, if a hexidecimal string representation is desired then pass\n\
+Note, if a hexadecimal string representation is desired then pass\n\
 result to data_to_hex()\n\
 ");
 static PyObject *
@@ -13384,7 +13386,7 @@ PyDoc_STRVAR(pk11_sha256_digest_doc,
 \n\
 Returns 32 octet SHA256 digest data as buffer object.\n\
 \n\
-Note, if a hexidecimal string representation is desired then pass\n\
+Note, if a hexadecimal string representation is desired then pass\n\
 result to data_to_hex()\n\
 ");
 
@@ -13431,7 +13433,7 @@ PyDoc_STRVAR(pk11_sha512_digest_doc,
 \n\
 Returns 64 octet SHA512 digest data as buffer object.\n\
 \n\
-Note, if a hexidecimal string representation is desired then pass\n\
+Note, if a hexadecimal string representation is desired then pass\n\
 result to data_to_hex()\n\
 ");
 static PyObject *
@@ -13715,7 +13717,7 @@ PK11Slot_has_root_certs(PK11Slot *self, PyObject *args)
 PyDoc_STRVAR(PK11Slot_get_disabled_reason_doc,
 "get_disabled_reason() -> integer\n\
 \n\
-Returns a diabled reason enumerated constant (i.e. PK11_DIS_*).\n\
+Returns a disabled reason enumerated constant (i.e. PK11_DIS_*).\n\
 \n\
 May be one of:\n\
 \n\
@@ -19046,7 +19048,7 @@ InitParameters_str(InitParameters *self)
     }
 
     /*
-     * We bump the ref count when inserting into the tuple to simpify clean
+     * We bump the ref count when inserting into the tuple to simplify clean
      * up. We always DECREF the variable on exit and also DECREF the
      * tuple. When the tuple is deallocated it will DECREF it's members,
      * then subsequently we'll individually DECREF the variable, thus
@@ -20049,7 +20051,7 @@ PKCS12Decoder_init(PKCS12Decoder *self, PyObject *args, PyObject *kwds)
 
     /*
      * The +1 for the utf8 password is for the null terminator which is used
-     * in the computation of the symetric key. Therefore the conversion to
+     * in the computation of the symmetric key. Therefore the conversion to
      * ucs2 must include the null terminator. It's safe for us to read the
      * null terminator at the end of the string Python provides because Python
      * always provides a 1 byte null terminator for all of it's string allocations.
@@ -21307,7 +21309,7 @@ PyDoc_STRVAR(pk11_pk11_need_pw_init_doc,
 \n\
 Returns True if the internal slot needs to be initialized, False otherwise.\n\
 \n\
-The internal slot token should be initalized if:\n\
+The internal slot token should be initialized if:\n\
 \n\
 The token is not initialized\n\
 \n\
@@ -22110,7 +22112,7 @@ succeed. [1]_\n\
 \n\
 .. [1] If the leaked objects are subsequently released after\n\
        nss_shutdown is called NSS can be reinitialized with the\n\
-       various NSS initialization routines. In this cass teh\n\
+       various NSS initialization routines. In this case the\n\
        SEC_ERROR_BUSY error can be thought of as an informatiive\n\
        warning.\n\
 \n\
@@ -22121,7 +22123,7 @@ succeed. [1]_\n\
        Python object wrapping an NSS object releases the NSS reference\n\
        to the NSS object. Thus if any Python objects which wrap NSS\n\
        objects remain \"live\" nss_shutdown will fail. Python objects\n\
-       are typically released by the Python interpretor when the\n\
+       are typically released by the Python interpreter when the\n\
        variable holding the object is assigned a new object or when\n\
        the variable holding the object goes out of scope. This means\n\
        you may need to manually delete some objects using the del\n\
@@ -22138,7 +22140,7 @@ succeed. [1]_\n\
        released by Python until it goes out of scope when the function\n\
        exits. Thus the shutdown will fail with SEC_ERROR_BUSY. But you\n\
        can explicitly force the sock object to be released by\n\
-       explictily deleting it, for example:\n\
+       explicitly deleting it, for example:\n\
 \n\
        def foo():\n\
            nss.nss_init(certdir)\n\
@@ -23614,7 +23616,7 @@ Convert the base64 encoded data to binary data.\n\
 The text is assumed to contain base64 text. The base64 text may\n\
 optionally be wrapped in a PEM header and footer.\n\
 \n\
-Returns a SecItem containg the binary data.\n\
+Returns a SecItem containing the binary data.\n\
 \n\
 Note, a SecItem can be initialized directly from base64 text by\n\
 utilizing the ascii parameter to the SecItem constructor, thus\n\
@@ -24049,7 +24051,7 @@ pkcs12_map_cipher(PyObject *self, PyObject *args, PyObject *kwds)
 
     if (!SEC_PKCS5IsAlgorithmPBEAlgTag(tag)) {
         cipher_tag = SEC_PKCS5GetPBEAlgorithm(tag, key_length);
-        /* no eqivalent PKCS5/PKCS12 cipher, use the raw
+        /* no equivalent PKCS5/PKCS12 cipher, use the raw
          * encryption tag we got and pass it directly in,
          * pkcs12 will use the pkcsv5 mechanism */
         if (cipher_tag == SEC_OID_PKCS5_PBES2) {
@@ -24503,7 +24505,7 @@ encryption when not in FIPS mode and no package encryption when in\n\
 FIPS mode. The private key is always protected with strong encryption\n\
 by default.\n\
 \n\
-A list of ciphers follows, the term is the SEC OID TAG followd by a\n\
+A list of ciphers follows, the term is the SEC OID TAG followed by a\n\
 friendly description.\n\
 \n\
 * symmetric CBC ciphers for PKCS #5 V2:\n\

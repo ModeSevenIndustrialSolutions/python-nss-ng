@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 '''
 In NSS 3.14 the SSL Version Range API was added. This was needed
 to better control the negotiation of SSL and TLS protocols between
@@ -70,7 +73,7 @@ sock.set_ssl_version_range(ssl.SSL_LIBRARY_VERSION_TLS_1_1,
 
 
 print()
-print("Socket version range after seting")
+print("Socket version range after setting")
 print("socket ssl version (asString): %s" % \
     (sock.get_ssl_version_range(repr_kind=nss.AsString),))
 print("socket ssl version (asEnumName): %s" % \

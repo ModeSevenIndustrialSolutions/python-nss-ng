@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 import sys
 import os
 from distutils.util import get_platform
@@ -14,7 +17,7 @@ def get_build_dir():
     directory so we use as much as distutils exposes, the rest was
     determined by looking at the source code for distutils.
 
-    If the build directory cannont be found in the tree None is returned.
+    If the build directory cannot be found in the tree None is returned.
     '''
     cwd = os.getcwd()
     path_components = cwd.split('/')

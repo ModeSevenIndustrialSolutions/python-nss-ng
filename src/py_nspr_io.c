@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * SPDX-License-Identifier: MPL-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
 // FIXME: add detail to each set_nspr_error()
 // FIXME: should nspr exception be derived from IOError? Note our detail is IOError's filename
@@ -195,7 +197,7 @@ NetworkAddress_init_from_address_string(NetworkAddress *self, const char *addr_s
     /*
      * NSS WART
      *
-     * The inerface presented by PR_GetAddrInfoByName is so crippled
+     * The interface presented by PR_GetAddrInfoByName is so crippled
      * that it's impossible to specify many of the selection criteria
      * which give getaddrinfo the flexibility it's designers
      * intended. As a simple example it's impossible to specify you
@@ -519,7 +521,7 @@ PR_IpAddrV4Mapped\n\
     Use IPv4 mapped address\n\
 \n\
 The optional port argument sets the port number in the NetworkAddress object.\n\
-The port number may be modfied later by assigning to the port attribute.\n\
+The port number may be modified later by assigning to the port attribute.\n\
 \n\
 Example::\n\
     \n\
@@ -1575,7 +1577,7 @@ Socket_get_desc_type(Socket *self, void *closure)
     TraceMethodEnter(self);
 
     if (!self->pr_socket) {
-        PyErr_SetString(PyExc_ValueError, "socket not intialized");
+        PyErr_SetString(PyExc_ValueError, "socket not initialized");
         return NULL;
     }
 
@@ -2144,7 +2146,7 @@ newly created Socket and NetworkAddress objects for the peer as well\n\
 as a buffer of data.\n\
 \n\
 Socket.accept_read() returns a tuple containing a new Socket object, a\n\
-new Networkaddress object for the peer, and a bufer containing data\n\
+new Networkaddress object for the peer, and a buffer containing data\n\
 from the first read on the Socket object.\n\
 ");
 
@@ -2383,7 +2385,7 @@ protocols require <CR><LF> sequences in some parts of the protocol\n\
 stream but permit <LF> (e.g. newline) endings in encapsulated portions\n\
 of the protocol. It is up to the caller to make line endings canonical\n\
 or to strip them altogether if necessary for their application. Both\n\
-operations are trival and not considered a burden in light of the need\n\
+operations are trivial and not considered a burden in light of the need\n\
 to read exact protocol sequences.\n\
 ");
 
@@ -2621,7 +2623,7 @@ _recv(Socket *self, long requested_amount, unsigned int timeout)
             return py_buf;
         }
 
-        /* We'll completly empty the read ahead buffer satisfying this request so malloc
+        /* We'll completely empty the read ahead buffer satisfying this request so malloc
          * the result string now, copy the read ahead portion into it and then free the
          * read ahead. By eschewing the read ahead until it's needed again saves us an
          * extra buffer copy on each subsequent read until it's needed again. */

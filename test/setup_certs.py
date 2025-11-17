@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 from __future__ import absolute_import
 
 import argparse
@@ -10,7 +13,7 @@ import subprocess
 import sys
 from string import Template
 import tempfile
-import six
+
 
 #-------------------------------------------------------------------------------
 logger = None
@@ -175,7 +178,7 @@ def create_ca_cert(options):
                 '-g', str(options.key_size),     # keysize
                 '-t', 'CT,,CT',                  # trust
                 '-1',                            # add key usage extension
-                '-2',                            # add basic contraints extension
+                '-2',                            # add basic constraints extension
                 '-5',                            # add certificate type extension
                 '-m', str(serial_number),        # cert serial number
                 '-v', str(options.valid_months), # validity in months
@@ -509,8 +512,8 @@ def setup_certs(args):
         if key.startswith('_'):
             continue
         value = getattr(options, key)
-        # Can't substitue on non-string values
-        if not isinstance(value, six.string_types):
+        # Can't substitute on non-string values
+        if not isinstance(value, str):
             continue
         # Don't bother trying to substitute if $ substitution character isn't present
         if '$' not in value:
@@ -538,7 +541,7 @@ def setup_certs(args):
     options.passwd_filename = None
     options.noise_filename = None
 
-    # Set function to clean up on exit, bind fuction with options
+    # Set function to clean up on exit, bind function with options
     def exit_handler_with_options():
         exit_handler(options)
     atexit.register(exit_handler_with_options)

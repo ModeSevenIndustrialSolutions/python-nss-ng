@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
+# Include license files
+include LICENSE.gpl
+include LICENSE.lgpl
+include LICENSE.mpl
+
+# Include documentation
+include README
+include doc/ChangeLog
+recursive-include doc *.py *.txt
+prune doc/examples/pki
+
+# Include tests
+recursive-include test *.py *.txt
+include test/run_tests
+prune test/pki
+prune test/__pycache__
+
+# Include source files
+recursive-include src *.c *.h *.py
+exclude src/_version.py
+
+# Include build configuration
+include pyproject.toml
+include setup.py
+
+# Exclude build artifacts and cache
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude *.egg-info
+prune .pytest_cache
+prune build
+prune dist

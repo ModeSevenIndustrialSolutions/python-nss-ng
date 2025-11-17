@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * SPDX-License-Identifier: MPL-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
 // FIXME: sometimes in the API dist_name is used and sometimes ca_name, make consistent.
 // FIXME: PyIntObjects represent their value as a long, but in many places we declared their C representation as
@@ -199,14 +201,14 @@ ssl_version_to_repr_kind(unsigned int major, unsigned int minor,
             break;
         default:
             PyErr_Format(PyExc_ValueError,
-                         "Verson %d.%d has unkown minor version",
+                         "Version %d.%d has unknown minor version",
                          major, minor);
             return NULL;
         }
         break;
     default:
         PyErr_Format(PyExc_ValueError,
-                     "Verson %d.%d has unkown major version",
+                     "Version %d.%d has unknown major version",
                      major, minor);
         return NULL;
     }
@@ -463,7 +465,7 @@ socket handshake, a crash is likely to occur when the first I/O\n\
 operation is done on the socket after it is imported into SSL.\n\
 \n\
 .. [1] See the \"SSL Version Range API\" section in the module\n\
-       documentation for updated recomendations on protocol selection.\n\
+       documentation for updated recommendations on protocol selection.\n\
 ");
 
 static PyObject *
@@ -1217,7 +1219,7 @@ SSLSocket_config_secure_server(SSLSocket *self, PyObject *args)
 }
 
 PyDoc_STRVAR(SSLSocket_get_peer_certificate_doc,
-"get_peer_certificate() -> Certficate\n\
+"get_peer_certificate() -> Certificate\n\
 \n\
 `SSLSocket.get_peer_certificate()` is used by certificate\n\
 authentication and bad-certificate callback functions to obtain the\n\
@@ -1249,7 +1251,7 @@ SSLSocket_get_peer_certificate(SSLSocket *self, PyObject *args)
 }
 
 PyDoc_STRVAR(SSLSocket_get_certificate_doc,
-"get_certificate() -> Certficate\n\
+"get_certificate() -> Certificate\n\
 \n\
 Returns the certificate associated with the socket or\n\
 None if not previously set.\n\
