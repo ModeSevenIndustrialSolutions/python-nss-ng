@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
-from __future__ import print_function
-from __future__ import absolute_import
 import sys
 import os
 import unittest

@@ -19,8 +19,6 @@ enumeration.
 This example does not illustrate the proper selection of protocol
 values nor actual SSL/TLS communication.
 '''
-from __future__ import absolute_import
-from __future__ import print_function
 
 
 from nss.error import NSPRError
