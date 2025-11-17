@@ -1,3 +1,6 @@
+SPDX-License-Identifier: MPL-2.0
+SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 python-nss is a Python binding for NSS (Network Security Services) and
 NSPR (Netscape Portable Runtime). NSS provides cryptography services
 supporting SSL, TLS, PKI, PKIX, X509, PKCS*, etc. NSS is an
@@ -26,7 +29,7 @@ instructions. On Linux typically these packages are called:
     * nss-devel
     * nspr-devel
 
-Use your system package manger to install them, for example on Fedora:
+Use your system package manager to install them, for example on Fedora:
 
     % sudo yum install nss-devel nspr-devel
 

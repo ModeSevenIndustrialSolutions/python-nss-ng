@@ -4,17 +4,17 @@ from __future__ import print_function
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
 import argparse
 import errno
 import getpass
-import six.moves.http_client
+import http.client
 import logging
 import sys
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+from typing import Union
+import urllib.parse as urlparse
 from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
@@ -100,11 +100,11 @@ def handshake_callback(sock):
     logging.debug("handshake complete, peer = %s", sock.get_peer_name())
     pass
 
-class NSSConnection(six.moves.http_client.HTTPConnection):
-    default_port = six.moves.http_client.HTTPSConnection.default_port
+class NSSConnection(http.client.HTTPConnection):
+    default_port = http.client.HTTPSConnection.default_port
 
     def __init__(self, host, port=None, strict=None, dbdir=None):
-        six.moves.http_client.HTTPConnection.__init__(self, host, port, strict)
+        http.client.HTTPConnection.__init__(self, host, port, strict)
 
         if not dbdir:
             raise RuntimeError("dbdir is required")
@@ -150,11 +150,11 @@ class NSSConnection(six.moves.http_client.HTTPConnection):
 
         raise IOError(errno.ENOTCONN, "could not connect to %s at port %d" % (self.host, self.port))
 
-class NSPRConnection(six.moves.http_client.HTTPConnection):
-    default_port = six.moves.http_client.HTTPConnection.default_port
+class NSPRConnection(http.client.HTTPConnection):
+    default_port = http.client.HTTPConnection.default_port
 
     def __init__(self, host, port=None, strict=None):
-        six.moves.http_client.HTTPConnection.__init__(self, host, port, strict)
+        http.client.HTTPConnection.__init__(self, host, port, strict)
 
         logging.debug('%s init %s', self.__class__.__name__, host)
         if not nss.nss_is_initialized(): nss.nss_init_nodb()
@@ -181,7 +181,8 @@ class NSPRConnection(six.moves.http_client.HTTPConnection):
 
         raise IOError(errno.ENOTCONN, "could not connect to %s at port %d" % (self.host, self.port))
 
-class NSSHTTPS(six.moves.http_client.HTTP):
+class NSSHTTPS:
+    """Legacy HTTP class wrapper for SSL connections."""
     _http_vsn = 11
     _http_vsn_str = 'HTTP/1.1'
 
@@ -195,11 +196,18 @@ class NSSHTTPS(six.moves.http_client.HTTP):
             port = None
         self._setup(self._connection_class(host, port, strict, dbdir=dbdir))
 
-class NSPRHTTP(six.moves.http_client.HTTP):
+    def _setup(self, conn):
+        self._conn = conn
+
+class NSPRHTTP:
+    """Legacy HTTP class wrapper for NSPR connections."""
     _http_vsn = 11
     _http_vsn_str = 'HTTP/1.1'
 
     _connection_class = NSPRConnection
+
+    def _setup(self, conn):
+        self._conn = conn
 
 #------------------------------------------------------------------------------
 
@@ -267,6 +275,7 @@ if not url_components.scheme or not url_components.netloc:
     sys.exit(1)
 
 if options.use_connection_class:
+    conn: Union[NSSConnection, NSPRConnection]
     if options.use_ssl:
         logging.info("Start (using NSSConnection class) %s", url)
         conn = NSSConnection(url_components.netloc, 443, dbdir=options.db_name)
@@ -282,28 +291,34 @@ if options.use_connection_class:
     print("headers:")
     for header in headers:
         print("%s: %s" % (header[0], header[1]))
-    content_length = int(response.getheader('content-length'))
+    content_length_str = response.getheader('content-length')
+    content_length = int(content_length_str) if content_length_str else 0
     data = response.read()
     assert(content_length == len(data))
     print(data)
     conn.close()
 else:
+    # Note: The legacy HTTP class approach is deprecated in Python 3
+    # Use the connection class approach instead
     if options.use_ssl:
-        logging.info("Start (using NSSHTTPS class) %s", url)
-        h = NSSHTTPS(url_components.netloc, 443, dbdir=options.db_name)
+        logging.info("Start (using NSSConnection class - legacy mode) %s", url)
+        conn = NSSConnection(url_components.netloc, 443, dbdir=options.db_name)
     else:
-        logging.info("Start (using NSPRHTTP class) %s", url)
-        h = NSPRHTTP(url_components.netloc, 80)
-    h.set_debuglevel(options.httplib_debug_level)
-    h.connect()
-    h.putrequest('GET', '/')
-    h.endheaders()
-    http_status, http_reason, headers = h.getreply()
-    print("status = %s %s" % (http_status, http_reason))
-    print("headers:\n%s" % headers)
-    content_length = int(headers['content-length'])
-    f = h.getfile()
-    data = f.read() # Get the raw HTML
-    assert(content_length == len(data))
-    f.close()
+        logging.info("Start (using NSPRConnection class - legacy mode) %s", url)
+        conn = NSPRConnection(url_components.netloc, 80)
+    conn.set_debuglevel(options.httplib_debug_level)
+    conn.connect()
+    conn.request("GET", "/")
+    response = conn.getresponse()
+    print("status = %s %s" % (response.status, response.reason))
+    headers = response.getheaders()
+    print("headers:")
+    for header in headers:
+        print("%s: %s" % (header[0], header[1]))
+    content_length_str = response.getheader('content-length')
+    content_length = int(content_length_str) if content_length_str else 0
+    data = response.read()
+    if content_length:
+        assert(content_length == len(data))
     print(data)
+    conn.close()

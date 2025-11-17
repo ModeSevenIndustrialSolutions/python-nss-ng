@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * SPDX-License-Identifier: MPL-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
@@ -294,7 +296,7 @@ init_py_nspr_errors(PyObject *module)
     PyObject *error_str = NULL;
     int i;
 
-    /* Load and intialize NSPR error descriptions */
+    /* Load and initialize NSPR error descriptions */
     if (init_nspr_errors() != PR_SUCCESS)
         return NULL;
 
@@ -597,7 +599,7 @@ static PyMemberDef CertVerifyError_members[] = {
     {"usages", T_UINT, offsetof(CertVerifyError, usages), READONLY,
      PyDoc_STR("usages returned by NSS")},
     {"log", T_OBJECT, offsetof(CertVerifyError, log), READONLY,
-     PyDoc_STR("verifcation log, see `CertVerifyLog`")},
+     PyDoc_STR("verification log, see `CertVerifyLog`")},
     {NULL}  /* Sentinel */
 };
 
@@ -688,14 +690,14 @@ model of always raising an exception on an error return some other\n\
 mechanism is needed to return the extra information. The solution is\n\
 to embed the information which normally would have been in the return\n\
 values in the exception object where it can be queried. The\n\
-CertVerifyError contails the returned usages bitmask and optionally\n\
+CertVerifyError contains the returned usages bitmask and optionally\n\
 the `CertVerifyLog` verification log object if requested.\n\
 \n\
-In addtion to the attributes in a `NSPRError` a CertVerifyError contains\n\
+In addition to the attributes in a `NSPRError` a CertVerifyError contains\n\
 the following attributes:\n\
 \n\
     usages\n\
-        The retured usages bitmask (unsigned int) from the Certificate\n\
+        The returned usages bitmask (unsigned int) from the Certificate\n\
         verification function.\n\
     log\n\
         The (optional) `CertVerifyLog` object which contains the\n\

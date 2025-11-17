@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 from __future__ import print_function
 from __future__ import absolute_import
 import sys
@@ -5,7 +8,7 @@ import os
 import unittest
 
 import nss.nss as nss
-import six
+
 
 #-------------------------------------------------------------------------------
 class TestVersion(unittest.TestCase):
@@ -27,7 +30,7 @@ class TestShutdownCallback(unittest.TestCase):
             self.assertEqual(isinstance(i, int), True)
             self.assertEqual(i, int_value)
 
-            self.assertEqual(isinstance(s, six.string_types), True)
+            self.assertEqual(isinstance(s, str), True)
             self.assertEqual(s, str_value)
 
             self.assertEqual(isinstance(d, dict), True)

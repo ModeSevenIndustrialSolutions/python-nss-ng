@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * SPDX-License-Identifier: MPL-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
 /* General security error codes  */
 /* Caller must #include "secerr.h" */
@@ -115,7 +117,7 @@ ER3(SEC_ERROR_EXTENSION_NOT_FOUND,		(SEC_ERROR_BASE + 35),
 
 ER3(SEC_ERROR_CA_CERT_INVALID,			(SEC_ERROR_BASE + 36),
 "Issuer certificate is invalid.")
-   
+
 ER3(SEC_ERROR_PATH_LEN_CONSTRAINT_INVALID,	(SEC_ERROR_BASE + 37),
 "Certificate path length constraint is invalid.")
 
@@ -343,7 +345,7 @@ ER3(SEC_ERROR_JS_DEL_MOD_FAILURE, 		(SEC_ERROR_BASE + 109),
 
 ER3(SEC_ERROR_OLD_KRL,	     			(SEC_ERROR_BASE + 110),
 "New KRL is not later than the current one.")
- 
+
 ER3(SEC_ERROR_CKL_CONFLICT,	     		(SEC_ERROR_BASE + 111),
 "New CKL has different issuer than current CKL.  Delete current CKL.")
 
@@ -550,4 +552,3 @@ ER3(SEC_ERROR_LEGACY_DATABASE,			(SEC_ERROR_BASE + 177),
 
 ER3(SEC_ERROR_APPLICATION_CALLBACK_ERROR,        (SEC_ERROR_BASE + 178),
 "The certificate was rejected by extra checks in the application.")
-

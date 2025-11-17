@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -7,7 +10,6 @@ import sys
 import nss.nss as nss
 import nss.error as nss_error
 print(sys.path)
-import six
 
 #-------------------------------------------------------------------------------
 
@@ -20,7 +22,7 @@ def fmt_info(label, item, level=0, hex_data=False):
     if hex_data:
         fmt_tuples.extend(nss.make_line_fmt_tuples(level+1,
                                                    nss.data_to_hex(item, 16)))
-    elif isinstance(item, six.string_types):
+    elif isinstance(item, str):
         fmt_tuples.extend(nss.make_line_fmt_tuples(level+1, str(item)))
     else:
         fmt_tuples.extend(item.format_lines(level=level+1))

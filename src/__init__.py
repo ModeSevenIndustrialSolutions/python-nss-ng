@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 """
 ============
 Introduction
@@ -21,16 +23,16 @@ General documentation on NSPR can be found here:
 http://developer.mozilla.org/en/docs/NSPR_API_Reference
 
 Please note, the documentation included with this package already
-encapsultes most of the information at the above two URL's, but is
+encapsulates most of the information at the above two URL's, but is
 specific to the python binding of NSS/NSPR. It is suggested you refer
 to the python-nss documentation.
 
 Most of the names and symbols in the NSS/NSPR C API have been kept in
-the nss-python binding and should be instantly familar or
+the nss-python binding and should be instantly familiar or
 recognizable. Python has different naming conventions and the
-nss-python binding has adhered to the python naming convensions,
+nss-python binding has adhered to the python naming conventions,
 Classes are camel case, otherwise symbols are all lower case with
-words seperated by underscores. The constants used by NSS/NSPR in C
+words separated by underscores. The constants used by NSS/NSPR in C
 API have been imported literally to add the programmer who might be
 referring to the Mozilla NSS/NSPR documentation and/or header files or
 who is porting an existing C application to python. Minor other
@@ -149,7 +151,7 @@ Things All NSS programs must do
   In the interest of code brevity we drop the leading "nss." from the
   module namespace.
 
-- Initialize NSS and indicate the certficate database (CertDB)::
+- Initialize NSS and indicate the certificate database (CertDB)::
 
     db_name = 'sql:pki'
     ssl.nssinit(db_name)
@@ -248,7 +250,7 @@ Issues
       - One can obtain the osfd in use by NSPR, either when the
         osfd was imported or because NSPR created the osfd itself via:
 
-	- PR_FileDesc2NativeHandle();
+        - PR_FileDesc2NativeHandle();
 
         But note this function is not meant to be public in the NSPR
         API and is documented as being deprecated and carries an
@@ -301,4 +303,17 @@ To be added
 
 """
 
-__version__ = '1.0.0'
+# Version is managed by setuptools-scm
+try:
+    from ._version import __version__
+except ImportError:
+    # Fallback for development installs without setuptools-scm
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            __version__ = version("python-nss")
+        except PackageNotFoundError:
+            __version__ = "0.0.0+unknown"
+    except ImportError:
+        __version__ = "0.0.0+unknown"

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+
 from __future__ import print_function
 from __future__ import absolute_import
 import unittest
@@ -160,7 +163,7 @@ class TestCertRequest(unittest.TestCase):
         #
         # Note, one of the attributes is a set of extension requests,
         # this should be identical to CertificateRequest.extensions
-        # property. The extenions property is just a shorthand for
+        # property. The extensions property is just a shorthand for
         # accessing the attribute containing extensions.
         #
         # NSS has an odd behavior with attributes that is heavily
