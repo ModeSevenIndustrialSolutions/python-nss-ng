@@ -38,44 +38,55 @@ packaging standards:
 - Created CI/CD workflow with NSS/NSPR dependencies
 - Added build status badges to README.md
 - Created `QUICKSTART.md` for rapid developer onboarding
+- **Fixed C extension compilation with NSS 3.100+**
+- Resolved typedef conflicts between python-nss and NSS headers
+- Fixed malformed C comment blocks with SPDX identifiers
+- C extensions now compile and pass 21 out of 32 tests
 
-## Critical Issues
+## Resolved Issues
 
-### 1. C Extension Compilation Failures ⚠️
+### 1. C Extension Compilation Failures ✅
 
-#### Priority: CRITICAL
+#### Status: RESOLVED
 
-The C extension code does not compile with modern NSS 3.100+. Compilation
-errors exist:
+The C extension compilation issues with NSS 3.100+ are now resolved.
 
-**Errors:**
+**Root Causes Identified:**
 
-- Struct member access issues in `src/py_nss.c`
-- Invalid type conversions (e.g., `Py_CLEAR` used on wrong types)
-- Member name mismatches (e.g., `py_modulus` vs `modulus`)
-- API changes in NSS/NSPR headers
+1. **Malformed C comment blocks**: SPDX identifiers appeared outside closing
+   `*/`
+2. **Typedef conflicts**: `RSAPublicKey` and `DSAPublicKey` conflicted with
+   NSS header definitions
 
-**Example Error:**
+**Fixes Applied:**
 
-```text
-src/py_nss.c:7228:20: error: no member named 'py_modulus' in
-'struct RSAPublicKeyStr'; did you mean 'modulus'?
-```
+1. Fixed C comment blocks in all source files:
+   - `src/py_nspr_error.c`, `src/py_nspr_error.h`
+   - `src/py_nspr_common.h`
+   - `src/py_nspr_io.c`, `src/py_nspr_io.h`
+   - `src/py_nss.c`, `src/py_nss.h`
+   - `src/py_ssl.c`, `src/py_ssl.h`
+   - `src/NSPRerrs.h`, `src/SECerrs.h`, `src/SSLerrs.h`
 
-**Action Required:**
+2. Renamed conflicting Python wrapper types:
+   - `RSAPublicKey` → `PyRSAPublicKey`
+   - `DSAPublicKey` → `PyDSAPublicKey`
 
-1. Audit all C code against NSS 3.117 API documentation
-2. Fix struct member access throughout codebase
-3. Update deprecated API usage
-4. Test compilation against different NSS versions (3.80, 3.100, 3.117)
-5. Consider using NSS's pkg-config data for compiler flags
+**Test Results:**
 
-**Files to Review:**
+- C extensions compile on macOS with NSS 3.117
+- 21 of 32 tests pass (66% pass rate)
+- 11 failures related to test database setup (not compilation issues)
+- Library imports and functions work as expected
 
-- `src/py_nss.c` (main NSS bindings - 817KB, complex)
-- `src/py_ssl.c` (SSL bindings - 166KB)
-- `src/py_nspr_io.c` (NSPR I/O - 119KB)
-- `src/py_nspr_error.c` (Error handling - 25KB)
+**Files Modified:**
+
+- `src/py_nss.c` (renamed types, fixed comments)
+- `src/py_nss.h` (renamed typedefs)
+- `src/py_ssl.c`, `src/py_ssl.h` (fixed comments)
+- `src/py_nspr_io.c`, `src/py_nspr_io.h` (fixed comments)
+- `src/py_nspr_error.c`, `src/py_nspr_error.h` (fixed comments)
+- `src/NSPRerrs.h`, `src/SECerrs.h`, `src/SSLerrs.h` (fixed comments)
 
 ## High Priority Tasks
 
@@ -112,7 +123,7 @@ Current setup uses new v-prefixed tags (v1.0.1), but legacy tags use
 
 #### Priority: HIGH (Testing)
 
-**Status:** 🔄 In Progress
+**Status:** ✅ Tests Running (Database Setup Issues Remain)
 
 **Completed:**
 
@@ -122,22 +133,24 @@ Current setup uses new v-prefixed tags (v1.0.1), but legacy tags use
 - Removed Python 2 compatibility from test files
 - Updated `test/util.py` to remove deprecated `distutils` usage
 - Tests are now pytest-compatible
+- ✅ C extensions compile and tests run
+- ✅ 21 of 32 tests pass (66% pass rate)
+- ✅ Document how to run tests with pytest (see `doc/TESTING.md`)
 
 **Remaining:**
 
-- Run tests to verify they work with pytest (blocked by C extension compilation)
+- Fix test database setup issues (11 tests failing due to SEC_ERROR_BAD_DATABASE)
 - Add tests for Python 3.10+ specific features
 - Add tests for new build system
 - Set up CI/CD to run tests automatically
 - Add coverage reporting
-- ✅ Document how to run tests with pytest (see `doc/TESTING.md`)
 
 **Files:**
 
 - ✅ `test/conftest.py` - Created with fixtures
 - ✅ `test/util.py` - Modernized
 - ✅ `doc/TESTING.md` - Comprehensive testing documentation
-- `test/test_*.py` - Ready for pytest (need C extensions to compile)
+- ✅ `test/test_*.py` - Running with pytest (21/32 passing)
 - `test/run_tests` - Legacy runner (pytest is now preferred)
 
 ### 5. Documentation Updates
@@ -288,13 +301,12 @@ GitHub Actions workflows exist (build-test.yaml, build-test-release.yaml):
 
 ## Immediate Next Steps
 
-1. **Fix C Extension Compilation** - This blocks everything else
-   - Start with the simplest errors first
-   - Focus on `src/py_nspr_error.c` as it's smallest
-   - Then move to `src/py_nspr_io.c`
-   - Tackle `src/py_nss.c` and `src/py_ssl.c` last
+1. **Fix Test Database Issues** - 11 tests failing with SEC_ERROR_BAD_DATABASE
+   - Investigate pytest fixture for database setup
+   - Ensure test certificates generate as expected
+   - Verify NSS database initialization
 
-2. **Test Build System** - Once code compiles
+2. **Test Build System** - Verify across platforms
 
    ```bash
    uv venv --python 3.10
@@ -362,7 +374,7 @@ GitHub Actions workflows exist (build-test.yaml, build-test-release.yaml):
 - Version management works with new tags
 - Path detection works on macOS with Homebrew
 - Source distribution builds as expected
-- Main blocker is C code compatibility with modern NSS
+- ✅ C code now compiles with modern NSS (3.117+)
 - We removed all Python 2 compatibility code
 - Tests are pytest-ready with custom fixtures and markers
 - Modern Python 3.10+ idioms are now used throughout the codebase
@@ -375,6 +387,10 @@ GitHub Actions workflows exist (build-test.yaml, build-test-release.yaml):
 - Type stub files (.pyi) created for C extension modules (1,130 lines)
 - Build status badges added to README
 - Comprehensive documentation suite (6 major guides, ~32KB)
+- **C extensions now compile with NSS 3.100+**
+- Fixed typedef conflicts with NSS headers (RSAPublicKey, DSAPublicKey)
+- Fixed malformed C comment blocks with SPDX identifiers
+- Tests running: 21/32 passing (66%), 11 failures due to database setup
 
 ## Recent Accomplishments (Session Summary)
 

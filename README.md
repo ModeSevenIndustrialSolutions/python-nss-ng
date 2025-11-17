@@ -5,8 +5,8 @@ SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # python-nss
 
-[![Build with NSS/NSPR](https://github.com/tiran/python-nss/actions/workflows/build-with-nss.yaml/badge.svg)](https://github.com/tiran/python-nss/actions/workflows/build-with-nss.yaml)
-[![Python Build/Test](https://github.com/tiran/python-nss/actions/workflows/build-test.yaml/badge.svg)](https://github.com/tiran/python-nss/actions/workflows/build-test.yaml)
+[![Build with NSS/NSPR](https://github.com/ModeSevenIndustrialSolutions/python-nss/actions/workflows/build-with-nss.yaml/badge.svg)](https://github.com/ModeSevenIndustrialSolutions/python-nss/actions/workflows/build-with-nss.yaml)
+[![Python Build/Test](https://github.com/ModeSevenIndustrialSolutions/python-nss/actions/workflows/build-test.yaml/badge.svg)](https://github.com/ModeSevenIndustrialSolutions/python-nss/actions/workflows/build-test.yaml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
@@ -203,5 +203,5 @@ the NSS compatibility issues and modernize the C code are welcome!
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/tiran/python-nss/issues)
-- **Repository**: [GitHub Repository](https://github.com/tiran/python-nss)
+- **Issues**: [GitHub Issues](https://github.com/ModeSevenIndustrialSolutions/python-nss/issues)
+- **Repository**: [GitHub Repository](https://github.com/ModeSevenIndustrialSolutions/python-nss)
