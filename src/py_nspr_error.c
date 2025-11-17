@@ -822,8 +822,6 @@ PyDoc_STRVAR(module_doc,
 manipulate them.\n\
 ");
 
-#if PY_MAJOR_VERSION >= 3
-
 static struct PyModuleDef module_def = {
     PyModuleDef_HEAD_INIT,
     NSS_ERROR_MODULE_NAME,      /* m_name */
@@ -836,20 +834,13 @@ static struct PyModuleDef module_def = {
     NULL                        /* m_free */
 };
 
-#else /* PY_MAOR_VERSION < 3 */
-#endif /* PY_MAJOR_VERSION */
-
 MOD_INIT(error)
 {
     PyObject *m;
     PyObject *py_error_doc = NULL;
     PyObject *py_module_doc = NULL;
 
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&module_def);
-#else
-    m = Py_InitModule3(NSS_ERROR_MODULE_NAME, module_methods, module_doc);
-#endif
 
     if (m == NULL) {
         return MOD_ERROR_VAL;

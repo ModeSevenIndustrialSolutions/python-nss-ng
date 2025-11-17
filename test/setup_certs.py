@@ -12,6 +12,7 @@ import subprocess
 import sys
 from string import Template
 import tempfile
+from util import find_nss_tool
 
 
 #-------------------------------------------------------------------------------
@@ -109,7 +110,7 @@ def create_passwd_file(options):
 
 
 def db_has_cert(options, nickname):
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-d', options.db_name,
                 '-L',
                 '-n', nickname]
@@ -124,7 +125,7 @@ def db_has_cert(options, nickname):
     return True
 
 def format_cert(options, nickname):
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-L',                          # OPERATION: list
                 '-d', options.db_name,         # NSS database
                 '-f', options.passwd_filename, # database password in file
@@ -150,7 +151,7 @@ def create_database(options):
             shutil.rmtree(options.db_dir)
         os.makedirs(options.db_dir)
 
-        cmd_args = ['/usr/bin/certutil',
+        cmd_args = [find_nss_tool('certutil'),
                     '-N',                          # OPERATION: create database
                     '-d', options.db_name,         # NSS database
                     '-f', options.passwd_filename, # database password in file
@@ -167,7 +168,7 @@ def create_ca_cert(options):
     logging.info('creating ca cert: subject="%s", nickname="%s"',
                  options.ca_subject, options.ca_nickname)
 
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-S',                            # OPERATION: create signed cert
                 '-x',                            # self-sign the cert
                 '-d', options.db_name,           # NSS database
@@ -234,7 +235,7 @@ def create_server_cert(options):
     logging.info('creating server cert: subject="%s", nickname="%s"',
                  options.server_subject, options.server_nickname)
 
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-S',                            # OPERATION: create signed cert
                 '-d', options.db_name,           # NSS database
                 '-f', options.passwd_filename,   # database password in file
@@ -278,7 +279,7 @@ def create_client_cert(options):
     logging.info('creating client cert: subject="%s", nickname="%s"',
                  options.client_subject, options.client_nickname)
 
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-S',                            # OPERATION: create signed cert
                 '-d', options.db_name,           # NSS database
                 '-f', options.passwd_filename,   # database password in file
@@ -321,7 +322,7 @@ def add_trusted_certs(options):
     logging.info('adding system trusted certs: name="%s" module="%s"',
                  name, module)
 
-    cmd_args = ['/usr/bin/modutil',
+    cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', options.db_name, # NSS database
                 '-add', name,              # module name
                 '-libfile', module,        # module
@@ -355,7 +356,7 @@ def get_system_fips_enabled():
 
 
 def get_db_fips_enabled(db_name):
-    cmd_args = ['/usr/bin/modutil',
+    cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', db_name,               # NSS database
                 '-chkfips', 'true',              # enable/disable fips
                 ]
@@ -380,7 +381,7 @@ def set_fips_mode(options):
 
     logging.info('setting fips: %s', state)
 
-    cmd_args = ['/usr/bin/modutil',
+    cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', options.db_name,       # NSS database
                 '-fips', state,                  # enable/disable fips
                 '-force'

@@ -13,6 +13,7 @@ from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
 import nss.ssl as ssl
+from conftest import get_test_db_path
 
 # -----------------------------------------------------------------------------
 NO_CLIENT_CERT             = 0
@@ -26,7 +27,7 @@ info = True
 password = 'DB_passwd'
 use_ssl = True
 client_cert_action = NO_CLIENT_CERT
-db_name = 'sql:pki'
+db_name = get_test_db_path()
 hostname = os.uname()[1]
 server_nickname = 'test_server'
 client_nickname = 'test_user'

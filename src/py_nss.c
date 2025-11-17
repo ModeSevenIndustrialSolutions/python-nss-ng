@@ -5645,45 +5645,10 @@ static void SecItem_ReleaseBuffer(PyObject *obj, Py_buffer *view)
     self->buffer_exports--;
 }
 
-#if PY_MAJOR_VERSION >= 3
-
 static PyBufferProcs SecItem_as_buffer = {
     SecItem_GetBuffer,          /* bf_getbuffer */
     SecItem_ReleaseBuffer,      /* bf_releasebuffer */
 };
-
-#else /* PY_MAJOR_VERSION < 3 */
-
-static Py_ssize_t
-SecItem_buffer_getbuf(PyObject *obj, Py_ssize_t index, void **ptr)
-{
-    SecItem *self = (SecItem *) obj;
-    if (index != 0) {
-        PyErr_SetString(PyExc_SystemError, "Accessing non-existent segment");
-        return -1;
-    }
-    *ptr = self->item.data;
-    return self->item.len;
-}
-
-static Py_ssize_t
-SecItem_buffer_getsegcount(PyObject *obj, Py_ssize_t *lenp)
-{
-    if (lenp)
-        *lenp = 1;
-    return 1;
-}
-
-static PyBufferProcs SecItem_as_buffer = {
-    SecItem_buffer_getbuf,			/* bf_getreadbuffer */
-    SecItem_buffer_getbuf,			/* bf_getwritebuffer */
-    SecItem_buffer_getsegcount,			/* bf_getsegcount */
-    NULL,					/* bf_getcharbuffer */
-    SecItem_GetBuffer,				/* bf_getbuffer */
-    SecItem_ReleaseBuffer,			/* bf_releasebuffer */
-};
-
-#endif /* PY_MAJOR_VERSION >= 3 */
 
 static Py_ssize_t
 SecItem_length(SecItem *self)
@@ -5736,18 +5701,10 @@ SecItem_subscript(SecItem *self, PyObject* item)
         unsigned char* dst;
         PyObject* result;
 
-#if PY_MAJOR_VERSION >= 3
-        /* The only difference between Py2 and Py3 is Py2 needs (PySliceObject *) cast on 1st parameter */
         if (PySlice_GetIndicesEx(item, SecItem_GET_SIZE(self),
 				 &start, &stop, &step, &slice_len) < 0) {
             return NULL;
         }
-#else
-        if (PySlice_GetIndicesEx((PySliceObject *)item, SecItem_GET_SIZE(self),
-				 &start, &stop, &step, &slice_len) < 0) {
-            return NULL;
-        }
-#endif
 
         if (slice_len <= 0) {
             return PyBytes_FromStringAndSize("", 0);
@@ -5810,11 +5767,7 @@ static PyTypeObject SecItemType = {
     0,						/* tp_getattro */
     0,						/* tp_setattro */
     &SecItem_as_buffer,				/* tp_as_buffer */
-#if PY_MAJOR_VERSION >= 3
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
-#else
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_NEWBUFFER,	/* tp_flags */
-#endif
     SecItem_doc,				/* tp_doc */
     0,						/* tp_traverse */
     0,						/* tp_clear */
@@ -11630,18 +11583,10 @@ RDN_subscript(RDN *self, PyObject* item)
         Py_ssize_t start, stop, step, slicelength, cur, i;
         PyObject* py_ava;
 
-#if PY_MAJOR_VERSION >= 3
-        /* The only difference between Py2 and Py3 is Py2 needs (PySliceObject *) cast on 1st parameter */
         if (PySlice_GetIndicesEx(item, RDN_length(self),
 				 &start, &stop, &step, &slicelength) < 0) {
             return NULL;
         }
-#else
-        if (PySlice_GetIndicesEx((PySliceObject *)item, RDN_length(self),
-				 &start, &stop, &step, &slicelength) < 0) {
-            return NULL;
-        }
-#endif
 
         if (slicelength <= 0) {
             return PyList_New(0);
@@ -12082,18 +12027,10 @@ DN_subscript(DN *self, PyObject* item)
         Py_ssize_t start, stop, step, slicelength, cur, i;
         PyObject* py_ava;
 
-#if PY_MAJOR_VERSION >= 3
-        /* The only difference between Py2 and Py3 is Py2 needs (PySliceObject *) cast on 1st parameter */
         if (PySlice_GetIndicesEx(item, DN_length(self),
 				 &start, &stop, &step, &slicelength) < 0) {
             return NULL;
         }
-#else
-        if (PySlice_GetIndicesEx((PySliceObject *)item, DN_length(self),
-				 &start, &stop, &step, &slicelength) < 0) {
-            return NULL;
-        }
-#endif
 
         if (slicelength <= 0) {
             return PyList_New(0);
@@ -13253,16 +13190,9 @@ pk11_hash_buf(PyObject *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "ky#:hash_buf",
                           &hash_alg, &in_data, &in_data_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "kt#:hash_buf",
-                          &hash_alg, &in_data, &in_data_len))
-        return NULL;
-#endif
 
     if ((hash_len = HASH_ResultLenByOidTag(hash_alg)) == 0) {
         return set_nspr_error("unable to determine resulting hash length for hash_alg = %s",
@@ -13308,14 +13238,8 @@ pk11_md5_digest(PyObject *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "y#:md5_digest", &in_data, &in_data_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "t#:md5_digest", &in_data, &in_data_len))
-        return NULL;
-#endif
 
     if ((py_out_buf = PyBytes_FromStringAndSize(NULL, MD5_LENGTH)) == NULL) {
         return NULL;
@@ -13354,14 +13278,8 @@ pk11_sha1_digest(PyObject *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "y#:sha1_digest", &in_data, &in_data_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "t#:sha1_digest", &in_data, &in_data_len))
-        return NULL;
-#endif
 
     if ((py_out_buf = PyBytes_FromStringAndSize(NULL, SHA1_LENGTH)) == NULL) {
         return NULL;
@@ -13401,14 +13319,8 @@ pk11_sha256_digest(PyObject *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "y#:sha256_digest", &in_data, &in_data_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "t#:sha256_digest", &in_data, &in_data_len))
-        return NULL;
-#endif
 
     if ((py_out_buf = PyBytes_FromStringAndSize(NULL, SHA256_LENGTH)) == NULL) {
         return NULL;
@@ -13447,14 +13359,8 @@ pk11_sha512_digest(PyObject *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "y#:sha512_digest", &in_data, &in_data_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "t#:sha512_digest", &in_data, &in_data_len))
-        return NULL;
-#endif
 
     if ((py_out_buf = PyBytes_FromStringAndSize(NULL, SHA512_LENGTH)) == NULL) {
         return NULL;
@@ -15187,14 +15093,8 @@ PK11Context_digest_op(PyPK11Context *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "y#:digest_op", &buffer, &buffer_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "t#:digest_op", &buffer, &buffer_len))
-        return NULL;
-#endif
 
     if (PK11_DigestOp(self->pk11_context, buffer, buffer_len) != SECSuccess) {
         return set_nspr_error(NULL);
@@ -15223,14 +15123,8 @@ PK11Context_cipher_op(PyPK11Context *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-#if PY_MAJOR_VERSION >= 3
-    /* Py2 -> Py3 difference is t# -> y# */
     if (!PyArg_ParseTuple(args, "y#:cipher_op", &in_buf, &in_buf_len))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "t#:cipher_op", &in_buf, &in_buf_len))
-        return NULL;
-#endif
 
     /*
      * Create an output buffer to hold the result.
@@ -25261,8 +25155,6 @@ PyDoc_STRVAR(module_doc,
 \n\
 ");
 
-#if PY_MAJOR_VERSION >= 3
-
 static struct PyModuleDef module_def = {
     PyModuleDef_HEAD_INIT,
     NSS_NSS_MODULE_NAME,        /* m_name */
@@ -25275,9 +25167,6 @@ static struct PyModuleDef module_def = {
     NULL                        /* m_free */
 };
 
-#else /* PY_MAOR_VERSION < 3 */
-#endif /* PY_MAJOR_VERSION */
-
 MOD_INIT(nss)
 {
     PyObject *m;
@@ -25288,11 +25177,7 @@ MOD_INIT(nss)
 
     PyDateTime_IMPORT;
 
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&module_def);
-#else
-    m = Py_InitModule3(NSS_NSS_MODULE_NAME, module_methods, module_doc);
-#endif
 
     if (m == NULL) {
         return MOD_ERROR_VAL;

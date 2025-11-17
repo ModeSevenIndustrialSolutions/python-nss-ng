@@ -7,8 +7,9 @@ import unittest
 
 import nss.nss as nss
 from nss.error import NSPRError
+from conftest import get_test_db_path
 
-db_name = 'sql:pki'
+db_name = get_test_db_path()
 
 #-------------------------------------------------------------------------------
 
