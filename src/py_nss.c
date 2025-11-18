@@ -1832,7 +1832,7 @@ SECItem_to_base64(SECItem *item, size_t chars_per_line, char *pem_type)
         src_end = base64 + base64_len;
 
         while(src < src_end) {
-            line_len = MIN(chars_per_line, src_end - src);
+            line_len = MIN(chars_per_line, (size_t)(src_end - src));
             if ((line = PyUnicode_FromStringAndSize(src, line_len)) == NULL) {
                 goto fail;
             }
@@ -4818,7 +4818,7 @@ CERTAVA_value_to_pystr(CERTAVA *ava)
      * can't get the canonical name use a dotted-decimal OID
      * representation instead.
      */
-    if ((oid_tag = CERT_GetAVATag(ava)) != -1) {
+    if ((oid_tag = CERT_GetAVATag(ava)) != (SECOidTag)-1) {
         attr_name = ava_oid_tag_to_name(oid_tag);
     }
 
@@ -4882,7 +4882,7 @@ CERTRDN_to_pystr(CERTRDN *rdn)
          * can't get the canonical name use a dotted-decimal OID
          * representation instead.
          */
-        if ((oid_tag = CERT_GetAVATag(ava)) != -1) {
+        if ((oid_tag = CERT_GetAVATag(ava)) != (SECOidTag)-1) {
             attr_name = ava_oid_tag_to_name(oid_tag);
         }
 
@@ -7883,6 +7883,10 @@ PublicKey_format_lines(PublicKey *self, PyObject *args, PyObject *kwds)
     case rsaPssKey:
     case rsaOaepKey:
     case nullKey:
+    case kyberKey:
+    case edKey:
+    case ecMontKey:
+    case mldsaKey:
         if ((obj = PublicKey_get_key_type_str(self, NULL)) == NULL) {
             goto fail;
         }
@@ -8061,6 +8065,10 @@ PublicKey_new_from_SECKEYPublicKey(SECKEYPublicKey *pk)
     case rsaPssKey:
     case rsaOaepKey:
     case nullKey:
+    case kyberKey:
+    case edKey:
+    case ecMontKey:
+    case mldsaKey:
         break;
     }
 
@@ -10145,7 +10153,7 @@ Certificate_get_extension(Certificate *self, PyObject *args, PyObject *kwds)
                                      &py_oid))
         return NULL;
 
-    if ((oid_tag = get_oid_tag_from_object(py_oid)) == -1) {
+    if ((oid_tag = get_oid_tag_from_object(py_oid)) == (SECOidTag)-1) {
         return NULL;
     }
 
@@ -23340,21 +23348,21 @@ pk11_create_pbev2_algorithm_id(PyObject *self, PyObject *args, PyObject *kwds)
         return NULL;
 
     if (py_pbe_alg) {
-        if ((pbe_alg_tag = get_oid_tag_from_object(py_pbe_alg)) == -1) {
+        if ((pbe_alg_tag = get_oid_tag_from_object(py_pbe_alg)) == (SECOidTag)-1) {
             SECItem_param_release(salt_param);
             return NULL;
         }
     }
 
     if (py_cipher_alg) {
-        if ((cipher_alg_tag = get_oid_tag_from_object(py_cipher_alg)) == -1) {
+        if ((cipher_alg_tag = get_oid_tag_from_object(py_cipher_alg)) == (SECOidTag)-1) {
             SECItem_param_release(salt_param);
             return NULL;
         }
     }
 
     if (py_prf_alg) {
-        if ((prf_alg_tag = get_oid_tag_from_object(py_prf_alg)) == -1) {
+        if ((prf_alg_tag = get_oid_tag_from_object(py_prf_alg)) == (SECOidTag)-1) {
             SECItem_param_release(salt_param);
             return NULL;
         }
@@ -24275,7 +24283,7 @@ pkcs12_enable_all_ciphers(PyObject *self, PyObject *args)
 
     TraceMethodEnter(self);
 
-    for (i = 0; i < sizeof(all_ciphers)/sizeof(all_ciphers[0]); i++) {
+    for (i = 0; i < (int)(sizeof(all_ciphers)/sizeof(all_ciphers[0])); i++) {
         cipher = all_ciphers[i];
         if (SEC_PKCS12EnableCipher(cipher, PR_TRUE) != SECSuccess) {
             PyObject *py_name = pkcs12_cipher_to_pystr(cipher);

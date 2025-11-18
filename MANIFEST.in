@@ -2,18 +2,18 @@
 # SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 # Include license files
-include LICENSE.gpl
-include LICENSE.lgpl
-include LICENSE.mpl
+include LICENSE
+recursive-include LICENSES *.txt
 
 # Include documentation
-include README
+include README.md
+include QUICKSTART.md
 include doc/ChangeLog
-recursive-include doc *.py *.txt
+recursive-include doc *.py
 prune doc/examples/pki
 
 # Include tests
-recursive-include test *.py *.txt
+recursive-include test *.py
 include test/run_tests
 prune test/pki
 prune test/__pycache__

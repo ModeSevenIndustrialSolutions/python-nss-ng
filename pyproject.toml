@@ -14,7 +14,8 @@ name = "python-nss-ng"
 dynamic = ["version"]
 description = "Python bindings for Network Security Services (NSS) and Netscape Portable Runtime (NSPR)"
 readme = "README.md"
-license = {text = "MPLv2.0 or GPLv2+ or LGPLv2+"}
+license = "MPL-2.0 OR GPL-2.0-or-later OR LGPL-2.0-or-later"
+license-files = ["LICENSE", "LICENSES/MPL-2.0.txt"]
 requires-python = ">=3.10"
 authors = [
     {name = "John Dennis", email = "jdennis@redhat.com"},
@@ -36,9 +37,7 @@ keywords = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL-2.0)",
-    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
-    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
+
     "Operating System :: POSIX",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
@@ -86,7 +85,7 @@ namespaces = false
 [tool.setuptools.package-dir]
 nss = "src"
 
-[tool.setuptools-scm]
+[tool.setuptools_scm]
 version_scheme = "post-release"
 local_scheme = "no-local-version"
 write_to = "src/_version.py"
@@ -95,6 +94,7 @@ write_to_template = """
 __version__ = "{version}"
 __version_tuple__ = {version_tuple}
 """
+fallback_version = "0.1.0"
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
