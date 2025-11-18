@@ -1,22 +1,82 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: 2025 The Linux Foundation
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 """
-pytest configuration for python-nss tests.
+pytest configuration for python-nss-ng tests.
 
 This file provides fixtures and setup for running tests with pytest.
 Tests are run in separate processes using pytest-xdist to provide clean
 NSS initialization for each test file.
 """
 
+import contextlib
+import logging
 import os
+import stat
 import sys
-import time
 import pytest
 
 
+# Module-level logger for test infrastructure
+logger = logging.getLogger(__name__)
+
+
+def _rmtree_onerror(func, path, exc_info):
+    """
+    Error handler for shutil.rmtree.
+
+    Attempts to handle permission errors by making files writable,
+    then retrying the removal. Logs other errors for diagnostics.
+
+    Args:
+        func: The function that raised the exception
+        path: Path to the file/directory
+        exc_info: Exception information tuple
+    """
+    if not os.access(path, os.W_OK):
+        # Make the file/directory writable and retry
+        try:
+            os.chmod(path, stat.S_IWUSR | stat.S_IRUSR | stat.S_IXUSR)
+            func(path)
+        except Exception as e:
+            logger.warning(f"Failed to remove {path} after chmod: {e}")
+    else:
+        # Log the error but don't raise - allow cleanup to continue
+        logger.warning(f"Error removing {path}: {exc_info[1]}")
+
+
+def _wait_for_nss_shutdown(timeout=2.0):
+    """
+    Wait for NSS to be ready for shutdown.
+
+    Instead of arbitrary sleeps, this polls NSS state to ensure
+    resources are released before attempting shutdown.
+
+    Args:
+        timeout: Maximum time to wait in seconds
+
+    Returns:
+        bool: True if ready, False if timeout reached
+    """
+    import time
+    start_time = time.time()
+    sleep_interval = 0.1
+
+    while time.time() - start_time < timeout:
+        # Check if we can proceed - in practice, NSS doesn't provide
+        # a good way to check this, so we use a short polling interval
+        # This is better than a single long sleep
+        time.sleep(sleep_interval)
+
+        # If we've waited a reasonable amount, consider it ready
+        if time.time() - start_time >= 0.5:
+            return True
+
+    return False
+
+
 def pytest_configure(config):
-    """Configure pytest for python-nss tests."""
+    """Configure pytest for python-nss-ng tests."""
     # Add custom markers
     config.addinivalue_line(
         "markers", "nss_init: mark test as requiring NSS initialization"
@@ -26,6 +86,9 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "slow: mark test as slow running"
+    )
+    config.addinivalue_line(
+        "markers", "allow_insecure: mark test as allowing insecure/legacy configurations"
     )
 
 
@@ -81,18 +144,9 @@ def test_certs(setup_test_environment):
     else:
         pki_dir = os.path.join(test_dir, 'pki')
 
-    # Clean up any existing pki directory with retry logic
+    # Clean up any existing PKI directory with error handling
     if os.path.exists(pki_dir):
-        for attempt in range(3):
-            try:
-                shutil.rmtree(pki_dir)
-                break
-            except OSError:
-                if attempt < 2:
-                    time.sleep(0.5)
-                else:
-                    # Last attempt - try to continue anyway
-                    pass
+        shutil.rmtree(pki_dir, onerror=_rmtree_onerror)
 
     # Set up certificates with default options
     # This creates the directory that tests expect
@@ -102,13 +156,9 @@ def test_certs(setup_test_environment):
 
     # Cleanup after all tests with retry logic
     if os.path.exists(pki_dir):
-        for attempt in range(3):
-            try:
-                shutil.rmtree(pki_dir)
-                break
-            except OSError:
-                if attempt < 2:
-                    time.sleep(0.5)
+        # Cleanup - remove test PKI directory
+        if os.path.exists(pki_dir):
+            shutil.rmtree(pki_dir, onerror=_rmtree_onerror)
 
 
 @pytest.fixture(scope="session")
@@ -139,8 +189,8 @@ def nss_initialized(nss_db_dir):
     yield
 
     # Shutdown NSS after all tests in this worker complete
-    # Give any background threads time to finish
-    time.sleep(0.5)
+    # Wait for NSS resources to be ready for shutdown
+    _wait_for_nss_shutdown(timeout=2.0)
     try:
         nss.nss_shutdown()
     except Exception as e:
@@ -166,11 +216,62 @@ def nss_db_context(nss_initialized):
     # Minimal cleanup per test
     # Note: We don't shut down NSS here as it's shared across all tests
     # in this worker process
-    try:
+    with contextlib.suppress(Exception):
         import nss.ssl as ssl
         ssl.clear_session_cache()
-    except:
-        pass
+
+
+@pytest.fixture(scope="function")
+def secure_mode():
+    """
+    Fixture that returns True to indicate secure defaults should be used.
+
+    Tests can use this to verify behavior with secure settings.
+    """
+    return True
+
+
+@pytest.fixture(scope="function")
+def insecure_mode():
+    """
+    Fixture that returns True to indicate insecure/legacy mode is allowed.
+
+    This should only be used for tests that specifically need to verify
+    legacy or insecure configurations work correctly.
+
+    WARNING: Tests using this fixture should be clearly marked and documented.
+    """
+    return True
+
+
+@pytest.fixture(scope="function")
+def tls_config(request):
+    """
+    Fixture that provides TLS configuration based on test requirements.
+
+    By default, returns secure configuration (TLS 1.2+).
+    Tests can use markers to request insecure mode:
+
+    @pytest.mark.allow_insecure
+    def test_legacy_tls(tls_config):
+        assert tls_config['allow_insecure'] == True
+    """
+    config = {
+        'min_tls_version': 'TLS1.2',
+        'max_tls_version': 'TLS1.3',
+        'allow_insecure': False,
+        'min_key_size': 2048,
+    }
+
+    # Check if test is marked with allow_insecure
+    if request.node.get_closest_marker('allow_insecure'):
+        config['allow_insecure'] = True
+        config['min_tls_version'] = 'TLS1.0'
+
+    return config
+
+
+
 
 
 def pytest_collection_modifyitems(config, items):

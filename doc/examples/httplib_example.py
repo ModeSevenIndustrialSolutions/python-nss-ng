@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 import argparse
 import errno
@@ -50,7 +50,7 @@ def auth_certificate_callback(sock, check_sig, is_server, certdb):
         # and the strerror attribute will contain a string describing the reason.
         approved_usage = cert.verify_now(certdb, check_sig, intended_usage, *pin_args)
     except Exception as e:
-        logging.error('cert validation failed for "%s" (%s)', cert.subject, e.strerror)
+        logging.error('cert validation failed for "%s" (%s)', cert.subject, str(e))
         cert_is_valid = False
         return cert_is_valid
 
@@ -80,7 +80,7 @@ def auth_certificate_callback(sock, check_sig, is_server, certdb):
         cert_is_valid = cert.verify_hostname(hostname)
     except Exception as e:
         logging.error('failed verifying socket hostname "%s" matches cert subject "%s" (%s)',
-                      hostname, cert.subject, e.strerror)
+                      hostname, cert.subject, str(e))
         cert_is_valid = False
         return cert_is_valid
 
@@ -140,7 +140,7 @@ class NSSConnection(http.client.HTTPConnection):
             self._create_socket(net_addr.family)
             try:
                 logging.debug("try connect: %s", net_addr)
-                self.sock.connect(net_addr, timeout=io.seconds_to_interval(timeout_secs))
+                self.sock.connect(net_addr, io.seconds_to_interval(timeout_secs))  # type: ignore[call-arg]
                 logging.debug("connected to: %s", net_addr)
                 return
             except Exception as e:

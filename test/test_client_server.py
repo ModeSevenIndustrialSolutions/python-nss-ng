@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
+import contextlib
+import getpass
 import os
 import sys
-import time
 import threading
 import socket
 
@@ -31,8 +32,8 @@ hostname = os.uname()[1]
 server_nickname = 'test_server'
 client_nickname = 'test_user'
 timeout_secs = 10
-sleep_time = 0.5
 server_ready = threading.Event()
+port = 0  # Will be set by test functions
 
 
 # -----------------------------------------------------------------------------
@@ -136,7 +137,7 @@ def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
             print("client_auth_data_callback: %s" % e, file=sys.stderr)
             return False
     else:
-        nicknames = nss.get_cert_nicknames(certdb, cert.SEC_CERT_NICKNAMES_USER)
+        nicknames = nss.get_cert_nicknames(certdb, nss.SEC_CERT_NICKNAMES_USER)
         for nickname in nicknames:
             try:
                 cert = nss.find_cert_from_nickname(nickname, password)
@@ -219,10 +220,8 @@ def client(request, test_port):
             print("client: received \"%s\"" % (buf))
     except Exception as e:
         print("client: %s" % e, file=sys.stderr)
-        try:
+        with contextlib.suppress(NSPRError, OSError):
             sock.close()
-        except:
-            pass
         return
 
     try:
@@ -266,7 +265,11 @@ def server(test_port):
         nss.set_password_callback(password_callback)
 
         # Perform basic SSL server configuration
-        ssl.set_default_cipher_pref(ssl.SSL_RSA_WITH_NULL_MD5, True)
+        # Enforce minimum TLS 1.2 for security
+        ssl.set_default_ssl_version_range(
+            ssl.SSL_LIBRARY_VERSION_TLS_1_2,
+            ssl.SSL_LIBRARY_VERSION_TLS_1_3
+        )
         ssl.config_server_session_id_cache()
 
         # Get our certificate and private key
@@ -331,23 +334,17 @@ def server(test_port):
             data = reply + "\n" # send echo with record separator
             client_sock.send(data.encode('utf-8'))
 
-        try:
+        with contextlib.suppress(NSPRError, OSError):
             client_sock.shutdown()
-        except:
-            pass
         client_sock.close()
     except Exception as e:
         print("server: %s" % e, file=sys.stderr)
-        try:
+        with contextlib.suppress(NSPRError, OSError):
             client_sock.close()
-        except:
-            pass
 
     # Clean up
-    try:
+    with contextlib.suppress(NSPRError, OSError):
         sock.shutdown()
-    except:
-        pass
     sock.close()
     if use_ssl:
         ssl.shutdown_server_session_id_cache()
@@ -360,9 +357,10 @@ def run_server_thread(port):
     thread = threading.Thread(target=server, args=(port,), daemon=True)
     thread.start()
     # Wait for server to be ready (with timeout)
+    # The server_ready event is set when the server is listening,
+    # which is the deterministic signal we need
     if not server_ready.wait(timeout=5):
         raise RuntimeError("Server failed to start within timeout")
-    time.sleep(sleep_time)  # Give server a moment to fully initialize
     return thread
 
 class TestSSL:
@@ -389,5 +387,4 @@ class TestSSL:
         # Wait for server thread to complete
         server_thread.join(timeout=2)
 
-        # Give NSS time to clean up resources
-        time.sleep(0.5)
+        # NSS cleanup happens automatically in fixture teardown

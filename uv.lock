@@ -255,7 +255,7 @@ wheels = [
 ]
 
 [[package]]
-name = "python-nss"
+name = "python-nss-ng"
 source = { editable = "." }
 
 [package.optional-dependencies]

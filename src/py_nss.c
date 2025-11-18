@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * SPDX-License-Identifier: MPL-2.0
- * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
  */
 
 #if 0
@@ -9807,7 +9807,7 @@ required usages, otherwise it is for all possible usages.\n\
 Hint: You can obtain a printable representation of the usage flags\n\
 via `cert_usage_flags`.\n\
 \n\
-Note: Anytime a NSPR or NSS function returns an error in python-nss it\n\
+Note: Anytime a NSPR or NSS function returns an error in python-nss-ng it\n\
 raises a NSPRError exception. When an exception is raised the normal\n\
 return values are discarded because the flow of control continues at\n\
 the first except block prepared to catch the exception. Normally this\n\

@@ -3,9 +3,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 import argparse
+import contextlib
 import getpass
 import os
 import sys
@@ -107,8 +108,8 @@ def client():
     # Get the IP Address of our server
     try:
         addr_info = io.AddrInfo(options.hostname)
-    except:
-        print("ERROR: could not resolve hostname \"%s\"" % options.hostname)
+    except Exception as e:
+        print("ERROR: could not resolve hostname \"%s\": %s" % (options.hostname, e))
         return
 
     for net_addr in addr_info:
@@ -133,7 +134,7 @@ def client():
             print("connected to: %s" % (net_addr))
             valid_addr = True
             break
-        except:
+        except (NSPRError, OSError):
             continue
 
     if not valid_addr:

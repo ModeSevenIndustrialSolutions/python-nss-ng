@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 
 import argparse
+import contextlib
 import sys
 
 from nss.error import NSPRError
@@ -92,8 +93,8 @@ def ssl_connect():
     # Get the IP Address of our server
     try:
         addr_info = io.AddrInfo(options.hostname)
-    except:
-        print("ERROR: could not resolve hostname \"%s\"" % options.hostname)
+    except Exception as e:
+        print("ERROR: could not resolve hostname \"%s\": %s" % (options.hostname, e))
         return
 
     for net_addr in addr_info:
@@ -114,7 +115,7 @@ def ssl_connect():
             print("connected to: %s" % (net_addr))
             valid_addr = True
             break
-        except:
+        except (NSPRError, OSError):
             continue
 
     if not valid_addr:

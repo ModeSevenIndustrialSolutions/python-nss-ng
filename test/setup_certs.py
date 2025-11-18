@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 
 import argparse
@@ -12,36 +12,20 @@ import subprocess
 import sys
 from string import Template
 import tempfile
+from typing import Dict, List, Optional, Tuple
 from util import find_nss_tool
+from exceptions import CommandExecutionError, CmdError
 
 
 #-------------------------------------------------------------------------------
-logger = None
+logger: Optional[logging.Logger] = None
 
 FIPS_SWITCH_FAILED_ERR = 11
 FIPS_ALREADY_ON_ERR = 12
 FIPS_ALREADY_OFF_ERR = 13
 
 
-class CmdError(Exception):
-    def __init__(self, cmd_args, returncode, message=None, stdout=None, stderr=None):
-        self.cmd_args = cmd_args
-        self.returncode = returncode
-        if message is None:
-            self.message = 'Failed error=%s, ' % (returncode)
-            if stderr:
-                self.message += '"%s", ' % stderr
-            self.message += 'args=%s' % (cmd_args)
-        else:
-            self.message = message
-        self.stdout = stdout
-        self.stderr = stderr
-
-    def __str__(self):
-        return self.message
-
-
-def run_cmd(cmd_args, input=None):
+def run_cmd(cmd_args: List[str], input: Optional[str] = None) -> Tuple[str, str]:
     logging.debug(' '.join(cmd_args))
     try:
         p = subprocess.Popen(cmd_args,
@@ -57,7 +41,7 @@ def run_cmd(cmd_args, input=None):
                            stdout, stderr)
         return stdout, stderr
     except OSError as e:
-        raise CmdError(cmd_args, e.errno, stderr=str(e))
+        raise CmdError(cmd_args, e.errno, stderr=str(e))  # type: ignore[arg-type]
 
 def exit_handler(options):
     logging.debug('in exit handler')
@@ -118,7 +102,7 @@ def db_has_cert(options, nickname):
     try:
         run_cmd(cmd_args)
     except CmdError as e:
-        if e.returncode == 255 and 'not found' in e.stderr:
+        if e.returncode == 255 and e.stderr and 'not found' in e.stderr:
             return False
         else:
             raise
@@ -331,21 +315,28 @@ def add_trusted_certs(options):
     run_cmd(cmd_args)
     return name
 
-def parse_fips_enabled(string):
+def parse_fips_enabled(string: str) -> bool:
     if re.search('FIPS mode disabled', string):
         return False
     if re.search('FIPS mode enabled', string):
         return True
     raise ValueError('unknown fips enabled string: "%s"' % string)
 
-def get_system_fips_enabled():
+def get_system_fips_enabled() -> bool:
+    # FIPS mode detection is Linux-specific
+    if not sys.platform.startswith("linux"):
+        if logger:
+            logger.debug("FIPS mode detection only available on Linux")
+        return False
+
     fips_path = '/proc/sys/crypto/fips_enabled'
 
     try:
         with open(fips_path) as f:
             data = f.read()
     except Exception as e:
-        logger.warning("Unable to determine system FIPS mode: %s" % e)
+        if logger:
+            logger.warning("Unable to determine system FIPS mode: %s" % e)
         data = '0'
 
     value = int(data)
@@ -355,7 +346,7 @@ def get_system_fips_enabled():
         return False
 
 
-def get_db_fips_enabled(db_name):
+def get_db_fips_enabled(db_name: str) -> bool:
     cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', db_name,               # NSS database
                 '-chkfips', 'true',              # enable/disable fips
@@ -366,16 +357,17 @@ def get_db_fips_enabled(db_name):
         return parse_fips_enabled(stdout)
     except CmdError as e:
         if e.returncode == FIPS_SWITCH_FAILED_ERR:
-            return parse_fips_enabled(e.stdout)
-        else:
-            raise
+            stdout_str = e.stdout if e.stdout else ""
+            return parse_fips_enabled(stdout_str)
+        raise
 
 def set_fips_mode(options):
     if options.fips:
         state = 'true'
     else:
         if get_system_fips_enabled():
-            logger.warning("System FIPS enabled, cannot disable FIPS")
+            if logger:
+                logger.warning("System FIPS enabled, cannot disable FIPS")
             return
         state = 'false'
 
@@ -493,7 +485,7 @@ def setup_certs(args):
                         client_nickname = '${client_username}',
                         serial_number = 1,
                         key_type = 'rsa',
-                        key_size = 1024,
+                        key_size = 2048,
                         valid_months = 12,
                         ca_path_len = 2,
                         serial_file = '${db_dir}/serial',

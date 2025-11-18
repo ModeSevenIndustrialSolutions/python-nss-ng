@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # Nektos/Act secrets
@@ -180,7 +180,7 @@ test/.DS_Store
 # Cython debug symbols
 cython_debug/
 
-# python-nss specific
+# python-nss-ng specific
 test/pki*/
 doc/examples/pki/
 pki/

@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
-import sys
+import contextlib
 import os
+import sys
 import sysconfig
+from typing import Any, Optional
 
 
-def get_build_dir():
+def get_build_dir() -> Optional[str]:
     """
     Walk from the current directory up until a directory is found
     which contains a regular file called "setup.py" and a directory
@@ -56,14 +58,14 @@ def get_build_dir():
     return None
 
 
-def insert_build_dir_into_path():
+def insert_build_dir_into_path() -> None:
     """Insert the build directory at the beginning of sys.path."""
     build_dir = get_build_dir()
     if build_dir:
         sys.path.insert(0, build_dir)
 
 
-def find_nss_tool(tool_name):
+def find_nss_tool(tool_name: str) -> str:
     """
     Find an NSS tool (certutil, modutil, pk12util, etc.) in the system.
 
@@ -98,9 +100,9 @@ def find_nss_tool(tool_name):
             return tool_path
 
     # If not found in common locations, search PATH
-    tool_path = shutil.which(tool_name)
-    if tool_path:
-        return tool_path
+    tool_path_from_which = shutil.which(tool_name)
+    if tool_path_from_which:
+        return tool_path_from_which
 
     # Not found anywhere
     raise RuntimeError(
@@ -109,3 +111,34 @@ def find_nss_tool(tool_name):
         f"  Fedora/RHEL: dnf install nss-tools\n"
         f"  Debian/Ubuntu: apt-get install libnss3-tools"
     )
+
+
+@contextlib.contextmanager
+def temp_file_with_data(data: bytes) -> Any:
+    """
+    Context manager for creating a temporary file with data.
+
+    The file is automatically cleaned up when the context exits.
+
+    Args:
+        data: Binary data to write to the temporary file
+
+    Yields:
+        str: Path to the temporary file
+
+    Example:
+        >>> with temp_file_with_data(b"password123") as path:
+        ...     # Use the file at 'path'
+        ...     pass
+        >>> # File is now deleted
+    """
+    import tempfile
+
+    fd, path = tempfile.mkstemp()
+    try:
+        os.write(fd, data)
+        os.close(fd)
+        yield path
+    finally:
+        with contextlib.suppress(OSError):
+            os.remove(path)

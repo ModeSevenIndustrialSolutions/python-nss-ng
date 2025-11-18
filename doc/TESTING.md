@@ -1,15 +1,15 @@
 <!--
-SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: MPL-2.0
 SPDX-FileCopyrightText: 2025 The Linux Foundation
 -->
 
-# Testing python-nss
+# Testing python-nss-ng
 
-This document describes how to run and write tests for python-nss.
+This document describes how to run and write tests for python-nss-ng.
 
 ## Overview
 
-python-nss uses pytest as its testing framework. The `test/` directory contains
+python-nss-ng uses pytest as its testing framework. The `test/` directory contains
 all tests. You can run them using pytest or the legacy `test/run_tests` script.
 
 ## Prerequisites

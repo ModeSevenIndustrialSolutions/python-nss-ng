@@ -1,11 +1,11 @@
 <!--
-SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: MPL-2.0
 SPDX-FileCopyrightText: 2025 The Linux Foundation
 -->
 
 # Quick Start Guide
 
-Get up and running with python-nss development in 5 minutes.
+Get up and running with python-nss-ng development in 5 minutes.
 
 ## Prerequisites
 
@@ -46,8 +46,8 @@ brew install nss nspr pkg-config
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone https://github.com/tiran/python-nss.git
-cd python-nss
+git clone https://github.com/ModeSevenIndustrialSolutions/python-nss-ng.git
+cd python-nss-ng
 
 # Create virtual environment and install dependencies
 uv venv --python 3.10
@@ -63,8 +63,8 @@ uv pip install -e ".[dev]"
 
 ```bash
 # Clone the repository
-git clone https://github.com/tiran/python-nss.git
-cd python-nss
+git clone https://github.com/ModeSevenIndustrialSolutions/python-nss-ng.git
+cd python-nss-ng
 
 # Create virtual environment
 python3 -m venv .venv
@@ -156,7 +156,7 @@ Read the comprehensive guides:
 ## Project Structure
 
 ```text
-python-nss/
+python-nss-ng/
 ├── src/                  # Source code
 │   ├── *.c              # C extension files
 │   ├── *.pyi            # Type stub files
@@ -230,7 +230,7 @@ python-nss/
 ## Getting Help
 
 - **Documentation**: Check README.md and doc/ directory
-- **Issues**: <https://github.com/tiran/python-nss/issues>
+- **Issues**: <https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/issues>
 - **TODO List**: See TODO.md for current tasks
 - **Contributing**: See CONTRIBUTING.md for guidelines
 

@@ -1,5 +1,5 @@
 SPDX-License-Identifier: MPL-2.0
-SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 2016-09-01  John Dennis  <jdennis@redhat.com> 1.0.0
   * Official 1.0.0 release, only minor tweaks from 1.0.0.beta1
@@ -290,8 +290,8 @@ SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
   in a CertificateRequest and giving access to CertificateRequest attributes.
   There is a bug in NSS which hides the existence of extensions in a
   CSR if the extensions are not contained in the first CSR
-  attribute. This was fixable in python-nss without requiring a patch
-  to NSS. Formerly python-nss did not provide access to the attributes
+  attribute. This was fixable in python-nss-ng without requiring a patch
+  to NSS. Formerly python-nss-ng did not provide access to the attributes
   in a CSR only the extensions, with this release all components of a
   CSR can be accessed. See test/test_cert_request.py for examples.
 
@@ -978,8 +978,8 @@ SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
 
   * Identify static variables, move to thread local storage
 
-  * Remove python-nss specific httplib.py, no longer needed
-    python-nss now compatible with standard library
+  * Remove python-nss-ng specific httplib.py, no longer needed
+    python-nss-ng now compatible with standard library
 
   * Rewrite httplib_example.py to use standard library and illustrate
     ssl, non-ssl, connection class, http class usage

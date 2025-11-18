@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 import sys
 import os
@@ -79,7 +79,7 @@ class TestCipher(unittest.TestCase):
 
     def test_string(self):
         if verbose:
-            print("Plain Text:\n%s" % (plain_text))
+            print("Plain Text:\n%r" % (plain_text,))
 
         # Encode the plain text by feeding it to cipher_op getting cipher text back.
         # Append the final bit of cipher text by calling digest_final
@@ -131,11 +131,11 @@ class TestCipher(unittest.TestCase):
         if verbose:
             print("Decrypting file \"%s\" to \"%s\"" % (encrypted_filename, decrypted_filename))
 
-        encrypted_file = open(encrypted_filename, "rb")
+        encrypted_file_in = open(encrypted_filename, "rb")
         decrypted_file = open(decrypted_filename, "wb")
         while True:
             # Read a chunk of data until EOF, encrypt it and write the encrypted data
-            in_data = encrypted_file.read(chunk_size)
+            in_data = encrypted_file_in.read(chunk_size)
             if len(in_data) == 0:   # EOF
                 break
             decrypted_data = self.decoding_ctx.cipher_op(in_data)
@@ -143,7 +143,7 @@ class TestCipher(unittest.TestCase):
         # Done encoding the input, get the final encoded data, write it, close files
         decrypted_data = self.decoding_ctx.digest_final()
         decrypted_file.write(decrypted_data)
-        encrypted_file.close()
+        encrypted_file_in.close()
         decrypted_file.close()
 
         # Validate the encryption/decryption by comparing the decoded text with
