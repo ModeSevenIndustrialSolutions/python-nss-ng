@@ -312,8 +312,15 @@ def add_trusted_certs(options):
                 '-libfile', module,        # module
                 ]
 
-    run_cmd(cmd_args)
-    return name
+    try:
+        run_cmd(cmd_args)
+        logging.info('Successfully added trusted certs module')
+        return name
+    except CmdError as e:
+        # Module not found is not a fatal error - tests can run without it
+        logging.warning('Could not add trusted certs module: %s', e.stderr if e.stderr else e.message)
+        logging.warning('Tests will continue without system trusted certificates')
+        return None
 
 def parse_fips_enabled(string: str) -> bool:
     if re.search('FIPS mode disabled', string):

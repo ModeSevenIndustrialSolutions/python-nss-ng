@@ -1,5 +1,5 @@
 ---
-# SPDX-License-Identifier: MPL-2.0
+# SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # Runs on a new pull request, performs build and runs tests
@@ -41,17 +41,17 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a  # v2.13.1
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
       - name: 'Build Python project'
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@48381cece78a990a6ba93bd5924bcd40bf0d1a7d  # v0.1.20
+        uses: lfreleng-actions/python-build-action@03a07d633766b8b26eeb12ef8b43cea43114dd69 # v0.1.21
 
   python-tests:
     name: 'Python Tests'
@@ -67,16 +67,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a  # v2.13.1
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: audit
 
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-test-action@b997656111c9b547f8458b18baf6be139e2d2c6c  # v0.1.12
+        uses: lfreleng-actions/python-test-action@b997656111c9b547f8458b18baf6be139e2d2c6c # v0.1.12
         with:
           python_version: ${{ matrix.python-version }}
 
@@ -94,16 +94,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a  # v2.13.1
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
+        uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b # v0.2.3
         with:
           python_version: "${{ matrix.python-version }}"
 
@@ -116,7 +116,7 @@ jobs:
       contents: read
     steps:
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
 
       - name: "Generate SBOM"
         id: sbom
@@ -136,14 +136,43 @@ jobs:
             sbom-cyclonedx.xml
           retention-days: 45
 
-      - name: "Security scan with Grype"
+      - name: "Security scan with Grype (SARIF)"
         # yamllint disable-line rule:line-length
-        uses: anchore/scan-action@568b89d27fc18c60e56937bff480c91c772cd993  # v7.1.0
+        uses: anchore/scan-action@3aaf50d765cfcceafa51d322ccb790e40f6cd8c5  # v7.2.0
+        id: grype-sarif
         with:
           sbom: "${{ steps.sbom.outputs.sbom_json_path }}"
+          output-format: "sarif"
+          output-file: "grype-results.sarif"
+          fail-build: "true"
 
-      - name: "Summary step"
+      - name: "Security scan with Grype (Text/Table)"
+        # yamllint disable-line rule:line-length
+        uses: anchore/scan-action@3aaf50d765cfcceafa51d322ccb790e40f6cd8c5  # v7.2.0
+        id: grype-table
+        if: always()
+        with:
+          sbom: "${{ steps.sbom.outputs.sbom_json_path }}"
+          output-format: "table"
+          output-file: "grype-results.txt"
+          fail-build: "false"
+
+      - name: "Upload Grype scan results"
+        # yamllint disable-line rule:line-length
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        if: always()
+        with:
+          name: grype-scan-results
+          path: |
+            grype-results.sarif
+            grype-results.txt
+          retention-days: 90
+
+      - name: "Grype summary"
+        if: always()
         run: |
-            # Summary step
-            echo "SBOM count: ${{ steps.sbom.outputs.component_count }}"
-            echo "Tool used: ${{ steps.sbom.outputs.dependency_manager }}"
+            # Grype summary
+            echo "## Grype Summary" >> "$GITHUB_STEP_SUMMARY"
+            [ -f grype-results.txt ] && cat grype-results.txt \
+              >> "$GITHUB_STEP_SUMMARY" || echo "No scan results available" \
+              >> "$GITHUB_STEP_SUMMARY"

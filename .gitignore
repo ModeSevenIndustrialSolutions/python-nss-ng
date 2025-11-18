@@ -190,4 +190,7 @@ exported_*.p12
 *.p12
 setup.py.old
 setup.cfg.old
-*.p12
+
+# Test lock files
+test/.nss_init.lock
+test/.pkcs12_operations.lock

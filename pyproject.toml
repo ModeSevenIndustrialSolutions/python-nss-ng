@@ -101,12 +101,12 @@ testpaths = ["test"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# Note: Use -n0 for serial execution for 100% reliability
+# Parallel execution (-n=auto) may have intermittent failures in PKCS12 tests
 addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
-    "-n=auto",
-    "--dist=loadfile",
 ]
 markers = [
     "nss_init: mark test as requiring NSS initialization",

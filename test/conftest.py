@@ -21,6 +21,40 @@ import pytest
 logger = logging.getLogger(__name__)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_p12_files_session():
+    """
+    Clean up .p12 files at the end of the test session.
+
+    This ensures any leftover .p12 files from all tests are removed
+    when the test session completes. Individual tests should clean up
+    their own files, but this provides a safety net.
+    """
+    yield
+
+    # Cleanup after all tests in this session
+    import glob
+
+    # Clean up from test directory
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    for p12_file in glob.glob(os.path.join(test_dir, '*.p12')):
+        try:
+            os.remove(p12_file)
+            logger.debug(f"Removed {p12_file}")
+        except Exception as e:
+            logger.debug(f"Could not remove {p12_file}: {e}")
+
+    # Also clean up from current working directory (repo root)
+    cwd = os.getcwd()
+    if cwd != test_dir:
+        for p12_file in glob.glob(os.path.join(cwd, '*.p12')):
+            try:
+                os.remove(p12_file)
+                logger.debug(f"Removed {p12_file}")
+            except Exception as e:
+                logger.debug(f"Could not remove {p12_file}: {e}")
+
+
 def _rmtree_onerror(func, path, exc_info):
     """
     Error handler for shutil.rmtree.
@@ -115,7 +149,25 @@ def setup_test_environment():
     yield
 
     # Cleanup after all tests in this process
-    pass
+    import glob
+
+    # Remove any .p12 files left in test directory
+    for p12_file in glob.glob(os.path.join(test_dir, '*.p12')):
+        try:
+            os.remove(p12_file)
+            logger.debug(f"Cleaned up {p12_file}")
+        except Exception as e:
+            logger.warning(f"Failed to remove {p12_file}: {e}")
+
+    # Also clean up from repo root if different from test directory
+    cwd = os.getcwd()
+    if cwd != test_dir:
+        for p12_file in glob.glob(os.path.join(cwd, '*.p12')):
+            try:
+                os.remove(p12_file)
+                logger.debug(f"Cleaned up {p12_file} from repo root")
+            except Exception as e:
+                logger.warning(f"Failed to remove {p12_file}: {e}")
 
 
 @pytest.fixture(scope="session")
@@ -132,6 +184,8 @@ def test_certs(setup_test_environment):
     """
     import setup_certs
     import shutil
+    import time
+    import hashlib
 
     # Create a session-scoped temporary directory for PKI
     test_dir = os.path.dirname(os.path.abspath(__file__))
@@ -148,17 +202,45 @@ def test_certs(setup_test_environment):
     if os.path.exists(pki_dir):
         shutil.rmtree(pki_dir, onerror=_rmtree_onerror)
 
-    # Set up certificates with default options
-    # This creates the directory that tests expect
-    setup_certs.setup_certs(['--db-dir', pki_dir])
+    # Set up certificates - run setup_certs directly
+    result = setup_certs.setup_certs(['--db-dir', pki_dir, '--no-trusted-certs'])
+
+    if result != 0:
+        raise RuntimeError(f"setup_certs failed with return code {result} for {pki_dir}")
+
+    # Verify database was created successfully
+    cert9_db = os.path.join(pki_dir, 'cert9.db')
+    key4_db = os.path.join(pki_dir, 'key4.db')
+
+    if not (os.path.exists(cert9_db) and os.path.exists(key4_db)):
+        raise RuntimeError(f"Database files not created in {pki_dir}")
+
+    # Verify we can actually list certificates from the database
+    try:
+        import subprocess
+        certutil_result = subprocess.run(
+            ['certutil', '-d', f'sql:{pki_dir}', '-L'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if certutil_result.returncode != 0:
+            raise RuntimeError(f"Database verification failed: {certutil_result.stderr}")
+
+        # Check that test_user certificate exists
+        if 'test_user' not in certutil_result.stdout:
+            raise RuntimeError(f"test_user certificate not found in {pki_dir}")
+
+        logger.debug(f"Successfully created and verified test certificates in {pki_dir}")
+    except Exception as e:
+        logger.error(f"Failed to verify database {pki_dir}: {e}")
+        raise
 
     yield pki_dir
 
     # Cleanup after all tests with retry logic
     if os.path.exists(pki_dir):
-        # Cleanup - remove test PKI directory
-        if os.path.exists(pki_dir):
-            shutil.rmtree(pki_dir, onerror=_rmtree_onerror)
+        shutil.rmtree(pki_dir, onerror=_rmtree_onerror)
 
 
 @pytest.fixture(scope="session")
@@ -184,7 +266,24 @@ def nss_initialized(nss_db_dir):
     import nss.nss as nss
 
     # Initialize NSS with the test database once for this worker
-    nss.nss_init_read_write(nss_db_dir)
+    try:
+        nss.nss_init_read_write(nss_db_dir)
+        logger.debug(f"Successfully initialized NSS with {nss_db_dir}")
+    except Exception as e:
+        logger.error(f"Failed to initialize NSS with {nss_db_dir}: {e}")
+        # Try to provide diagnostic information
+        import subprocess
+        try:
+            certutil_result = subprocess.run(
+                ['certutil', '-d', nss_db_dir, '-L'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            logger.error(f"Database state: {certutil_result.stdout if certutil_result.returncode == 0 else certutil_result.stderr}")
+        except Exception:
+            pass
+        raise
 
     yield
 
