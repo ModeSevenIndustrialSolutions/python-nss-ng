@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 import sys
 import os
@@ -7,6 +7,7 @@ import re
 import subprocess
 import shlex
 import shutil
+import unittest
 from io import BytesIO
 import pytest
 
@@ -178,7 +179,7 @@ class TestPKCS12Decoder:
                 elif key_seen is False:
                     assert bag.has_key is True
                 else:
-                    pytest.fail("unexpected has_key for bag type = %s(%d)" % (bag.has_key, nss.oid_tag_name(bag.type), bag.type))
+                    pytest.fail("unexpected has_key for bag type = %s(%d)" % (nss.oid_tag_name(bag.type), bag.type))
 
             elif bag.type == nss.SEC_OID_PKCS12_V1_PKCS8_SHROUDED_KEY_BAG_ID:
                 assert isinstance(bag.shroud_algorithm_id, nss.AlgorithmID)

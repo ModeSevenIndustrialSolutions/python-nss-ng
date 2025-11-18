@@ -2,7 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
+import sys
+
+# Platform support check - only Linux and macOS are supported
+if sys.platform.startswith("win"):
+    raise RuntimeError(
+        "Unsupported platform: Windows. python-nss-ng only supports Linux and macOS platforms."
+    )
+
 """
 ============
 Introduction
@@ -25,7 +34,7 @@ http://developer.mozilla.org/en/docs/NSPR_API_Reference
 Please note, the documentation included with this package already
 encapsulates most of the information at the above two URL's, but is
 specific to the python binding of NSS/NSPR. It is suggested you refer
-to the python-nss documentation.
+to the python-nss-ng documentation.
 
 Most of the names and symbols in the NSS/NSPR C API have been kept in
 the nss-python binding and should be instantly familiar or
@@ -172,7 +181,7 @@ Examples
 
 There are example programs in under "examples" in the documentation
 directory. On Fedora/RHEL/CentOS systems this will be
-/usr/share/doc/python-nss.
+/usr/share/doc/python-nss-ng.
 
 The ssl_example.py sample implements both a client and server in one
 script. You tell it whether to run as a client (-C) or a server (-S)
@@ -312,7 +321,7 @@ except ImportError:
         from importlib.metadata import PackageNotFoundError, version
 
         try:
-            __version__ = version("python-nss")
+            __version__ = version("python-nss-ng")
         except PackageNotFoundError:
             __version__ = "0.0.0+unknown"
     except ImportError:

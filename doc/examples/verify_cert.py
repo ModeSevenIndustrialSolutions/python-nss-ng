@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 
 import argparse
 import sys
+from typing import Any
 
 import nss.nss as nss
 import nss.error as nss_error
+
+# Global options - set by main()
+options: Any = None
 
 '''
 This example illustrates how one can use NSS to verify (validate) a
@@ -222,7 +226,7 @@ def main():
 
     # Use the log or non-log variant to verify the cert
     #
-    # Note: Anytime a NSPR or NSS function returns an error in python-nss it
+    # Note: Anytime a NSPR or NSS function returns an error in python-nss-ng it
     # raises a NSPRError exception. When an exception is raised the normal
     # return values are discarded because the flow of control continues at
     # the first except block prepared to catch the exception. Normally this

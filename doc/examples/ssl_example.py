@@ -3,12 +3,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 import warnings
 warnings.simplefilter( "always", DeprecationWarning)
 
 import argparse
+import contextlib
 import getpass
 import os
 import sys
@@ -123,7 +124,7 @@ def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
             print(e)
             return False
     else:
-        nicknames = nss.get_cert_nicknames(certdb, cert.SEC_CERT_NICKNAMES_USER)
+        nicknames = nss.get_cert_nicknames(certdb, nss.SEC_CERT_NICKNAMES_USER)
         for nickname in nicknames:
             try:
                 cert = nss.find_cert_from_nickname(nickname, password)
@@ -204,19 +205,15 @@ def Client():
         buf = buf.rstrip()        # remove newline record separator
         print("client received: %s" % (buf))
     except Exception as e:
-        print(e.strerror)
-        try:
+        print(str(e))
+        with contextlib.suppress(NSPRError, OSError):
             sock.close()
-        except:
-            pass
         return
 
     # End of (simple) protocol session?
     if buf == 'Goodbye':
-        try:
+        with contextlib.suppress(NSPRError, OSError):
             sock.shutdown()
-        except:
-            pass
 
     try:
         sock.close()
@@ -237,7 +234,14 @@ def Server():
 
     if options.use_ssl:
         # Perform basic SSL server configuration
-        ssl.set_default_cipher_pref(ssl.SSL_RSA_WITH_NULL_MD5, True)
+        # Enforce minimum TLS 1.2 for security (unless explicitly allowing insecure mode)
+        if not options.allow_insecure:
+            ssl.set_default_ssl_version_range(
+                ssl.SSL_LIBRARY_VERSION_TLS_1_2,
+                ssl.SSL_LIBRARY_VERSION_TLS_1_3
+            )
+        else:
+            print("WARNING: Running in insecure mode for testing purposes only!")
         ssl.config_server_session_id_cache()
 
         # Get our certificate and private key
@@ -294,14 +298,12 @@ def Server():
 
                 data ='Goodbye' + '\n' # newline is protocol record separator
                 client_sock.send(data.encode('utf-8'))
-                try:
+                with contextlib.suppress(NSPRError, OSError):
                     client_sock.shutdown(io.PR_SHUTDOWN_RCV)
                     client_sock.close()
-                except:
-                    pass
                 break
             except Exception as e:
-                print(e.strerror)
+                print(str(e))
                 break
         break
 
@@ -400,6 +402,9 @@ parser.add_argument('--min-ssl-version',
 parser.add_argument('--max-ssl-version',
                     help='minimum SSL version')
 
+parser.add_argument('--allow-insecure', action='store_true',
+                    help='allow insecure/legacy configurations (for testing only)')
+
 parser.set_defaults(client = False,
                     server = False,
                     db_name = 'sql:pki',
@@ -411,6 +416,7 @@ parser.set_defaults(client = False,
                     port = 1234,
                     use_ssl = True,
                     client_cert_action = NO_CLIENT_CERT,
+                    allow_insecure = False,
                    )
 
 options = parser.parse_args()

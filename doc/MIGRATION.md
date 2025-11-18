@@ -1,16 +1,16 @@
 <!--
-SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: MPL-2.0
 SPDX-FileCopyrightText: 2025 The Linux Foundation
 -->
 
 # Migration Guide: Legacy to Modern Python Project Structure
 
-This document describes the modernization changes made to the python-nss
+This document describes the modernization changes made to the python-nss-ng
 project to bring it up to current Python packaging standards (2025).
 
 ## Overview
 
-The python-nss project was originally built using Python 2.x and the legacy
+The python-nss-ng project was originally built using Python 2.x and the legacy
 `distutils` build system. This migration updates the project to:
 
 - Support Python 3.10+ (3.10, 3.11, 3.12, 3.13, 3.14)
@@ -29,7 +29,7 @@ The python-nss project was originally built using Python 2.x and the legacy
 from distutils.core import setup, Extension
 
 setup(
-    name='python-nss',
+    name='python-nss-ng',
     version='1.0.0',  # Hardcoded version
     # ... all configuration here
 )
@@ -51,7 +51,7 @@ requires = ["setuptools>=68.0", "setuptools-scm>=8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "python-nss"
+name = "python-nss-ng"
 dynamic = ["version"]
 requires-python = ">=3.10"
 # ... modern metadata
@@ -91,7 +91,7 @@ try:
 except ImportError:
     from importlib.metadata import version, PackageNotFoundError
     try:
-        __version__ = version("python-nss")
+        __version__ = version("python-nss-ng")
     except PackageNotFoundError:
         __version__ = "0.0.0+unknown"
 ```
@@ -101,7 +101,7 @@ except ImportError:
 #### Legacy Structure
 
 ```text
-python-nss/
+python-nss-ng/
 ├── setup.py          # All configuration
 ├── setup.cfg         # Minimal config
 ├── MANIFEST          # Generated manifest
@@ -112,7 +112,7 @@ python-nss/
 #### Modern Structure
 
 ```text
-python-nss/
+python-nss-ng/
 ├── pyproject.toml    # Main configuration (PEP 621)
 ├── setup.py          # C extension config
 ├── MANIFEST.in       # Source manifest template
@@ -299,7 +299,7 @@ python -m build
 
 ### Non-Breaking Changes
 
-- Package name remains `python-nss`
+- Package name is now `python-nss-ng`
 - Import path remains `import nss`
 - Public API unchanged
 - License unchanged
@@ -336,7 +336,7 @@ Until the C code receives updates:
 ### Verify Package Metadata
 
 ```bash
-python -c "from importlib.metadata import version; print(version('python-nss'))"
+python -c "from importlib.metadata import version; print(version('python-nss-ng'))"
 ```
 
 ### Check Build System

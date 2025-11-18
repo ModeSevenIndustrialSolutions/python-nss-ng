@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 
 import argparse
 import sys
+from typing import Any
 
 import nss.nss as nss
 import nss.error as nss_error
@@ -11,7 +12,7 @@ print(sys.path)
 
 #-------------------------------------------------------------------------------
 
-options = None
+options: Any = None
 
 #-------------------------------------------------------------------------------
 

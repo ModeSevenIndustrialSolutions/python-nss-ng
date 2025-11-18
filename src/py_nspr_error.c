@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * SPDX-License-Identifier: MPL-2.0
- * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+ * SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
  */
 
 #define PY_SSIZE_T_CLEAN
@@ -477,12 +477,12 @@ PyDoc_STRVAR(NSPRError_doc,
         NSS or NSPR error value, if None get current error\n\
 \n\
 Exception object (derived from StandardException), raised when an\n\
-NSS or NSPR error occurs. The error model in python-nss is anytime\n\
-a NSS or NSPR C function returns an error the python-nss binding\n\n\
+NSS or NSPR error occurs. The error model in python-nss-ng is anytime\n\
+a NSS or NSPR C function returns an error the python-nss-ng binding\n\n\
 raises a NSPRError exception.\n\
 \n\
 Raised internally, there should be no need to raise this exception\n\
-from with a Python program using python-nss.\n\
+from with a Python program using python-nss-ng.\n\
 \n\
 The error_message is an optional string detailing the specifics\n\
 of an error.\n\
@@ -675,7 +675,7 @@ Exception object (derived from NSPRError), raised when an\n\
 error occurs during certificate verification.\n\
 \n\
 Raised internally, there should be no need to raise this exception\n\
-from with a Python program using python-nss.\n\
+from with a Python program using python-nss-ng.\n\
 \n\
 Certificate verification presents a problem for the normal error\n\
 handling model whereby any error returned from an underlying C\n\

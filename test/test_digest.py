@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss contributors
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 import subprocess
 import sys
@@ -31,7 +31,7 @@ class TestDigest:
             ref_data = f.read()
 
         # Run the system hash function to get a reference result.
-        # Since we're testing the python-nss binding we assume
+        # Since we're testing the python-nss-ng binding we assume
         # the system command is entirely independent and correct.
         #
         # Because our digest routines return binary data (e.g. a buffer

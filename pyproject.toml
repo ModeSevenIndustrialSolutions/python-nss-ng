@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 [build-system]
@@ -10,17 +10,18 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "python-nss"
+name = "python-nss-ng"
 dynamic = ["version"]
 description = "Python bindings for Network Security Services (NSS) and Netscape Portable Runtime (NSPR)"
-readme = "README"
+readme = "README.md"
 license = {text = "MPLv2.0 or GPLv2+ or LGPLv2+"}
 requires-python = ">=3.10"
 authors = [
     {name = "John Dennis", email = "jdennis@redhat.com"},
+    {name = "Matthew Watkins", email = "mwatkins@linuxfoundation.org"},
 ]
 maintainers = [
-    {name = "John Dennis", email = "jdennis@redhat.com"},
+    {name = "Matthew Watkins", email = "mwatkins@linuxfoundation.org"},
 ]
 keywords = [
     "nss",
@@ -39,6 +40,8 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
     "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
     "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
     "Programming Language :: C",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -67,10 +70,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "http://www.mozilla.org/projects/security/pki/python-nss"
-Documentation = "http://www.mozilla.org/projects/security/pki/python-nss"
-Repository = "https://github.com/tiran/python-nss"
-Issues = "https://github.com/tiran/python-nss/issues"
+Homepage = "http://www.mozilla.org/projects/security/pki/python-nss-ng"
+Documentation = "http://www.mozilla.org/projects/security/pki/python-nss-ng"
+Repository = "https://github.com/ModeSevenIndustrialSolutions/python-nss-ng"
+Issues = "https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/issues"
 
 [tool.setuptools]
 zip-safe = false
@@ -109,7 +112,10 @@ markers = [
     "nss_init: mark test as requiring NSS initialization",
     "requires_db: mark test as requiring NSS database",
     "slow: mark test as slow running",
+    "allow_insecure: mark test as allowing insecure/legacy configurations",
 ]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 source = ["nss"]
@@ -145,25 +151,47 @@ exclude = [
 
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "S",   # flake8-bandit (security)
+    "T20", # flake8-print
+    "PT",  # flake8-pytest-style
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "RUF", # Ruff-specific rules
 ]
 ignore = [
     "E501",  # line too long, handled by formatter
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
+    "S101",  # assert detected (allow in tests)
+    "T201",  # print found (intentional in examples)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"test_*.py" = ["E402"]
+"test_*.py" = ["E402", "S101", "S105", "S106"]  # Allow asserts and hardcoded passwords in tests
+"doc/examples/*.py" = ["T201", "S105", "S106"]  # Allow prints and test passwords in examples
+"test/setup_certs.py" = ["S603", "S607"]  # Allow subprocess calls in cert setup
 
 [tool.ruff.lint.isort]
 known-first-party = ["nss"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+check_untyped_defs = true
 
 [tool.cibuildwheel]
 skip = ["pp*", "*-musllinux*"]
