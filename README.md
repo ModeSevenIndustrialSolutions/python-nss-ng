@@ -140,9 +140,16 @@ pip install -e .
 # Install with test dependencies
 uv pip install -e ".[test]"
 
-# Run tests (when C extensions compile)
+# Run tests (recommended for reliability)
+pytest test/ -n0
+
+# Or run with parallel execution (may have occasional intermittent failures)
 pytest test/
 ```
+
+**Note:** Some tests have known intermittent failures with parallel execution.
+For fully reliable results, use `-n0` to disable parallel execution. See
+[TESTING.md](TESTING.md) for details.
 
 ### Building
 
