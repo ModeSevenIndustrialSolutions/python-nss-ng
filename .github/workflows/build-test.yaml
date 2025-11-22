@@ -48,6 +48,14 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
+      - name: Install NSS/NSPR system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libnspr4-dev \
+            pkg-config
+
       - name: 'Build Python project'
         id: python-build
         # yamllint disable-line rule:line-length
@@ -73,6 +81,14 @@ jobs:
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Install NSS/NSPR system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libnspr4-dev \
+            pkg-config
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -100,6 +116,14 @@ jobs:
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Install NSS/NSPR system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libnspr4-dev \
+            pkg-config
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length

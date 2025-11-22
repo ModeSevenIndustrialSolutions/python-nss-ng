@@ -479,7 +479,7 @@ def setup_certs(args):
                         show_certs = False,
                         clean = True,
                         add_trusted_certs = True,
-                        hostname = os.uname()[1],
+                        hostname = 'localhost',
                         db_type = 'sql',
                         db_dir = 'pki',
                         db_passwd = 'DB_passwd',

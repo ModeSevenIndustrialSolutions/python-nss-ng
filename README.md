@@ -134,6 +134,30 @@ pip install -e .
 
 ## Development
 
+### Test Dependencies
+
+In addition to Python test packages, the test suite requires NSS command-line tools for certificate generation:
+
+#### Fedora/RHEL/CentOS
+
+```bash
+sudo dnf install nss-tools
+```
+
+#### Debian/Ubuntu
+
+```bash
+sudo apt-get install libnss3-tools
+```
+
+#### macOS (Homebrew)
+
+NSS tools are included with the `nss` package:
+
+```bash
+brew install nss
+```
+
 ### Running Tests
 
 ```bash
@@ -147,7 +171,7 @@ pytest test/ -n0
 pytest test/
 ```
 
-**Note:** Some tests have known intermittent failures with parallel execution.
+**Note:** Some tests have known intermittent failures with parallel execution. Tests automatically generate certificates in a `pki/` directory within the test folder using `certutil` from nss-tools.
 For fully reliable results, use `-n0` to disable parallel execution. See
 [TESTING.md](TESTING.md) for details.
 
@@ -199,7 +223,7 @@ python-nss-ng/
 ├── test/                  # Test suite
 ├── doc/                   # Documentation
 ├── pyproject.toml        # Modern Python project configuration
-├── setup.py              # Build configuration for C extensions
+├── meson.build           # Meson build configuration
 └── MANIFEST.in           # Source distribution file inclusion rules
 ```
 

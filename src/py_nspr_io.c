@@ -415,8 +415,8 @@ NetworkAddress_set_from_string(NetworkAddress *self, PyObject *args, PyObject *k
 
 static PyMethodDef
 NetworkAddress_methods[] = {
-    {"set_from_string", (PyCFunction)NetworkAddress_set_from_string, METH_VARARGS|METH_KEYWORDS, NetworkAddress_set_from_string_doc},
-    {NULL, NULL}  /* Sentinel */
+    {"set_from_string", (PyCFunction)(void(*)(void))NetworkAddress_set_from_string, METH_VARARGS|METH_KEYWORDS, NetworkAddress_set_from_string_doc},
+    {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 /* =========================== Class Construction =========================== */
@@ -1168,9 +1168,9 @@ HostEntry_get_network_address(HostEntry *self, PyObject *args, PyObject *kwds)
 
 static PyMethodDef
 HostEntry_methods[] = {
-    {"get_network_addresses", (PyCFunction)HostEntry_get_network_addresses, METH_VARARGS|METH_KEYWORDS, HostEntry_get_network_addresses_doc},
-    {"get_network_address",   (PyCFunction)HostEntry_get_network_address,   METH_VARARGS|METH_KEYWORDS, HostEntry_get_network_address_doc},
-    {NULL, NULL}  /* Sentinel */
+    {"get_network_addresses", (PyCFunction)(void(*)(void))HostEntry_get_network_addresses, METH_VARARGS|METH_KEYWORDS, HostEntry_get_network_addresses_doc},
+    {"get_network_address",   (PyCFunction)(void(*)(void))HostEntry_get_network_address,   METH_VARARGS|METH_KEYWORDS, HostEntry_get_network_address_doc},
+    {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 /* =========================== Class Construction =========================== */
@@ -3247,31 +3247,31 @@ static PyMethodDef
 Socket_methods[] = {
     {"set_socket_option", (PyCFunction)Socket_set_socket_option, METH_VARARGS,               Socket_set_socket_option_doc},
     {"get_socket_option", (PyCFunction)Socket_get_socket_option, METH_VARARGS,               Socket_get_socket_option_doc},
-    {"connect",           (PyCFunction)Socket_connect,           METH_VARARGS|METH_KEYWORDS, Socket_connect_doc},
-    {"accept",            (PyCFunction)Socket_accept,            METH_VARARGS|METH_KEYWORDS, Socket_accept_doc},
-    {"accept_read",       (PyCFunction)Socket_accept_read,       METH_VARARGS|METH_KEYWORDS, Socket_accept_read_doc},
+    {"connect",           (PyCFunction)(void(*)(void))Socket_connect,           METH_VARARGS|METH_KEYWORDS, Socket_connect_doc},
+    {"accept",            (PyCFunction)(void(*)(void))Socket_accept,            METH_VARARGS|METH_KEYWORDS, Socket_accept_doc},
+    {"accept_read",       (PyCFunction)(void(*)(void))Socket_accept_read,       METH_VARARGS|METH_KEYWORDS, Socket_accept_read_doc},
     {"bind",              (PyCFunction)Socket_bind,              METH_VARARGS,               Socket_bind_doc},
-    {"listen",            (PyCFunction)Socket_listen,            METH_VARARGS|METH_KEYWORDS, Socket_listen_doc},
-    {"shutdown",          (PyCFunction)Socket_shutdown,          METH_VARARGS|METH_KEYWORDS, Socket_shutdown_doc},
-    {"close"   ,          (PyCFunction)Socket_close,             METH_NOARGS,                Socket_close_doc},
-    {"recv",              (PyCFunction)Socket_recv,              METH_VARARGS|METH_KEYWORDS, Socket_recv_doc},
-    {"read",              (PyCFunction)Socket_read,              METH_VARARGS|METH_KEYWORDS, Socket_read_doc},
-    {"readline",          (PyCFunction)Socket_readline,          METH_VARARGS|METH_KEYWORDS, Socket_readline_doc},
-    {"readlines",         (PyCFunction)Socket_readlines,         METH_VARARGS|METH_KEYWORDS, Socket_readlines_doc},
-    {"recv_from",         (PyCFunction)Socket_recv_from,         METH_VARARGS|METH_KEYWORDS, Socket_recv_from_doc},
-    {"send",              (PyCFunction)Socket_send,              METH_VARARGS|METH_KEYWORDS, Socket_send_doc},
-    {"sendall",           (PyCFunction)Socket_sendall,           METH_VARARGS|METH_KEYWORDS, Socket_sendall_doc},
-    {"send_to",           (PyCFunction)Socket_send_to,           METH_VARARGS|METH_KEYWORDS, Socket_send_to_doc},
-    {"get_sock_name",     (PyCFunction)Socket_get_sock_name,     METH_NOARGS,                Socket_get_sock_name_doc},
-    {"get_peer_name",     (PyCFunction)Socket_get_peer_name,     METH_NOARGS,                Socket_get_peer_name_doc},
-    {"fileno",            (PyCFunction)Socket_fileno,            METH_NOARGS,                Socket_fileno_doc},
+    {"listen",            (PyCFunction)(void(*)(void))Socket_listen,            METH_VARARGS|METH_KEYWORDS, Socket_listen_doc},
+    {"shutdown",          (PyCFunction)(void(*)(void))Socket_shutdown,          METH_VARARGS|METH_KEYWORDS, Socket_shutdown_doc},
+    {"close"   ,          (PyCFunction)(void(*)(void))Socket_close,             METH_NOARGS,                Socket_close_doc},
+    {"recv",              (PyCFunction)(void(*)(void))Socket_recv,              METH_VARARGS|METH_KEYWORDS, Socket_recv_doc},
+    {"read",              (PyCFunction)(void(*)(void))Socket_read,              METH_VARARGS|METH_KEYWORDS, Socket_read_doc},
+    {"readline",          (PyCFunction)(void(*)(void))Socket_readline,          METH_VARARGS|METH_KEYWORDS, Socket_readline_doc},
+    {"readlines",         (PyCFunction)(void(*)(void))Socket_readlines,         METH_VARARGS|METH_KEYWORDS, Socket_readlines_doc},
+    {"recv_from",         (PyCFunction)(void(*)(void))Socket_recv_from,         METH_VARARGS|METH_KEYWORDS, Socket_recv_from_doc},
+    {"send",              (PyCFunction)(void(*)(void))Socket_send,              METH_VARARGS|METH_KEYWORDS, Socket_send_doc},
+    {"sendall",           (PyCFunction)(void(*)(void))Socket_sendall,           METH_VARARGS|METH_KEYWORDS, Socket_sendall_doc},
+    {"send_to",           (PyCFunction)(void(*)(void))Socket_send_to,           METH_VARARGS|METH_KEYWORDS, Socket_send_to_doc},
+    {"get_sock_name",     (PyCFunction)(void(*)(void))Socket_get_sock_name,     METH_NOARGS,                Socket_get_sock_name_doc},
+    {"get_peer_name",     (PyCFunction)(void(*)(void))Socket_get_peer_name,     METH_NOARGS,                Socket_get_peer_name_doc},
+    {"fileno",            (PyCFunction)(void(*)(void))Socket_fileno,            METH_NOARGS,                Socket_fileno_doc},
 #ifndef NO_DUP
     {"makefile",          (PyCFunction)Socket_makefile,          METH_VARARGS,               Socket_makefile_doc},
 #endif
-    {"new_tcp_pair",      (PyCFunction)Socket_new_tcp_pair,      METH_NOARGS|METH_STATIC,    Socket_new_tcp_pair_doc},
+    {"new_tcp_pair",      (PyCFunction)(void(*)(void))Socket_new_tcp_pair,      METH_NOARGS|METH_STATIC,    Socket_new_tcp_pair_doc},
     {"poll"        ,      (PyCFunction)Socket_poll,              METH_VARARGS|METH_STATIC,   Socket_poll_doc},
     {"import_tcp_socket", (PyCFunction)Socket_import_tcp_socket, METH_VARARGS|METH_STATIC,   Socket_import_tcp_socket_doc},
-    {NULL, NULL}  /* Sentinel */
+    {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 /* =========================== Class Construction =========================== */

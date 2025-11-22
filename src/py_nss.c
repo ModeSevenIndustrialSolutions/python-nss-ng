@@ -15978,7 +15978,7 @@ CRLDistributionPts_init_from_SECItem(CRLDistributionPts *self, SECItem *item)
     }
 
     if ((dist_pts = CERT_DecodeCRLDistributionPoints(arena, item)) == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Failed to parse CRL Distribution Point Extension");
+        set_nspr_error("Failed to parse CRL Distribution Point Extension");
         PORT_FreeArena(arena, PR_FALSE);
         return -1;
     }
@@ -24496,7 +24496,13 @@ pkcs12_export(PyObject *self, PyObject *args, PyObject *kwds)
     PORT_SetUCS2_ASCIIConversionFunction(secport_ucs2_to_utf8);
 
     key_cipher = SEC_OID_PKCS12_V2_PBE_WITH_SHA1_AND_3KEY_TRIPLE_DES_CBC;
-    cert_cipher = PK11_IsFIPS() ? SEC_OID_UNKNOWN : SEC_OID_PKCS12_V2_PBE_WITH_SHA1_AND_40_BIT_RC2_CBC;
+    /* Use SEC_OID_UNKNOWN (unencrypted cert safe) to work around strict NSS crypto
+     * policies in modern distributions (Fedora 42+) that disable PKCS#12 encryption
+     * algorithms. The private key is still encrypted with 3DES, which is what matters
+     * for security. The certificate is public data anyway.
+     * Users can still override by passing cert_cipher parameter if their NSS allows it.
+     */
+    cert_cipher = SEC_OID_UNKNOWN;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "eses#|IIO&:pkcs12_export", kwlist,
                                      "utf-8", &utf8_nickname,
@@ -24569,7 +24575,7 @@ pkcs12_export(PyObject *self, PyObject *args, PyObject *kwds)
         }
 
         if (!cert_safe || !key_safe) {
-            PyErr_SetString(PyExc_ValueError, "key or cert safe creation failed");
+            set_nspr_error("key or cert safe creation failed");
             goto exit;
         }
 

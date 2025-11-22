@@ -186,11 +186,7 @@ set_nspr_error(const char *format, ...)
     PyObject *exception_obj = NULL;
 
     if (format) {
-#ifdef HAVE_STDARG_PROTOTYPES
         va_start(vargs, format);
-#else
-        va_start(vargs);
-#endif
         error_message = PyUnicode_FromFormatV(format, vargs);
         va_end(vargs);
     }
@@ -222,11 +218,7 @@ set_cert_verify_error(unsigned long usages, PyObject *log, const char *format, .
     PyObject *exception_obj = NULL;
 
     if (format) {
-#ifdef HAVE_STDARG_PROTOTYPES
         va_start(vargs, format);
-#else
-        va_start(vargs);
-#endif
         error_message = PyUnicode_FromFormatV(format, vargs);
         va_end(vargs);
     }
@@ -272,6 +264,8 @@ io_get_nspr_error_string(PyObject *self, PyObject *args)
     int err_num;
     NSPRErrorDesc const *error_desc = NULL;
 
+    (void)self;  /* Unused parameter */
+
     if (!PyArg_ParseTuple(args, "i:get_nspr_error_string", &err_num)) {
         return NULL;
     }
@@ -286,7 +280,7 @@ io_get_nspr_error_string(PyObject *self, PyObject *args)
 static PyMethodDef
 module_methods[] = {
     {"get_nspr_error_string", io_get_nspr_error_string, METH_VARARGS, io_get_nspr_error_string_doc},
-    {NULL, NULL}            /* Sentinel */
+    {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 static PyObject *
@@ -414,7 +408,7 @@ static PyMemberDef NSPRError_members[] = {
 
     {"error_message", T_OBJECT, offsetof(NSPRError, error_message), READONLY,
      PyDoc_STR("error message specific to this error")},
-    {NULL}  /* Sentinel */
+    {NULL, 0, 0, 0, NULL}  /* Sentinel */
 };
 
 /* ============================== Class Methods ============================= */
@@ -550,43 +544,16 @@ NSPRError_init(NSPRError *self, PyObject *args, PyObject *kwds)
 
 static PyTypeObject NSPRErrorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "nss.error.NSPRError",			/* tp_name */
-    sizeof(NSPRError),				/* tp_basicsize */
-    0,						/* tp_itemsize */
-    (destructor)NSPRError_dealloc,		/* tp_dealloc */
-    0,						/* tp_print */
-    0,						/* tp_getattr */
-    0,						/* tp_setattr */
-    0,						/* tp_compare */
-    0,						/* tp_repr */
-    0,						/* tp_as_number */
-    0,						/* tp_as_sequence */
-    0,						/* tp_as_mapping */
-    0,						/* tp_hash */
-    0,						/* tp_call */
-    (reprfunc)NSPRError_str,			/* tp_str */
-    0,						/* tp_getattro */
-    0,						/* tp_setattro */
-    0,						/* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /* tp_flags */
-    NSPRError_doc,				/* tp_doc */
-    (traverseproc)NSPRError_traverse,		/* tp_traverse */
-    (inquiry)NSPRError_clear,			/* tp_clear */
-    0,						/* tp_richcompare */
-    0,						/* tp_weaklistoffset */
-    0,						/* tp_iter */
-    0,						/* tp_iternext */
-    0,						/* tp_methods */
-    NSPRError_members,				/* tp_members */
-    0,						/* tp_getset */
-    0,						/* tp_base */
-    0,						/* tp_dict */
-    0,						/* tp_descr_get */
-    0,						/* tp_descr_set */
-    0,						/* tp_dictoffset */
-    (initproc)NSPRError_init,			/* tp_init */
-    0,						/* tp_alloc */
-    0,						/* tp_new */
+    .tp_name = "nss.error.NSPRError",
+    .tp_basicsize = sizeof(NSPRError),
+    .tp_dealloc = (destructor)NSPRError_dealloc,
+    .tp_str = (reprfunc)NSPRError_str,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_doc = NSPRError_doc,
+    .tp_traverse = (traverseproc)NSPRError_traverse,
+    .tp_clear = (inquiry)NSPRError_clear,
+    .tp_members = NSPRError_members,
+    .tp_init = (initproc)NSPRError_init,
 };
 
 /* ========================================================================== */
@@ -601,7 +568,7 @@ static PyMemberDef CertVerifyError_members[] = {
      PyDoc_STR("usages returned by NSS")},
     {"log", T_OBJECT, offsetof(CertVerifyError, log), READONLY,
      PyDoc_STR("verification log, see `CertVerifyLog`")},
-    {NULL}  /* Sentinel */
+    {NULL, 0, 0, 0, NULL}  /* Sentinel */
 };
 
 /* ============================== Class Methods ============================= */
@@ -764,43 +731,17 @@ CertVerifyError_init(CertVerifyError *self, PyObject *args, PyObject *kwds)
 
 static PyTypeObject CertVerifyErrorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "nss.error.CertVerifyError",		/* tp_name */
-    sizeof(CertVerifyError),			/* tp_basicsize */
-    0,						/* tp_itemsize */
-    (destructor)CertVerifyError_dealloc,	/* tp_dealloc */
-    0,						/* tp_print */
-    0,						/* tp_getattr */
-    0,						/* tp_setattr */
-    0,						/* tp_compare */
-    0,						/* tp_repr */
-    0,						/* tp_as_number */
-    0,						/* tp_as_sequence */
-    0,						/* tp_as_mapping */
-    0,						/* tp_hash */
-    0,						/* tp_call */
-    (reprfunc)CertVerifyError_str,		/* tp_str */
-    0,						/* tp_getattro */
-    0,						/* tp_setattro */
-    0,						/* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
-    CertVerifyError_doc,			/* tp_doc */
-    (traverseproc)CertVerifyError_traverse,	/* tp_traverse */
-    (inquiry)CertVerifyError_clear,		/* tp_clear */
-    0,						/* tp_richcompare */
-    0,						/* tp_weaklistoffset */
-    0,						/* tp_iter */
-    0,						/* tp_iternext */
-    0,						/* tp_methods */
-    CertVerifyError_members,			/* tp_members */
-    0,						/* tp_getset */
-    &NSPRErrorType,				/* tp_base */
-    0,						/* tp_dict */
-    0,						/* tp_descr_get */
-    0,						/* tp_descr_set */
-    0,						/* tp_dictoffset */
-    (initproc)CertVerifyError_init,		/* tp_init */
-    0,						/* tp_alloc */
-    0,						/* tp_new */
+    .tp_name = "nss.error.CertVerifyError",
+    .tp_basicsize = sizeof(CertVerifyError),
+    .tp_dealloc = (destructor)CertVerifyError_dealloc,
+    .tp_str = (reprfunc)CertVerifyError_str,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_doc = CertVerifyError_doc,
+    .tp_traverse = (traverseproc)CertVerifyError_traverse,
+    .tp_clear = (inquiry)CertVerifyError_clear,
+    .tp_members = CertVerifyError_members,
+    .tp_base = &NSPRErrorType,
+    .tp_init = (initproc)CertVerifyError_init,
 };
 
 
