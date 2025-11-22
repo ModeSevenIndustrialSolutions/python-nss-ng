@@ -16,18 +16,18 @@ all tests. You can run them using pytest or the legacy `test/run_tests` script.
 
 ### System Dependencies
 
-You need NSS and NSPR installed on your system:
+You need NSS and NSPR development libraries and NSS tools installed on your system:
 
 **Fedora/RHEL/CentOS:**
 
 ```bash
-sudo dnf install nss-devel nspr-devel
+sudo dnf install nss-devel nspr-devel nss-tools
 ```
 
 **Debian/Ubuntu:**
 
 ```bash
-sudo apt-get install libnss3-dev libnspr4-dev
+sudo apt-get install libnss3-dev libnspr4-dev libnss3-tools
 ```
 
 **macOS (Homebrew):**
@@ -35,6 +35,10 @@ sudo apt-get install libnss3-dev libnspr4-dev
 ```bash
 brew install nss nspr
 ```
+
+**Note:** The NSS tools package provides `certutil`, `pk12util`, and other utilities
+required for test certificate generation. On macOS, these tools are included with the
+`nss` Homebrew package.
 
 ### Python Dependencies
 

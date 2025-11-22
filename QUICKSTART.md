@@ -167,7 +167,7 @@ python-nss-ng/
 ├── doc/                 # Documentation
 ├── .github/             # GitHub Actions workflows
 ├── pyproject.toml       # Project configuration
-└── setup.py             # Build configuration
+└── meson.build          # Build configuration
 ```
 
 ## Known Issues

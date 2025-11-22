@@ -11,10 +11,10 @@ from typing import Any, Optional
 def get_build_dir() -> Optional[str]:
     """
     Walk from the current directory up until a directory is found
-    which contains a regular file called "setup.py" and a directory
+    which contains a regular file called "meson.build" and a directory
     called "build". If found return the fully qualified path to
     the build directory's platform specific directory, this is where
-    the architecture specific build produced by setup.py is located.
+    the architecture specific build produced by meson is located.
 
     If the build directory cannot be found in the tree None is returned.
     """
@@ -22,12 +22,12 @@ def get_build_dir() -> Optional[str]:
     path_components = cwd.split(os.sep)
     while len(path_components):
         path = os.path.join(os.sep, *path_components) if path_components[0] else os.path.join(*path_components)
-        setup_path = os.path.join(path, 'setup.py')
+        meson_path = os.path.join(path, 'meson.build')
         build_path = os.path.join(path, 'build')
 
-        # Does this directory contain the file "setup.py" and the directory "build"?
-        if (os.path.exists(setup_path) and os.path.exists(build_path) and
-                os.path.isfile(setup_path) and os.path.isdir(build_path)):
+        # Does this directory contain the file "meson.build" and the directory "build"?
+        if (os.path.exists(meson_path) and os.path.exists(build_path) and
+                os.path.isfile(meson_path) and os.path.isdir(build_path)):
             # Found, return the path concatenated with the architecture
             # specific build directory
 

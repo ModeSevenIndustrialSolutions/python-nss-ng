@@ -99,10 +99,18 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
+      - name: Install NSS/NSPR system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libnspr4-dev \
+            pkg-config
+
       - name: 'Build Python project'
         id: 'python-build'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@03a07d633766b8b26eeb12ef8b43cea43114dd69  # v0.1.21
+        uses: lfreleng-actions/python-build-action@3552106f5c8bfedebe4c38116abf3b9c289359ea  # v0.1.22
         with:
           sigstore_sign: true
           attestations: true
@@ -127,6 +135,14 @@ jobs:
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Install NSS/NSPR system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libnspr4-dev \
+            pkg-config
 
       - name: 'Test Python project [PYTEST]'
         # yamllint disable-line rule:line-length
@@ -154,6 +170,14 @@ jobs:
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Install NSS/NSPR system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libnspr4-dev \
+            pkg-config
 
       - name: 'Audit Python project'
         # yamllint disable-line rule:line-length

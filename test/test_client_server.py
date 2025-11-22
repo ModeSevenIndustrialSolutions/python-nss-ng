@@ -28,7 +28,9 @@ password = 'DB_passwd'
 use_ssl = True
 client_cert_action = NO_CLIENT_CERT
 
-hostname = os.uname()[1]
+# Use localhost instead of system hostname for reliable resolution across all platforms
+# This is especially important for CI environments where system hostnames may not resolve
+hostname = 'localhost'
 server_nickname = 'test_server'
 client_nickname = 'test_user'
 timeout_secs = 10
