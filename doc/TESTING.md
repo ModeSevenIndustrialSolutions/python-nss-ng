@@ -36,9 +36,9 @@ sudo apt-get install libnss3-dev libnspr4-dev libnss3-tools
 brew install nss nspr
 ```
 
-**Note:** The NSS tools package provides `certutil`, `pk12util`, and other utilities
-required for test certificate generation. On macOS, these tools are included with the
-`nss` Homebrew package.
+**Note:** The NSS tools package provides `certutil`, `pk12util`, and other
+utilities required for test certificate generation. On macOS, the `nss`
+Homebrew package includes these tools.
 
 ### Python Dependencies
 

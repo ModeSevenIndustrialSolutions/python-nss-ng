@@ -110,7 +110,9 @@ jobs:
       - name: 'Build Python project'
         id: 'python-build'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@3552106f5c8bfedebe4c38116abf3b9c289359ea  # v0.1.22
+        # uses: lfreleng-actions/python-build-action@3552106f5c8bfedebe4c38116abf3b9c289359ea  # v0.1.22
+        # yamllint disable-line rule:line-length
+        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
         with:
           sigstore_sign: true
           attestations: true
@@ -267,7 +269,7 @@ jobs:
       name: 'development'
     permissions:
       contents: read
-      id-token: write # IMPORTANT: mandatory for trusted publishing
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     timeout-minutes: 5
     steps:
       # Harden the runner used by this workflow
@@ -297,7 +299,7 @@ jobs:
       name: 'production'
     permissions:
       contents: read
-      id-token: write # IMPORTANT: mandatory for trusted publishing
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     timeout-minutes: 5
     steps:
       # Harden the runner used by this workflow
@@ -328,7 +330,8 @@ jobs:
       - 'pypi'
     runs-on: 'ubuntu-latest'
     permissions:
-      contents: write # IMPORTANT: needed to edit a draft release and promote it
+      # IMPORTANT: needed to edit a draft release and promote it
+      contents: write
     timeout-minutes: 2
     outputs:
       release_url: "${{ steps.promote-release.outputs.release_url }}"
@@ -392,7 +395,7 @@ jobs:
     # yamllint disable-line rule:line-length
     if: always() && (needs.promote-release.result == 'success' || needs.promote-release.result == 'skipped')
     permissions:
-      contents: write # IMPORTANT: needed to edit release, attach artefacts
+      contents: write  # IMPORTANT: needed to edit release, attach artefacts
     timeout-minutes: 5
     steps:
       # Harden the runner used by this workflow

@@ -41,25 +41,113 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
-      - name: Install NSS/NSPR system dependencies
+      - name: Build NSS/NSPR from source
         run: |
+          set -e
+
+          # Install build dependencies
           sudo apt-get update
           sudo apt-get install -y \
-            libnss3-dev \
-            libnspr4-dev \
-            pkg-config
+            build-essential \
+            pkg-config \
+            zlib1g-dev \
+            libsqlite3-dev \
+            gyp \
+            ninja-build \
+            wget
+
+          # Create build directory
+          mkdir -p ~/nss-build
+          cd ~/nss-build
+
+          # Download and extract NSS 3.104
+          NSS_VERSION="3.104"
+          NSS_URL="https://ftp.mozilla.org/pub/security/nss/releases"
+          NSS_FILE="nss-${NSS_VERSION}.tar.gz"
+          wget -q "${NSS_URL}/NSS_${NSS_VERSION//./_}_RTM/src/${NSS_FILE}"
+          tar -xzf "${NSS_FILE}"
+
+          # Download and extract NSPR 4.35
+          NSPR_VERSION="4.35"
+          NSPR_URL="https://ftp.mozilla.org/pub/nspr/releases"
+          NSPR_FILE="nspr-${NSPR_VERSION}.tar.gz"
+          wget -q "${NSPR_URL}/v${NSPR_VERSION}/src/${NSPR_FILE}"
+          tar -xzf "${NSPR_FILE}"
+
+          # Build NSPR
+          cd "nspr-${NSPR_VERSION}/nspr"
+          ./configure --prefix=/usr/local \
+            --with-mozilla --with-pthreads --enable-64bit
+          make -j"$(nproc)"
+          sudo make install
+
+          # Build NSS
+          cd ~/nss-build/nss-${NSS_VERSION}/nss
+          make -j"$(nproc)" \
+            BUILD_OPT=1 \
+            USE_64=1 \
+            NSS_USE_SYSTEM_SQLITE=1 \
+            NSPR_INCLUDE_DIR=/usr/local/include/nspr \
+            NSPR_LIB_DIR=/usr/local/lib
+
+          # Install NSS
+          cd ../dist
+          NSS_DIST_DIR=$(find . -maxdepth 1 -type d -name "Linux*" | head -1)
+          sudo mkdir -p /usr/local/include/nss
+          sudo cp -r "${NSS_DIST_DIR}"/include/* /usr/local/include/nss/
+          sudo cp -L "${NSS_DIST_DIR}"/lib/*.so /usr/local/lib/
+          sudo cp -L "${NSS_DIST_DIR}"/bin/* /usr/local/bin/
+          sudo ldconfig
+
+          # Create pkg-config files
+          sudo tee /usr/local/lib/pkgconfig/nss.pc > /dev/null <<EOF
+          prefix=/usr/local
+          exec_prefix=\${prefix}
+          libdir=\${exec_prefix}/lib
+          includedir=\${prefix}/include/nss
+
+          Name: NSS
+          Description: Network Security Services
+          Version: ${NSS_VERSION}
+          Requires: nspr >= ${NSPR_VERSION}
+          Libs: -L\${libdir} -lssl3 -lsmime3 -lnss3 -lnssutil3
+          Cflags: -I\${includedir}
+          EOF
+
+          sudo tee /usr/local/lib/pkgconfig/nspr.pc > /dev/null <<EOF
+          prefix=/usr/local
+          exec_prefix=\${prefix}
+          libdir=\${exec_prefix}/lib
+          includedir=\${prefix}/include/nspr
+
+          Name: NSPR
+          Description: Netscape Portable Runtime
+          Version: ${NSPR_VERSION}
+          Libs: -L\${libdir} -lplds4 -lplc4 -lnspr4
+          Cflags: -I\${includedir}
+          EOF
+
+          # Set PKG_CONFIG_PATH for subsequent steps
+          PKG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+          echo "PKG_CONFIG_PATH=${PKG_PATH}" >> "$GITHUB_ENV"
+          LD_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          echo "LD_LIBRARY_PATH=${LD_PATH}" >> "$GITHUB_ENV"
+
+          # Verify installation
+          pkg-config --modversion nss
+          pkg-config --modversion nspr
 
       - name: 'Build Python project'
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@3552106f5c8bfedebe4c38116abf3b9c289359ea # v0.1.22
+        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
 
   python-tests:
     name: 'Python Tests'
@@ -75,24 +163,112 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
         with:
           egress-policy: audit
 
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
-      - name: Install NSS/NSPR system dependencies
+      - name: Build NSS/NSPR from source
         run: |
+          set -e
+
+          # Install build dependencies
           sudo apt-get update
           sudo apt-get install -y \
-            libnss3-dev \
-            libnspr4-dev \
-            pkg-config
+            build-essential \
+            pkg-config \
+            zlib1g-dev \
+            libsqlite3-dev \
+            gyp \
+            ninja-build \
+            wget
+
+          # Create build directory
+          mkdir -p ~/nss-build
+          cd ~/nss-build
+
+          # Download and extract NSS 3.104
+          NSS_VERSION="3.104"
+          NSS_URL="https://ftp.mozilla.org/pub/security/nss/releases"
+          NSS_FILE="nss-${NSS_VERSION}.tar.gz"
+          wget -q "${NSS_URL}/NSS_${NSS_VERSION//./_}_RTM/src/${NSS_FILE}"
+          tar -xzf "${NSS_FILE}"
+
+          # Download and extract NSPR 4.35
+          NSPR_VERSION="4.35"
+          NSPR_URL="https://ftp.mozilla.org/pub/nspr/releases"
+          NSPR_FILE="nspr-${NSPR_VERSION}.tar.gz"
+          wget -q "${NSPR_URL}/v${NSPR_VERSION}/src/${NSPR_FILE}"
+          tar -xzf "${NSPR_FILE}"
+
+          # Build NSPR
+          cd "nspr-${NSPR_VERSION}/nspr"
+          ./configure --prefix=/usr/local \
+            --with-mozilla --with-pthreads --enable-64bit
+          make -j"$(nproc)"
+          sudo make install
+
+          # Build NSS
+          cd ~/nss-build/nss-${NSS_VERSION}/nss
+          make -j"$(nproc)" \
+            BUILD_OPT=1 \
+            USE_64=1 \
+            NSS_USE_SYSTEM_SQLITE=1 \
+            NSPR_INCLUDE_DIR=/usr/local/include/nspr \
+            NSPR_LIB_DIR=/usr/local/lib
+
+          # Install NSS
+          cd ../dist
+          NSS_DIST_DIR=$(find . -maxdepth 1 -type d -name "Linux*" | head -1)
+          sudo mkdir -p /usr/local/include/nss
+          sudo cp -r "${NSS_DIST_DIR}"/include/* /usr/local/include/nss/
+          sudo cp -L "${NSS_DIST_DIR}"/lib/*.so /usr/local/lib/
+          sudo cp -L "${NSS_DIST_DIR}"/bin/* /usr/local/bin/
+          sudo ldconfig
+
+          # Create pkg-config files
+          sudo tee /usr/local/lib/pkgconfig/nss.pc > /dev/null <<EOF
+          prefix=/usr/local
+          exec_prefix=\${prefix}
+          libdir=\${exec_prefix}/lib
+          includedir=\${prefix}/include/nss
+
+          Name: NSS
+          Description: Network Security Services
+          Version: ${NSS_VERSION}
+          Requires: nspr >= ${NSPR_VERSION}
+          Libs: -L\${libdir} -lssl3 -lsmime3 -lnss3 -lnssutil3
+          Cflags: -I\${includedir}
+          EOF
+
+          sudo tee /usr/local/lib/pkgconfig/nspr.pc > /dev/null <<EOF
+          prefix=/usr/local
+          exec_prefix=\${prefix}
+          libdir=\${exec_prefix}/lib
+          includedir=\${prefix}/include/nspr
+
+          Name: NSPR
+          Description: Netscape Portable Runtime
+          Version: ${NSPR_VERSION}
+          Libs: -L\${libdir} -lplds4 -lplc4 -lnspr4
+          Cflags: -I\${includedir}
+          EOF
+
+          # Set PKG_CONFIG_PATH for subsequent steps
+          PKG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+          echo "PKG_CONFIG_PATH=${PKG_PATH}" >> "$GITHUB_ENV"
+          LD_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          echo "LD_LIBRARY_PATH=${LD_PATH}" >> "$GITHUB_ENV"
+
+          # Verify installation
+          pkg-config --modversion nss
+          pkg-config --modversion nspr
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-test-action@b997656111c9b547f8458b18baf6be139e2d2c6c # v0.1.12
+        uses: lfreleng-actions/python-test-action@b997656111c9b547f8458b18baf6be139e2d2c6c  # v0.1.12
         with:
           python_version: ${{ matrix.python-version }}
 
@@ -110,24 +286,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-
-      - name: Install NSS/NSPR system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnss3-dev \
-            libnspr4-dev \
-            pkg-config
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b # v0.2.3
+        uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
         with:
           python_version: "${{ matrix.python-version }}"
 
