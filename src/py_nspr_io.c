@@ -636,11 +636,14 @@ NetworkAddress_str(NetworkAddress *self)
     switch(PR_NetAddrFamily(&self->pr_netaddr)) {
     case PR_AF_INET:
         result = PyUnicode_FromFormat("%U:%d", unicode_addr, PR_ntohs(self->pr_netaddr.inet.port));
+        break;
     case PR_AF_INET6:
         result = PyUnicode_FromFormat("[%U]:%d", unicode_addr, PR_ntohs(self->pr_netaddr.ipv6.port));
+        break;
     default:
         result = unicode_addr;
         Py_INCREF(unicode_addr);
+        break;
     }
 
     Py_DECREF(unicode_addr);
