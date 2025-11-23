@@ -33,13 +33,43 @@ permissions:
   actions: write  # Required for cache deletion when clear_cache is true
 
 jobs:
-  python-build-x64:
-    name: 'Python Build x64'
+  python-metadata-x64:
+    name: 'Python Metadata x64'
     runs-on: ubuntu-latest
     outputs:
-      matrix_json: "${{ steps.python-build.outputs.matrix_json }}"
-      artefact_name: "${{ steps.python-build.outputs.artefact_name }}"
-      artefact_path: "${{ steps.python-build.outputs.artefact_path }}"
+      matrix_json: "${{ steps.metadata.outputs.python_matrix_json }}"
+      project_name: "${{ steps.metadata.outputs.project_name }}"
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      # Harden the runner used by this workflow
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: 'audit'
+
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: 'Extract Python project metadata'
+        id: metadata
+        # yamllint disable-line rule:line-length
+        uses: modeseven-lfreleng-actions/build-metadata-action@initial-update
+        with:
+          path_prefix: '.'
+          output_format: summary
+          include_environment: true
+          use_version_extract: true
+          verbose: true
+
+  python-build-x64:
+    name: "Python Build x64 ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    needs: python-metadata-x64
+    strategy:
+      fail-fast: false
+      matrix: "${{ fromJson(needs.python-metadata-x64.outputs.matrix_json) }}"
     permissions:
       contents: read
       actions: write  # Required for cache deletion when clear_cache is true
@@ -66,21 +96,52 @@ jobs:
             >> "$GITHUB_ENV"
           echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
-      - name: 'Build Python project'
+      - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
         uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
         with:
-          artefact_name: python-nss-ng-x64
+          artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
+          python_version: ${{ matrix.python-version }}
           clear_cache: ${{ github.event.inputs.clear_cache || 'false' }}
 
-  python-build-arm64:
-    name: 'Python Build ARM64'
+  python-metadata-arm64:
+    name: 'Python Metadata ARM64'
     runs-on: ubuntu-24.04-arm
     outputs:
-      matrix_json: "${{ steps.python-build.outputs.matrix_json }}"
-      artefact_name: "${{ steps.python-build.outputs.artefact_name }}"
-      artefact_path: "${{ steps.python-build.outputs.artefact_path }}"
+      matrix_json: "${{ steps.metadata.outputs.python_matrix_json }}"
+      project_name: "${{ steps.metadata.outputs.project_name }}"
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      # Harden the runner used by this workflow
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: 'audit'
+
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: 'Extract Python project metadata'
+        id: metadata
+        # yamllint disable-line rule:line-length
+        uses: modeseven-lfreleng-actions/build-metadata-action@initial-update
+        with:
+          path_prefix: '.'
+          output_format: summary
+          include_environment: true
+          use_version_extract: true
+          verbose: true
+
+  python-build-arm64:
+    name: "Python Build ARM64 ${{ matrix.python-version }}"
+    runs-on: ubuntu-24.04-arm
+    needs: python-metadata-arm64
+    strategy:
+      fail-fast: false
+      matrix: "${{ fromJson(needs.python-metadata-arm64.outputs.matrix_json) }}"
     permissions:
       contents: read
       actions: write  # Required for cache deletion when clear_cache is true
@@ -107,21 +168,22 @@ jobs:
             >> "$GITHUB_ENV"
           echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
-      - name: 'Build Python project'
+      - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
         uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
         with:
-          artefact_name: python-nss-ng-arm64
+          artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
+          python_version: ${{ matrix.python-version }}
           clear_cache: ${{ github.event.inputs.clear_cache || 'false' }}
 
   python-tests-x64:
     name: "Python Tests x64 ${{ matrix.python-version }}"
     runs-on: 'ubuntu-latest'
-    needs: 'python-build-x64'
+    needs: ['python-metadata-x64', 'python-build-x64']
     strategy:
       fail-fast: false
-      matrix: "${{ fromJson(needs.python-build-x64.outputs.matrix_json) }}"
+      matrix: "${{ fromJson(needs.python-metadata-x64.outputs.matrix_json) }}"
     permissions:
       contents: read
     timeout-minutes: 12
@@ -154,15 +216,15 @@ jobs:
         uses: modeseven-lfreleng-actions/python-test-action@update-action  # Testing
         with:
           python_version: ${{ matrix.python-version }}
-          artefact_name: python-nss-ng-x64
+          artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
 
   python-tests-arm64:
     name: "Python Tests ARM64 ${{ matrix.python-version }}"
     runs-on: 'ubuntu-24.04-arm'
-    needs: 'python-build-arm64'
+    needs: ['python-metadata-arm64', 'python-build-arm64']
     strategy:
       fail-fast: false
-      matrix: "${{ fromJson(needs.python-build-arm64.outputs.matrix_json) }}"
+      matrix: "${{ fromJson(needs.python-metadata-arm64.outputs.matrix_json) }}"
     permissions:
       contents: read
     timeout-minutes: 12
@@ -197,15 +259,15 @@ jobs:
         uses: modeseven-lfreleng-actions/python-test-action@update-action  # Testing
         with:
           python_version: ${{ matrix.python-version }}
-          artefact_name: python-nss-ng-arm64
+          artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
 
   python-audit-x64:
     name: "Python Audit x64 ${{ matrix.python-version }}"
     runs-on: 'ubuntu-latest'
-    needs: 'python-build-x64'
+    needs: ['python-metadata-x64', 'python-build-x64']
     strategy:
       fail-fast: false
-      matrix: "${{ fromJson(needs.python-build-x64.outputs.matrix_json) }}"
+      matrix: "${{ fromJson(needs.python-metadata-x64.outputs.matrix_json) }}"
     permissions:
       contents: read
     timeout-minutes: 10
@@ -240,15 +302,15 @@ jobs:
         uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
         with:
           python_version: "${{ matrix.python-version }}"
-          artefact_name: python-nss-ng-x64
+          artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
 
   python-audit-arm64:
     name: "Python Audit ARM64 ${{ matrix.python-version }}"
     runs-on: 'ubuntu-24.04-arm'
-    needs: 'python-build-arm64'
+    needs: ['python-metadata-arm64', 'python-build-arm64']
     strategy:
       fail-fast: false
-      matrix: "${{ fromJson(needs.python-build-arm64.outputs.matrix_json) }}"
+      matrix: "${{ fromJson(needs.python-metadata-arm64.outputs.matrix_json) }}"
     permissions:
       contents: read
     timeout-minutes: 10
@@ -283,12 +345,12 @@ jobs:
         uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
         with:
           python_version: "${{ matrix.python-version }}"
-          artefact_name: python-nss-ng-arm64
+          artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
 
   sbom-x64:
     name: "Generate SBOM x64"
     runs-on: ubuntu-latest
-    needs: 'python-build-x64'
+    needs: ['python-metadata-x64', 'python-build-x64']
     timeout-minutes: 10
     permissions:
       contents: read
@@ -374,7 +436,7 @@ jobs:
   sbom-arm64:
     name: "Generate SBOM ARM64"
     runs-on: ubuntu-24.04-arm
-    needs: 'python-build-arm64'
+    needs: ['python-metadata-arm64', 'python-build-arm64']
     timeout-minutes: 10
     permissions:
       contents: read
