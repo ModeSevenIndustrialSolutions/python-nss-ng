@@ -26,16 +26,16 @@ concurrency:
 permissions: {}
 
 jobs:
-  python-build:
-    name: 'Python Build'
-    runs-on: 'ubuntu-latest'
+  python-build-x64:
+    name: 'Python Build (x64)'
+    runs-on: ubuntu-latest
     outputs:
       matrix_json: "${{ steps.python-build.outputs.matrix_json }}"
       artefact_name: "${{ steps.python-build.outputs.artefact_name }}"
       artefact_path: "${{ steps.python-build.outputs.artefact_path }}"
     permissions:
       contents: read
-    timeout-minutes: 12
+    timeout-minutes: 20
     env:
       GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
     steps:
@@ -50,99 +50,50 @@ jobs:
 
       - name: Build NSS/NSPR from source
         run: |
-          set -e
+          chmod +x .github/scripts/install-nss.sh
+          ./.github/scripts/install-nss.sh
 
-          # Install build dependencies
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            pkg-config \
-            zlib1g-dev \
-            libsqlite3-dev \
-            gyp \
-            ninja-build \
-            wget
+          # Set environment variables for subsequent steps
+          echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+            >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
-          # Create build directory
-          mkdir -p ~/nss-build
-          cd ~/nss-build
+      - name: 'Build Python project'
+        id: python-build
+        # yamllint disable-line rule:line-length
+        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
 
-          # Download and extract NSS 3.104
-          NSS_VERSION="3.104"
-          NSS_URL="https://ftp.mozilla.org/pub/security/nss/releases"
-          NSS_FILE="nss-${NSS_VERSION}.tar.gz"
-          wget -q "${NSS_URL}/NSS_${NSS_VERSION//./_}_RTM/src/${NSS_FILE}"
-          tar -xzf "${NSS_FILE}"
+  python-build-arm64:
+    name: 'Python Build (ARM64)'
+    runs-on: ubuntu-24.04-arm
+    outputs:
+      matrix_json: "${{ steps.python-build.outputs.matrix_json }}"
+      artefact_name: "${{ steps.python-build.outputs.artefact_name }}"
+      artefact_path: "${{ steps.python-build.outputs.artefact_path }}"
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+    steps:
+      # Harden the runner used by this workflow
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: 'audit'
 
-          # Download and extract NSPR 4.35
-          NSPR_VERSION="4.35"
-          NSPR_URL="https://ftp.mozilla.org/pub/nspr/releases"
-          NSPR_FILE="nspr-${NSPR_VERSION}.tar.gz"
-          wget -q "${NSPR_URL}/v${NSPR_VERSION}/src/${NSPR_FILE}"
-          tar -xzf "${NSPR_FILE}"
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
-          # Build NSPR
-          cd "nspr-${NSPR_VERSION}/nspr"
-          ./configure --prefix=/usr/local \
-            --with-mozilla --with-pthreads --enable-64bit
-          make -j"$(nproc)"
-          sudo make install
+      - name: Build NSS/NSPR from source
+        run: |
+          chmod +x .github/scripts/install-nss.sh
+          ./.github/scripts/install-nss.sh
 
-          # Build NSS
-          cd ~/nss-build/nss-${NSS_VERSION}/nss
-          make -j"$(nproc)" \
-            BUILD_OPT=1 \
-            USE_64=1 \
-            NSS_USE_SYSTEM_SQLITE=1 \
-            NSPR_INCLUDE_DIR=/usr/local/include/nspr \
-            NSPR_LIB_DIR=/usr/local/lib
-
-          # Install NSS
-          cd ../dist
-          NSS_DIST_DIR=$(find . -maxdepth 1 -type d -name "Linux*" | head -1)
-          sudo mkdir -p /usr/local/include/nss
-          sudo cp -r "${NSS_DIST_DIR}"/include/* /usr/local/include/nss/
-          sudo cp -L "${NSS_DIST_DIR}"/lib/*.so /usr/local/lib/
-          sudo cp -L "${NSS_DIST_DIR}"/bin/* /usr/local/bin/
-          sudo ldconfig
-
-          # Create pkg-config files
-          sudo tee /usr/local/lib/pkgconfig/nss.pc > /dev/null <<EOF
-          prefix=/usr/local
-          exec_prefix=\${prefix}
-          libdir=\${exec_prefix}/lib
-          includedir=\${prefix}/include/nss
-
-          Name: NSS
-          Description: Network Security Services
-          Version: ${NSS_VERSION}
-          Requires: nspr >= ${NSPR_VERSION}
-          Libs: -L\${libdir} -lssl3 -lsmime3 -lnss3 -lnssutil3
-          Cflags: -I\${includedir}
-          EOF
-
-          sudo tee /usr/local/lib/pkgconfig/nspr.pc > /dev/null <<EOF
-          prefix=/usr/local
-          exec_prefix=\${prefix}
-          libdir=\${exec_prefix}/lib
-          includedir=\${prefix}/include/nspr
-
-          Name: NSPR
-          Description: Netscape Portable Runtime
-          Version: ${NSPR_VERSION}
-          Libs: -L\${libdir} -lplds4 -lplc4 -lnspr4
-          Cflags: -I\${includedir}
-          EOF
-
-          # Set PKG_CONFIG_PATH for subsequent steps
-          PKG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-          echo "PKG_CONFIG_PATH=${PKG_PATH}" >> "$GITHUB_ENV"
-          LD_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
-          echo "LD_LIBRARY_PATH=${LD_PATH}" >> "$GITHUB_ENV"
-
-          # Verify installation
-          pkg-config --modversion nss
-          pkg-config --modversion nspr
+          # Set environment variables for subsequent steps
+          echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+            >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
       - name: 'Build Python project'
         id: python-build
@@ -150,13 +101,12 @@ jobs:
         uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
 
   python-tests:
-    name: 'Python Tests'
+    name: 'Python Tests (${{ matrix.python-version }})'
     runs-on: 'ubuntu-latest'
-    needs: 'python-build'
-    # Matrix job
+    needs: 'python-build-x64'
     strategy:
       fail-fast: false
-      matrix: "${{ fromJson(needs.python-build.outputs.matrix_json) }}"
+      matrix: "${{ fromJson(needs.python-build-x64.outputs.matrix_json) }}"
     permissions:
       contents: read
     timeout-minutes: 12
@@ -172,99 +122,57 @@ jobs:
 
       - name: Build NSS/NSPR from source
         run: |
-          set -e
+            # Install meson/ninja for editable installs
+            sudo apt-get update
+            sudo apt-get install -y meson ninja-build
 
-          # Install build dependencies
+            chmod +x .github/scripts/install-nss.sh
+            ./.github/scripts/install-nss.sh
+
+            # Set environment variables for subsequent steps
+            echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+              >> "$GITHUB_ENV"
+            echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+      - name: "Python tests [pytest] ${{ matrix.python-version }}"
+        # yamllint disable-line rule:line-length
+        uses: lfreleng-actions/python-test-action@b997656111c9b547f8458b18baf6be139e2d2c6c  # v0.1.12
+        with:
+          python_version: ${{ matrix.python-version }}
+
+  python-tests-arm64:
+    name: 'Python Tests ARM64 (${{ matrix.python-version }})'
+    runs-on: 'ubuntu-24.04-arm'
+    needs: 'python-build-arm64'
+    strategy:
+      fail-fast: false
+      matrix: "${{ fromJson(needs.python-build-arm64.outputs.matrix_json) }}"
+    permissions:
+      contents: read
+    timeout-minutes: 12
+    steps:
+      # Harden the runner used by this workflow
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Build NSS/NSPR from source
+        run: |
+          # Install meson/ninja for editable installs
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            pkg-config \
-            zlib1g-dev \
-            libsqlite3-dev \
-            gyp \
-            ninja-build \
-            wget
+          sudo apt-get install -y meson ninja-build
 
-          # Create build directory
-          mkdir -p ~/nss-build
-          cd ~/nss-build
+          chmod +x .github/scripts/install-nss.sh
+          ./.github/scripts/install-nss.sh
 
-          # Download and extract NSS 3.104
-          NSS_VERSION="3.104"
-          NSS_URL="https://ftp.mozilla.org/pub/security/nss/releases"
-          NSS_FILE="nss-${NSS_VERSION}.tar.gz"
-          wget -q "${NSS_URL}/NSS_${NSS_VERSION//./_}_RTM/src/${NSS_FILE}"
-          tar -xzf "${NSS_FILE}"
-
-          # Download and extract NSPR 4.35
-          NSPR_VERSION="4.35"
-          NSPR_URL="https://ftp.mozilla.org/pub/nspr/releases"
-          NSPR_FILE="nspr-${NSPR_VERSION}.tar.gz"
-          wget -q "${NSPR_URL}/v${NSPR_VERSION}/src/${NSPR_FILE}"
-          tar -xzf "${NSPR_FILE}"
-
-          # Build NSPR
-          cd "nspr-${NSPR_VERSION}/nspr"
-          ./configure --prefix=/usr/local \
-            --with-mozilla --with-pthreads --enable-64bit
-          make -j"$(nproc)"
-          sudo make install
-
-          # Build NSS
-          cd ~/nss-build/nss-${NSS_VERSION}/nss
-          make -j"$(nproc)" \
-            BUILD_OPT=1 \
-            USE_64=1 \
-            NSS_USE_SYSTEM_SQLITE=1 \
-            NSPR_INCLUDE_DIR=/usr/local/include/nspr \
-            NSPR_LIB_DIR=/usr/local/lib
-
-          # Install NSS
-          cd ../dist
-          NSS_DIST_DIR=$(find . -maxdepth 1 -type d -name "Linux*" | head -1)
-          sudo mkdir -p /usr/local/include/nss
-          sudo cp -r "${NSS_DIST_DIR}"/include/* /usr/local/include/nss/
-          sudo cp -L "${NSS_DIST_DIR}"/lib/*.so /usr/local/lib/
-          sudo cp -L "${NSS_DIST_DIR}"/bin/* /usr/local/bin/
-          sudo ldconfig
-
-          # Create pkg-config files
-          sudo tee /usr/local/lib/pkgconfig/nss.pc > /dev/null <<EOF
-          prefix=/usr/local
-          exec_prefix=\${prefix}
-          libdir=\${exec_prefix}/lib
-          includedir=\${prefix}/include/nss
-
-          Name: NSS
-          Description: Network Security Services
-          Version: ${NSS_VERSION}
-          Requires: nspr >= ${NSPR_VERSION}
-          Libs: -L\${libdir} -lssl3 -lsmime3 -lnss3 -lnssutil3
-          Cflags: -I\${includedir}
-          EOF
-
-          sudo tee /usr/local/lib/pkgconfig/nspr.pc > /dev/null <<EOF
-          prefix=/usr/local
-          exec_prefix=\${prefix}
-          libdir=\${exec_prefix}/lib
-          includedir=\${prefix}/include/nspr
-
-          Name: NSPR
-          Description: Netscape Portable Runtime
-          Version: ${NSPR_VERSION}
-          Libs: -L\${libdir} -lplds4 -lplc4 -lnspr4
-          Cflags: -I\${includedir}
-          EOF
-
-          # Set PKG_CONFIG_PATH for subsequent steps
-          PKG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-          echo "PKG_CONFIG_PATH=${PKG_PATH}" >> "$GITHUB_ENV"
-          LD_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
-          echo "LD_LIBRARY_PATH=${LD_PATH}" >> "$GITHUB_ENV"
-
-          # Verify installation
-          pkg-config --modversion nss
-          pkg-config --modversion nspr
+          # Set environment variables for subsequent steps
+          echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+            >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -273,13 +181,12 @@ jobs:
           python_version: ${{ matrix.python-version }}
 
   python-audit:
-    name: 'Python Audit'
+    name: 'Python Audit (${{ matrix.python-version }})'
     runs-on: 'ubuntu-latest'
-    needs: 'python-build'
-    # Matrix job
+    needs: 'python-build-x64'
     strategy:
       fail-fast: false
-      matrix: "${{ fromJson(needs.python-build.outputs.matrix_json) }}"
+      matrix: "${{ fromJson(needs.python-build-x64.outputs.matrix_json) }}"
     permissions:
       contents: read
     timeout-minutes: 10
@@ -293,6 +200,60 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
+      - name: Build NSS/NSPR from source
+        run: |
+          # Install meson/ninja for editable installs
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build
+
+          chmod +x .github/scripts/install-nss.sh
+          ./.github/scripts/install-nss.sh
+
+          # Set environment variables for subsequent steps
+          echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+            >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+      - name: "Audit dependencies ${{ matrix.python-version }}"
+        # yamllint disable-line rule:line-length
+        uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
+        with:
+          python_version: "${{ matrix.python-version }}"
+
+  python-audit-arm64:
+    name: 'Python Audit ARM64 (${{ matrix.python-version }})'
+    runs-on: 'ubuntu-24.04-arm'
+    needs: 'python-build-arm64'
+    strategy:
+      fail-fast: false
+      matrix: "${{ fromJson(needs.python-build-arm64.outputs.matrix_json) }}"
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      # Harden the runner used by this workflow
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: 'audit'
+
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Build NSS/NSPR from source
+        run: |
+          # Install meson/ninja for editable installs
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build
+
+          chmod +x .github/scripts/install-nss.sh
+          ./.github/scripts/install-nss.sh
+
+          # Set environment variables for subsequent steps
+          echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+            >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
@@ -302,7 +263,7 @@ jobs:
   sbom:
     name: 'Generate SBOM'
     runs-on: ubuntu-latest
-    needs: 'python-build'
+    needs: 'python-build-x64'
     timeout-minutes: 10
     permissions:
       contents: read
