@@ -154,6 +154,44 @@ jobs:
           use_version_extract: true
           verbose: true
 
+  python-build-sdist:
+    name: 'Build Source Distribution'
+    runs-on: ubuntu-latest
+    needs: python-metadata
+    permissions:
+      contents: read
+      id-token: write       # Needed for attestations
+      attestations: write   # Needed for attestations
+    timeout-minutes: 10
+    steps:
+      # Harden the runner used by this workflow
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: 'audit'
+
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Build NSS/NSPR from source
+        run: |
+          chmod +x .github/scripts/install-nss.sh
+          ./.github/scripts/install-nss.sh
+
+          # Set environment variables for subsequent steps
+          echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH" \
+            >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+      - name: "Build source distribution"
+        id: python-build-sdist
+        # yamllint disable-line rule:line-length
+        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
+        with:
+          artefact_name: python-nss-ng-sdist
+          build_formats: sdist
+          attestations: true
+
   python-build-x64:
     name: "Python Build x64 ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
@@ -195,6 +233,7 @@ jobs:
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
+          build_formats: wheel
           sigstore_sign: true
           attestations: true
 
@@ -239,6 +278,7 @@ jobs:
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
+          build_formats: wheel
           sigstore_sign: true
           attestations: true
 
@@ -583,6 +623,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs:
       - 'tag-validate'
+      - 'python-build-sdist'
       - 'python-tests-x64'
       - 'python-tests-arm64'
       - 'python-audit-x64'
@@ -614,6 +655,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs:
       - 'tag-validate'
+      - 'python-build-sdist'
       - 'test-pypi'
     environment:
       name: 'production'
@@ -645,6 +687,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs:
       - 'tag-validate'
+      - 'python-build-sdist'
       - 'python-build-x64'
       - 'python-build-arm64'
       - 'pypi'
@@ -664,13 +707,20 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
 
-      - name: '⬇ Download build artefacts'
+      - name: '⬇ Download build artefacts (wheels)'
         # yamllint disable-line rule:line-length
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
-          pattern: 'python-nss-ng-*'
+          pattern: 'python-nss-ng-*-py*'
           path: 'dist'
           merge-multiple: true
+
+      - name: '⬇ Download build artefacts (sdist)'
+        # yamllint disable-line rule:line-length
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: 'python-nss-ng-sdist'
+          path: 'dist'
 
       - name: 'Attach build artefacts to release'
         # yamllint disable-line rule:line-length
