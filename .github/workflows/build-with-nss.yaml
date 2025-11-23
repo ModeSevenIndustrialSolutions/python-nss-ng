@@ -13,10 +13,20 @@ on:
       - main
       - master
       - develop
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!.*'
+      - '!tox.ini'
   pull_request:
     branches:
       - main
       - master
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!.*'
+      - '!tox.ini'
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
