@@ -120,7 +120,7 @@ repos:
     rev: 19d280b4facd814e660873ce738e09da457eb1c0  # frozen: v0.1.8
     hooks:
       - id: gha-workflow-linter
-        args: [lint, .]
+        args: [lint, --no-auto-fix, .]
 
   # Run tests last to ensure all code changes from other hooks are tested
   - repo: local

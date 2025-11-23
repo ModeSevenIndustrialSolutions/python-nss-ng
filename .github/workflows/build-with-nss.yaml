@@ -81,7 +81,8 @@ jobs:
           # Configure Git to trust the workspace directory
           # This is needed for meson dist to work in containers
           git config --global --add safe.directory '*'
-          git config --global --add safe.directory "$(pwd)"
+          git config --global --add \
+            safe.directory "$(pwd)"
 
           # Verify Git repository is accessible
           echo "=== Verifying Git Repository ==="
@@ -97,14 +98,17 @@ jobs:
           pkg-config --modversion nss
           pkg-config --modversion nspr
           echo "=== Final Git Check ==="
-          git status --short || echo "Git status failed"
+          git status --short || \
+            echo "Git status failed"
 
       - name: Install Python build tools
         run: |
-          # Ensure pip is available (Fedora Python packages don't include pip by default)
+          # Ensure pip is available
+          # (Fedora Python packages don't include pip by default)
           python-build -m ensurepip
           python-build -m pip install --upgrade pip
-          python-build -m pip install --break-system-packages build setuptools wheel setuptools-scm meson ninja
+          python-build -m pip install --break-system-packages \
+            build setuptools wheel setuptools-scm meson ninja
 
       - name: Configure build environment
         run: |
@@ -115,12 +119,14 @@ jobs:
 
       - name: Build wheel (skip sdist in container due to Git limitations)
         run: |
-          python-build -m build --wheel
+          python-build -m build --wheel 2>&1
 
       - name: Install package from wheel
         run: |
           python-build -m pip install dist/*.whl
-          python-build -m pip install pytest>=9.0 pytest-cov>=7.0 pytest-xdist>=3.8
+          # shellcheck disable=SC2261
+          python-build -m pip install pytest>=9.0 \
+            pytest-cov>=7.0 pytest-xdist>=3.8
 
       - name: Show build info
         if: always()
@@ -154,11 +160,13 @@ jobs:
 
     steps:
       - name: Checkout code
+        # yamllint disable rule:line-length
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
         with:
           fetch-depth: 0  # Full history needed for meson dist
 
       - name: Set up Python ${{ matrix.python-version }}
+        # yamllint disable rule:line-length
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
         with:
           python-version: ${{ matrix.python-version }}
@@ -200,15 +208,16 @@ jobs:
 
       - name: Build source distribution
         run: |
-          python -m build --sdist
+          python -m build --sdist 2>&1
 
       - name: Build wheel
         run: |
-          python -m build --wheel
+          python -m build --wheel 2>&1
 
       - name: Install package from wheel
         run: |
           pip install dist/*.whl
+          # shellcheck disable=SC2261
           pip install pytest>=9.0 pytest-cov>=7.0 pytest-xdist>=3.8
 
       - name: Show build info
@@ -235,7 +244,8 @@ jobs:
 
       - name: Clean test PKI directories
         run: |
-          # Remove any existing test PKI directories to ensure fresh certificates
+          # Remove any existing test PKI directories to ensure
+          # fresh certificates
           rm -rf test/pki test/pki_* || true
 
       - name: Run tests
@@ -262,7 +272,8 @@ jobs:
             echo "Status: ${{ needs.build-macos.result }}"
             echo ""
             echo "### Notes"
-            echo "- Fedora builds test Python 3.10, 3.11, 3.12, 3.14 with NSS 3.117+"
+            echo "- Fedora builds test Python 3.10, 3.11, 3.12, 3.14 with"
+            echo "  NSS 3.117+"
             echo "- Linux builds run on both x86_64 and aarch64 architectures"
             echo "- macOS builds target Apple Silicon (ARM64) only"
             echo "- macOS builds test Python 3.10, 3.11, 3.12, 3.13"

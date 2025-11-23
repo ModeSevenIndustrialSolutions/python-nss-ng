@@ -13,6 +13,7 @@ echo "===================================="
 
 # Detect OS
 if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
     . /etc/os-release
     OS=$ID
     VER=$VERSION_ID
@@ -27,18 +28,18 @@ echo "Detected OS: $OS $VER"
 case "$OS" in
     ubuntu|debian)
         echo "Installing on Ubuntu/Debian..."
-        
+
         # Add Mozilla Team PPA (has newer NSS)
         sudo apt-get update
         sudo apt-get install -y software-properties-common
-        
+
         # For Ubuntu, add the Mozilla Team PPA
         if [ "$OS" = "ubuntu" ]; then
             echo "Adding Mozilla Team PPA..."
             sudo add-apt-repository -y ppa:mozillateam/ppa
             sudo apt-get update
         fi
-        
+
         # Install NSS/NSPR development packages
         echo "Installing NSS/NSPR packages..."
         sudo apt-get install -y \
@@ -46,7 +47,7 @@ case "$OS" in
             libnspr4-dev \
             pkg-config
         ;;
-        
+
     fedora)
         echo "Installing on Fedora..."
         sudo dnf install -y \
@@ -54,15 +55,15 @@ case "$OS" in
             nspr-devel \
             pkg-config
         ;;
-        
+
     centos|rhel|rocky|almalinux)
         echo "Installing on RHEL-based system..."
-        
+
         # Enable EPEL if needed
         if ! rpm -q epel-release &>/dev/null; then
             sudo dnf install -y epel-release || sudo yum install -y epel-release
         fi
-        
+
         sudo dnf install -y \
             nss-devel \
             nspr-devel \
@@ -72,7 +73,7 @@ case "$OS" in
             nspr-devel \
             pkg-config
         ;;
-        
+
     *)
         echo "ERROR: Unsupported OS: $OS"
         exit 1
@@ -88,18 +89,18 @@ echo "===================================="
 if command -v pkg-config &> /dev/null; then
     NSS_VERSION=$(pkg-config --modversion nss || echo "NOT FOUND")
     NSPR_VERSION=$(pkg-config --modversion nspr || echo "NOT FOUND")
-    
+
     echo "NSS version: $NSS_VERSION"
     echo "NSPR version: $NSPR_VERSION"
     echo "NSS cflags: $(pkg-config --cflags nss || echo 'NOT FOUND')"
     echo "NSS libs: $(pkg-config --libs nss || echo 'NOT FOUND')"
-    
+
     # Check if NSS version is sufficient (3.98+)
     # Mozilla Team PPA provides NSS 3.98+ which has the key types we need
     if [ "$NSS_VERSION" != "NOT FOUND" ]; then
         MAJOR=$(echo "$NSS_VERSION" | cut -d. -f1)
         MINOR=$(echo "$NSS_VERSION" | cut -d. -f2)
-        
+
         if [ "$MAJOR" -ge 3 ] && [ "$MINOR" -ge 98 ]; then
             echo "✓ NSS version $NSS_VERSION is sufficient"
         else

@@ -307,7 +307,7 @@ class TestPKCS12Export:
             if 'SEC_ERROR_BAD_EXPORT_ALGORITHM' in str(e) or 'Required algorithm is not allowed' in str(e):
                 pytest.skip(f"PKCS#12 export disabled by NSS crypto policy: {e}")
             raise
-        
+
         with open(exported_pk12_filename, 'wb') as f:
             f.write(pkcs12_data)
 
@@ -315,7 +315,7 @@ class TestPKCS12Export:
         # Note: Due to cipher policy differences (SEC_OID_UNKNOWN for cert safe on modern NSS),
         # the exact format may differ between pk12util and nss.pkcs12_export, but both are valid.
         exported_pk12_listing = list_pk12(exported_pk12_filename)
-        
+
         # Verify essential content is present
         assert 'CN=Test CA' in exported_pk12_listing, "CA certificate missing from export"
         assert 'CN=test_user' in exported_pk12_listing, "User certificate missing from export"
