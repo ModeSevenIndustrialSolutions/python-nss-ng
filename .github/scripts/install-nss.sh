@@ -163,11 +163,11 @@ echo "NSS version:  $(pkg-config --modversion nss)"
 echo "NSPR version: $(pkg-config --modversion nspr)"
 echo ""
 echo "NSS headers:  ${INSTALL_PREFIX}/include/nss/"
-find "${INSTALL_PREFIX}/include/nss/" -maxdepth 1 -type f | head -5
+find "${INSTALL_PREFIX}/include/nss/" -maxdepth 1 -type f 2>/dev/null | head -5 || true
 echo "..."
 echo ""
 echo "NSS libraries: ${INSTALL_PREFIX}/lib/"
-find "${INSTALL_PREFIX}/lib/" -maxdepth 1 -name "libnss*" -type f | head -5
+find "${INSTALL_PREFIX}/lib/" -maxdepth 1 -name "libnss*" 2>/dev/null | head -5 || true
 echo ""
 echo "========================================"
 echo "NSS/NSPR installation complete! ✅"
