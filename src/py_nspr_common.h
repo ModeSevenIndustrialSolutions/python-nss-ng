@@ -9,14 +9,14 @@
 
 #define PACKAGE_NAME "nss"
 
-#if PY_VERSION_HEX < 0x030A0000
-#error "Python version must be at least 3.10"
+#if PY_VERSION_HEX < 0x03090000
+#error "Python version must be at least 3.9"
 #endif
 
 #define PyNone_Check(x) ((x) == Py_None)
 
 /******************************************************************************
- *                              Python 3.10+                                  *
+ *                              Python 3.9+                                   *
  ******************************************************************************/
 
 #define IS_PY3K
@@ -260,11 +260,7 @@ do {                                            \
  *
  * Convert a Python string to encoded bytes.
  *
- * Python2: The string may be either a PyUnicode or a PyString object.
- * If it's a PyString object it is assumed the value is already encoded
- * and a copy is returned.
- *
- * Python3: The string must be a PyUnicode object.
+ * The string must be a PyUnicode object.
  *
  * Example:
  *

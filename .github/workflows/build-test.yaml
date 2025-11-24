@@ -103,6 +103,8 @@ jobs:
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
+          auditwheel: true
+          manylinux_version: manylinux_2_34
           clear_cache: ${{ github.event.inputs.clear_cache || 'false' }}
 
   python-build-arm64:
@@ -145,6 +147,8 @@ jobs:
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
+          auditwheel: true
+          manylinux_version: manylinux_2_34
           clear_cache: ${{ github.event.inputs.clear_cache || 'false' }}
 
   python-tests-x64:
@@ -193,6 +197,7 @@ jobs:
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
+          report_artefact: 'true'
 
   python-tests-arm64:
     name: "Python Tests ARM64 ${{ matrix.python-version }}"
@@ -242,6 +247,7 @@ jobs:
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
+          report_artefact: 'true'
 
   python-audit-x64:
     name: "Python Audit x64 ${{ matrix.python-version }}"
@@ -283,8 +289,9 @@ jobs:
         # yamllint disable-line rule:line-length
         uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
         with:
-          python_version: "${{ matrix.python-version }}"
+          python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
+          report_artefact: 'true'
 
   python-audit-arm64:
     name: "Python Audit ARM64 ${{ matrix.python-version }}"
@@ -326,8 +333,9 @@ jobs:
         # yamllint disable-line rule:line-length
         uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
         with:
-          python_version: "${{ matrix.python-version }}"
+          python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
+          report_artefact: 'true'
 
   sbom-x64:
     name: "Generate SBOM x64"

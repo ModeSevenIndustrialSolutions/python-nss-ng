@@ -1,6 +1,9 @@
 SPDX-License-Identifier: MPL-2.0
 SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
+NOTE: As of 2025, python-nss-ng supports Python 3.9+ only.
+Python 2 support was removed. Historical entries below reference legacy versions.
+
 2016-09-01  John Dennis  <jdennis@redhat.com> 1.0.0
   * Official 1.0.0 release, only minor tweaks from 1.0.0.beta1
 
