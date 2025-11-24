@@ -234,6 +234,8 @@ jobs:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
           build_formats: wheel
+          auditwheel: true
+          manylinux_version: manylinux_2_34
           sigstore_sign: true
           attestations: true
 
@@ -279,6 +281,8 @@ jobs:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
           build_formats: wheel
+          auditwheel: true
+          manylinux_version: manylinux_2_34
           sigstore_sign: true
           attestations: true
 

@@ -9,11 +9,12 @@ and utilities for emitting deprecation warnings.
 """
 
 import warnings
+from typing import Dict, Optional
 
 # Central registry of deprecated functionality
 # Key: deprecated symbol name
 # Value: replacement/migration guidance
-DEPRECATED_REGISTRY: dict[str, str] = {
+DEPRECATED_REGISTRY: Dict[str, str] = {
     "io.NetworkAddress()": (
         "NetworkAddress initialization from a string parameter only works for IPv4. "
         "Use io.AddrInfo instead for proper IPv4/IPv6 support."
@@ -53,7 +54,9 @@ DEPRECATED_REGISTRY: dict[str, str] = {
 }
 
 
-def warn_deprecated(symbol_name: str, alternative: str | None = None, stacklevel: int = 2) -> None:
+def warn_deprecated(
+    symbol_name: str, alternative: Optional[str] = None, stacklevel: int = 2
+) -> None:
     """
     Emit a deprecation warning for a deprecated symbol.
 
@@ -83,7 +86,7 @@ def is_deprecated(symbol_name: str) -> bool:
     return symbol_name in DEPRECATED_REGISTRY
 
 
-def get_deprecation_message(symbol_name: str) -> str | None:
+def get_deprecation_message(symbol_name: str) -> Optional[str]:
     """
     Get the deprecation message for a symbol.
 
@@ -96,7 +99,7 @@ def get_deprecation_message(symbol_name: str) -> str | None:
     return DEPRECATED_REGISTRY.get(symbol_name)
 
 
-def list_deprecated() -> dict[str, str]:
+def list_deprecated() -> Dict[str, str]:
     """
     Get a copy of the entire deprecation registry.
 

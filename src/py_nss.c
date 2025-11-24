@@ -793,13 +793,13 @@ py_indented_format(PyObject *self, PyObject *args, PyObject *kwds)
     /*
      * Implementation note:
      *
-     * This was originally coded to produce utf-8 strings in
-     * Py2. During the Py2 to Py3 porting when all strings were
-     * converted to unicode it was observed the conversion to utf-8
-     * and string building in utf-8 done in this function could be
-     * avoided and instead characters could be defined as
-     * PY_UNICODE_TYPE and all size computation and character movement
-     * be done on the scalar PY_UNICODE_TYPE character type.
+     * This was originally coded to produce utf-8 strings. During
+     * porting when all strings were converted to unicode it was
+     * observed the conversion to utf-8 and string building in utf-8
+     * done in this function could be avoided and instead characters
+     * could be defined as PY_UNICODE_TYPE and all size computation
+     * and character movement be done on the scalar PY_UNICODE_TYPE
+     * character type.
      *
      * But PEP 393 "Flexible String Representation" clearly warns
      * against extension modules assuming a fixed size for a unicode
@@ -3438,10 +3438,8 @@ SymKeyOrNoneConvert(PyObject *obj, PyObject **param)
 }
 
 /*
- * Note, this is only necessary in Py2, it is equivalent to the 's'
- * PyArg_Parse format conversion in Py3 with the exception a PyBytes
- * object is returned which must be DECREF'ed instead of returning a
- * char * pointer.
+ * Note, a PyBytes object is returned which must be DECREF'ed instead
+ * of returning a char * pointer.
  */
 static int
 UTF8Convert(PyObject *obj, PyObject **param)
@@ -3462,10 +3460,8 @@ UTF8Convert(PyObject *obj, PyObject **param)
 }
 
 /*
- * Note, this is only necessary in Py2, it is equivalent to the 'z'
- * PyArg_Parse format conversion in Py3 with the exception a PyBytes
- * object is returned (if obj is non-NULL or not None) which must be
- * DECREF'ed instead of returning a char * pointer.
+ * Note, a PyBytes object is returned (if obj is non-NULL or not None)
+ * which must be DECREF'ed instead of returning a char * pointer.
  */
 static int
 UTF8OrNoneConvert(PyObject *obj, PyObject **param)

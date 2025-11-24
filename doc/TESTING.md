@@ -256,7 +256,7 @@ Coverage configuration is in `pyproject.toml` under `[tool.coverage.*]`.
 
 Run tests in CI/CD pipelines on:
 
-- Python versions 3.10, 3.11, 3.12, 3.13, and 3.14
+- Python versions 3.9, 3.10, 3.11, 3.12, 3.13, and 3.14
 - Platforms: Linux, macOS, and Windows if supported
 - Different NSS versions if possible
 
@@ -272,7 +272,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v4

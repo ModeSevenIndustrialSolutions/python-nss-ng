@@ -103,6 +103,8 @@ jobs:
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
+          auditwheel: true
+          manylinux_version: manylinux_2_34
           clear_cache: ${{ github.event.inputs.clear_cache || 'false' }}
 
   python-build-arm64:
@@ -145,6 +147,8 @@ jobs:
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
+          auditwheel: true
+          manylinux_version: manylinux_2_34
           clear_cache: ${{ github.event.inputs.clear_cache || 'false' }}
 
   python-tests-x64:
