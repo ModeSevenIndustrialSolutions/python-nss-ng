@@ -245,7 +245,13 @@ def client(request, test_port):
 # -----------------------------------------------------------------------------
 
 def get_free_port():
-    """Get a free port by binding to port 0 and letting the OS choose."""
+    """Get a free port by binding to port 0 and letting the OS choose.
+
+    Note: This function creates and closes a socket to get a free port.
+    There's a small race condition window where another process could grab
+    the port, but this is unavoidable with this approach. The server binding
+    happens quickly enough that this is rarely an issue in practice.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('', 0))
         s.listen(1)
@@ -308,8 +314,14 @@ def server(test_port):
         print("listening on: %s" % (net_addr))
     sock.listen()
 
-    # Signal that server is ready
+    # Signal that server is ready - do this AFTER listen() completes
+    # to ensure the socket is fully ready to accept connections
     server_ready.set()
+
+    # Small delay to ensure the listening socket is fully established
+    # This helps prevent race conditions on ARM64 where timing is different
+    import time
+    time.sleep(0.1)
 
     # Accept a single connection from a client
     client_sock, client_addr = sock.accept()
@@ -354,15 +366,34 @@ def server(test_port):
 # -----------------------------------------------------------------------------
 
 def run_server_thread(port):
-    """Run server in a background thread."""
+    """Run server in a background thread with proper error handling."""
     server_ready.clear()
-    thread = threading.Thread(target=server, args=(port,), daemon=True)
+
+    # Store exception from server thread if it crashes
+    server_exception = []
+
+    def server_wrapper(port):
+        try:
+            server(port)
+        except Exception as e:
+            server_exception.append(e)
+            raise
+
+    thread = threading.Thread(target=server_wrapper, args=(port,), daemon=True)
     thread.start()
+
     # Wait for server to be ready (with timeout)
     # The server_ready event is set when the server is listening,
     # which is the deterministic signal we need
     if not server_ready.wait(timeout=5):
+        if server_exception:
+            raise RuntimeError(f"Server crashed during startup: {server_exception[0]}")
         raise RuntimeError("Server failed to start within timeout")
+
+    # Additional small delay to ensure socket is fully ready on all architectures
+    import time
+    time.sleep(0.2)
+
     return thread
 
 class TestSSL:
@@ -387,6 +418,10 @@ class TestSSL:
         assert "{%s}" % request == reply
 
         # Wait for server thread to complete
-        server_thread.join(timeout=2)
+        server_thread.join(timeout=5)
+
+        # Check if server thread is still alive (shouldn't be)
+        if server_thread.is_alive():
+            raise RuntimeError("Server thread did not complete within timeout")
 
         # NSS cleanup happens automatically in fixture teardown
