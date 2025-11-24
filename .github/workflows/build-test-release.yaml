@@ -236,7 +236,7 @@ jobs:
           build_formats: wheel
           auditwheel: true
           manylinux_version: manylinux_2_34
-          sigstore_sign: true
+          sigstore_sign: ${{ matrix.python-version != '3.9' }}
           attestations: true
 
   python-build-arm64:
@@ -283,7 +283,7 @@ jobs:
           build_formats: wheel
           auditwheel: true
           manylinux_version: manylinux_2_34
-          sigstore_sign: true
+          sigstore_sign: ${{ matrix.python-version != '3.9' }}
           attestations: true
 
   python-tests-x64:
