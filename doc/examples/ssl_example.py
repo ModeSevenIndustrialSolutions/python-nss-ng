@@ -123,7 +123,7 @@ def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
             print(e)
             return False
     else:
-        nicknames = nss.get_cert_nicknames(certdb, cert.SEC_CERT_NICKNAMES_USER)
+        nicknames = nss.get_cert_nicknames(certdb, nss.SEC_CERT_NICKNAMES_USER)
         for nickname in nicknames:
             try:
                 cert = nss.find_cert_from_nickname(nickname, password)
@@ -204,7 +204,7 @@ def Client():
         buf = buf.rstrip()        # remove newline record separator
         print("client received: %s" % (buf))
     except Exception as e:
-        print(e.strerror)
+        print(e.strerror)  # type: ignore[attr-defined]
         try:
             sock.close()
         except:
@@ -301,7 +301,7 @@ def Server():
                     pass
                 break
             except Exception as e:
-                print(e.strerror)
+                print(e.strerror)  # type: ignore[attr-defined]
                 break
         break
 

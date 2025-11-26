@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import sys
 import errno
+import getpass
 import signal
 import time
 
@@ -135,7 +136,7 @@ def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
             print("client_auth_data_callback: %s" % e, file=sys.stderr)
             return False
     else:
-        nicknames = nss.get_cert_nicknames(certdb, cert.SEC_CERT_NICKNAMES_USER)
+        nicknames = nss.get_cert_nicknames(certdb, nss.SEC_CERT_NICKNAMES_USER)
         for nickname in nicknames:
             try:
                 cert = nss.find_cert_from_nickname(nickname, password)

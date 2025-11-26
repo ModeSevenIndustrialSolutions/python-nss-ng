@@ -10,10 +10,11 @@ import subprocess
 import sys
 from string import Template
 import tempfile
-import six
+from typing import Any, Optional
+import six  # type: ignore[import-untyped]
 
 #-------------------------------------------------------------------------------
-logger = None
+logger: Optional[logging.Logger] = None
 
 FIPS_SWITCH_FAILED_ERR = 11
 FIPS_ALREADY_ON_ERR = 12
@@ -342,7 +343,8 @@ def get_system_fips_enabled():
         with open(fips_path) as f:
             data = f.read()
     except Exception as e:
-        logger.warning("Unable to determine system FIPS mode: %s" % e)
+        if logger:
+            logger.warning("Unable to determine system FIPS mode: %s" % e)
         data = '0'
 
     value = int(data)
@@ -372,7 +374,8 @@ def set_fips_mode(options):
         state = 'true'
     else:
         if get_system_fips_enabled():
-            logger.warning("System FIPS enabled, cannot disable FIPS")
+            if logger:
+                logger.warning("System FIPS enabled, cannot disable FIPS")
             return
         state = 'false'
 

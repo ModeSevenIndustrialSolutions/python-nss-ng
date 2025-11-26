@@ -5,7 +5,7 @@ import os
 import unittest
 
 import nss.nss as nss
-import six
+import six  # type: ignore[import-untyped]
 
 #-------------------------------------------------------------------------------
 class TestVersion(unittest.TestCase):

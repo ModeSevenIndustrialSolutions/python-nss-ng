@@ -170,7 +170,7 @@ class TestPKCS12Decoder(unittest.TestCase):
                 elif key_seen is False:
                     self.assertIs(bag.has_key, True)
                 else:
-                    self.fail("unexpected has_key for bag type = %s(%d)" % (bag.has_key, nss.oid_tag_name(bag.type), bag.type))
+                    self.fail("unexpected has_key for bag type = %s(%d)" % (nss.oid_tag_name(bag.type), bag.type))
 
             elif bag.type == nss.SEC_OID_PKCS12_V1_PKCS8_SHROUDED_KEY_BAG_ID:
                 self.assertIsInstance(bag.shroud_algorithm_id, nss.AlgorithmID)

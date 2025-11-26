@@ -3,11 +3,15 @@ from __future__ import print_function
 
 import argparse
 import sys
+from typing import Any
 import nss.nss as nss
 import nss.error as nss_error
 
 # Sample program that illustrates how to access certificate trust and/or
 # modify a certificates trust setting.
+
+# Global variable for command-line options
+options: Any = None
 
 def password_callback(slot, retry):
     return options.db_passwd

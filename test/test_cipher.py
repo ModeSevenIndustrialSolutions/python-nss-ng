@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import sys
 import os
 import unittest
+from typing import BinaryIO
 
 import nss.nss as nss
 
@@ -78,7 +79,7 @@ class TestCipher(unittest.TestCase):
 
     def test_string(self):
         if verbose:
-            print("Plain Text:\n%s" % (plain_text))
+            print("Plain Text:\n%r" % (plain_text))
 
         # Encode the plain text by feeding it to cipher_op getting cipher text back.
         # Append the final bit of cipher text by calling digest_final
@@ -107,7 +108,7 @@ class TestCipher(unittest.TestCase):
         decrypted_filename = os.path.basename(in_filename) + ".decrypted"
 
         in_file = open(in_filename, "rb")
-        encrypted_file = open(encrypted_filename, "wb")
+        encrypted_file: BinaryIO = open(encrypted_filename, "wb")
 
         if verbose:
             print("Encrypting file \"%s\" to \"%s\"" % (in_filename, encrypted_filename))
@@ -131,7 +132,7 @@ class TestCipher(unittest.TestCase):
             print("Decrypting file \"%s\" to \"%s\"" % (encrypted_filename, decrypted_filename))
 
         encrypted_file = open(encrypted_filename, "rb")
-        decrypted_file = open(decrypted_filename, "wb")
+        decrypted_file: BinaryIO = open(decrypted_filename, "wb")
         while True:
             # Read a chunk of data until EOF, encrypt it and write the encrypted data
             in_data = encrypted_file.read(chunk_size)
