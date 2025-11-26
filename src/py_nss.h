@@ -104,7 +104,7 @@ typedef struct {
 typedef struct {
     PyObject_HEAD
     SECKEYPrivateKey *private_key;
-} PrivateKey;
+} PyPrivateKey;
 
 /* ========================================================================== */
 /* ============================== SignedCRL Class =========================== */
@@ -123,7 +123,7 @@ typedef struct {
     PyObject_HEAD
     PyObject *py_modulus;
     PyObject *py_exponent;
-} RSAPublicKey;
+} PyRSAPublicKey;
 
 /* ========================================================================== */
 /* ============================ DSAPublicKey Class ========================== */
@@ -133,7 +133,7 @@ typedef struct {
     PyObject_HEAD
     PyObject *py_pqg_params;
     PyObject *py_public_value;
-} DSAPublicKey;
+} PyDSAPublicKey;
 
 /* ========================================================================== */
 /* ============================ RSAGenParams Class ========================== */
@@ -187,7 +187,7 @@ typedef struct {
     SECKEYPublicKey *pk;
     PyObject *py_rsa_key;
     PyObject *py_dsa_key;
-} PublicKey;
+} PyPublicKey;
 
 /* ========================================================================== */
 /* ======================== SubjectPublicKeyInfo Class ====================== */
@@ -198,7 +198,7 @@ typedef struct {
     PRArenaPool *arena;
     PyObject *py_algorithm;
     PyObject *py_public_key;
-} SubjectPublicKeyInfo;
+} PySubjectPublicKeyInfo;
 
 /* ========================================================================== */
 /* ============================= PK11SymKey Class =========================== */

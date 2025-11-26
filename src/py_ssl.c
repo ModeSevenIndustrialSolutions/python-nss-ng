@@ -896,7 +896,7 @@ get_client_auth_data(void *arg, PRFileDesc *fd, CERTDistNames *caNames, CERTCert
     Py_DECREF(return_args);
 
     *pRetCert = ((Certificate *)py_cert)->cert;
-    *pRetKey = ((PrivateKey *)py_priv_key)->private_key;
+    *pRetKey = ((PyPrivateKey *)py_priv_key)->private_key;
 
     PyGILState_Release(gstate);
 
@@ -926,7 +926,7 @@ PyDoc_STRVAR(SSLSocket_set_client_auth_data_callback_doc,
 \n\
 The callback has the following signature::\n\
     \n\
-    callback(ca_names, [user_data1, ...]) -> (Certificate, PrivateKey)\n\
+    callback(ca_names, [user_data1, ...]) -> (Certificate, PyPrivateKey)\n\
 \n\
 ca_names\n\
     Sequence of CA distinguished names that the server accepts. Each\n\
@@ -935,7 +935,7 @@ ca_names\n\
 user_dataN\n\
     zero or more caller supplied optional parameters\n\
 \n\
-The callback returns Certificate and PrivateKey if successful,\n\
+The callback returns Certificate and PyPrivateKey if successful,\n\
 or None if the callback failed.\n\
 \n\
 Defines a callback function for SSL to use in a client application\n\
@@ -1183,8 +1183,8 @@ PyDoc_STRVAR(SSLSocket_config_secure_server_doc,
 :Parameters:\n\
     cert : Certificate object\n\
         Server's certificate as a Certificate object\n\
-    key : PrivateKey object\n\
-        Server's private key as a PrivateKey object\n\
+    key : PyPrivateKey object\n\
+        Server's private key as a PyPrivateKey object\n\
     kea : integer\n\
         Key exchange type (e.g. ssl_kea_rsa, ssl_kea_dh, etc.)\n\
 \n\
@@ -1197,7 +1197,7 @@ static PyObject *
 SSLSocket_config_secure_server(SSLSocket *self, PyObject *args)
 {
     Certificate *py_cert = NULL;
-    PrivateKey *py_priv_key = NULL;
+    PyPrivateKey *py_priv_key = NULL;
     int kea = 0;
 
     TraceMethodEnter(self);
