@@ -91,7 +91,7 @@ def ssl_connect():
     # Get the IP Address of our server
     try:
         addr_info = io.AddrInfo(options.hostname)
-    except:
+    except Exception:
         print("ERROR: could not resolve hostname \"%s\"" % options.hostname)
         return
 
@@ -117,7 +117,7 @@ def ssl_connect():
             print("connected to: %s" % (net_addr))
             valid_addr = True
             break
-        except:
+        except Exception:
             continue
 
     if not valid_addr:

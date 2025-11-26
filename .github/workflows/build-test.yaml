@@ -99,7 +99,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@main  # Testing
+        uses: lfreleng-actions/python-build-action@7f4c0b732b54dbc356981892b308b718ad839feb  # v1.0.0
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -143,7 +143,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@main  # Testing
+        uses: lfreleng-actions/python-build-action@7f4c0b732b54dbc356981892b308b718ad839feb  # v1.0.0
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -285,7 +285,7 @@ jobs:
         # yamllint disable-line rule:line-length
         # uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@update-action  # Testing
+        uses: lfreleng-actions/python-audit-action@e607f187734d18c6ab2cdff3dd2db91840aae07a  # v0.2.4
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
@@ -328,7 +328,7 @@ jobs:
         # yamllint disable-line rule:line-length
         # uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
+        uses: lfreleng-actions/python-audit-action@e607f187734d18c6ab2cdff3dd2db91840aae07a  # v0.2.4
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}

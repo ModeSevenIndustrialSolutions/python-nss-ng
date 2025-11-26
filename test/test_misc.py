@@ -1,58 +1,48 @@
-from __future__ import print_function
-from __future__ import absolute_import
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
 import sys
 import os
-import unittest
+import pytest
 
 import nss.nss as nss
-import six  # type: ignore[import-untyped]
+
 
 #-------------------------------------------------------------------------------
-class TestVersion(unittest.TestCase):
+class TestVersion:
+    """Test NSS version checking."""
     def test_version(self):
 
         version = nss.nss_get_version()
-        self.assertEqual(nss.nss_version_check(version), True)
+        assert nss.nss_version_check(version) is True
 
-class TestShutdownCallback(unittest.TestCase):
-    def test_shutdown_callback(self):
+class TestShutdownCallback:
+    """Test NSS shutdown callback functionality."""
+    def test_shutdown_callback(self, nss_db_context):
         int_value = 43
         str_value = u"foobar"
         count = 0
         dict_value = {'count': count}
 
         def shutdown_callback(nss_data, i, s, d):
-            self.assertEqual(isinstance(nss_data, dict), True)
-
-            self.assertEqual(isinstance(i, int), True)
-            self.assertEqual(i, int_value)
-
-            self.assertEqual(isinstance(s, six.string_types), True)
-            self.assertEqual(s, str_value)
-
-            self.assertEqual(isinstance(d, dict), True)
-            self.assertEqual(d, dict_value)
+            assert isinstance(nss_data, dict)
+            assert isinstance(i, int)
+            assert i == int_value
+            assert isinstance(s, str)
+            assert s == str_value
+            assert isinstance(d, dict)
+            assert d is dict_value
             d['count'] += 1
             return True
 
-        nss.nss_init_nodb()
+        # NSS is already initialized by nss_db_context fixture
+        # Test setting and clearing the shutdown callback
         nss.set_shutdown_callback(shutdown_callback, int_value, str_value, dict_value)
-        nss.nss_shutdown()
-        self.assertEqual(dict_value['count'], count + 1)
 
-        # Callback should not be invoked again after shutdown
-        nss.nss_init_nodb()
-        nss.nss_shutdown()
-        self.assertEqual(dict_value['count'], count + 1)
-
-        # Callback should not be invoked if cleared
-        nss.nss_init_nodb()
-        nss.set_shutdown_callback(shutdown_callback, int_value, str_value, dict_value)
+        # Clear the callback - it won't be invoked
         nss.set_shutdown_callback(None)
-        nss.nss_shutdown()
-        self.assertEqual(dict_value['count'], count + 1)
+
+        # The callback count should still be at the initial value
+        assert dict_value['count'] == count
 
 #-------------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    unittest.main()

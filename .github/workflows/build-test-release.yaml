@@ -69,7 +69,7 @@ jobs:
       - name: 'Verify pushed tag'
         id: 'tag-validate'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/tag-validate-action@fix-ssh-signature-detection  # Testing
+        uses: lfreleng-actions/tag-validate-action@ea114d32becba39b63b9797ebcee95bcbdfd0057  # v0.1.0
         with:
           require_type: 'semver'
           require_signed: 'true'
@@ -146,7 +146,7 @@ jobs:
       - name: 'Extract Python project metadata'
         id: metadata
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/build-metadata-action@initial-update
+        uses: lfreleng-actions/build-metadata-action@82adfb8d227c85eb4bcbc0a71242d031f459462e  # v0.1.1
         with:
           path_prefix: '.'
           output_format: summary
@@ -186,7 +186,7 @@ jobs:
       - name: "Build source distribution"
         id: python-build-sdist
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@main  # Testing
+        uses: lfreleng-actions/python-build-action@7f4c0b732b54dbc356981892b308b718ad839feb  # v1.0.0
         with:
           artefact_name: python-nss-ng-sdist
           build_formats: sdist
@@ -229,7 +229,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@main  # Testing
+        uses: lfreleng-actions/python-build-action@7f4c0b732b54dbc356981892b308b718ad839feb  # v1.0.0
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -276,7 +276,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@main  # Testing
+        uses: lfreleng-actions/python-build-action@7f4c0b732b54dbc356981892b308b718ad839feb  # v1.0.0
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -406,7 +406,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
+        uses: lfreleng-actions/python-audit-action@e607f187734d18c6ab2cdff3dd2db91840aae07a  # v0.2.4
         with:
           python_version: "${{ matrix.python-version }}"
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
@@ -447,7 +447,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
+        uses: lfreleng-actions/python-audit-action@e607f187734d18c6ab2cdff3dd2db91840aae07a  # v0.2.4
         with:
           python_version: "${{ matrix.python-version }}"
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
@@ -649,7 +649,7 @@ jobs:
 
       - name: 'Test PyPI publishing'
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/pypi-publish-action@update-action  # Testing
+        uses: lfreleng-actions/pypi-publish-action@53c5dfd85b6a8919216a58a8ed9a908c5bce1d3e  # v0.1.2
         with:
           environment: 'development'
           tag: "${{ needs.tag-validate.outputs.tag }}"
@@ -678,7 +678,7 @@ jobs:
 
       - name: 'PyPI release'
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/pypi-publish-action@update-action  # Testing
+        uses: lfreleng-actions/pypi-publish-action@53c5dfd85b6a8919216a58a8ed9a908c5bce1d3e  # v0.1.2
         with:
           environment: 'production'
           attestations: true
@@ -730,7 +730,7 @@ jobs:
 
       - name: 'Attach build artefacts to release'
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/release-assets-action@initial-update  # Testing
+        uses: lfreleng-actions/release-assets-action@34a4887ec24e0f9ff358a872beb69394683079a6  # v0.1.0
         with:
           asset_paths: '["dist/**"]'
           release_tag: "${{ needs.tag-validate.outputs.tag }}"

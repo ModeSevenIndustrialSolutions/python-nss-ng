@@ -1,6 +1,17 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
+import sys
+
+# Platform support check - only Linux and macOS are supported
+if sys.platform.startswith("win"):
+    raise RuntimeError(
+        "Unsupported platform: Windows. python-nss-ng only supports Linux and macOS platforms."
+    )
+
 """
 ============
 Introduction

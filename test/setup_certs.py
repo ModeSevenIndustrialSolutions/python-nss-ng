@@ -1,4 +1,6 @@
-from __future__ import absolute_import
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
 
 import argparse
 import atexit
@@ -10,8 +12,10 @@ import subprocess
 import sys
 from string import Template
 import tempfile
-from typing import Any, Optional
-import six  # type: ignore[import-untyped]
+from typing import Dict, List, Optional, Tuple
+from util import find_nss_tool
+from exceptions import CommandExecutionError, CmdError
+
 
 #-------------------------------------------------------------------------------
 logger: Optional[logging.Logger] = None
@@ -21,25 +25,7 @@ FIPS_ALREADY_ON_ERR = 12
 FIPS_ALREADY_OFF_ERR = 13
 
 
-class CmdError(Exception):
-    def __init__(self, cmd_args, returncode, message=None, stdout=None, stderr=None):
-        self.cmd_args = cmd_args
-        self.returncode = returncode
-        if message is None:
-            self.message = 'Failed error=%s, ' % (returncode)
-            if stderr:
-                self.message += '"%s", ' % stderr
-            self.message += 'args=%s' % (cmd_args)
-        else:
-            self.message = message
-        self.stdout = stdout
-        self.stderr = stderr
-
-    def __str__(self):
-        return self.message
-
-
-def run_cmd(cmd_args, input=None):
+def run_cmd(cmd_args: List[str], input: Optional[str] = None) -> Tuple[str, str]:
     logging.debug(' '.join(cmd_args))
     try:
         p = subprocess.Popen(cmd_args,
@@ -55,7 +41,7 @@ def run_cmd(cmd_args, input=None):
                            stdout, stderr)
         return stdout, stderr
     except OSError as e:
-        raise CmdError(cmd_args, e.errno, stderr=str(e))
+        raise CmdError(cmd_args, e.errno, stderr=str(e))  # type: ignore[arg-type]
 
 def exit_handler(options):
     logging.debug('in exit handler')
@@ -108,7 +94,7 @@ def create_passwd_file(options):
 
 
 def db_has_cert(options, nickname):
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-d', options.db_name,
                 '-L',
                 '-n', nickname]
@@ -116,14 +102,14 @@ def db_has_cert(options, nickname):
     try:
         run_cmd(cmd_args)
     except CmdError as e:
-        if e.returncode == 255 and 'not found' in e.stderr:
+        if e.returncode == 255 and e.stderr and 'not found' in e.stderr:
             return False
         else:
             raise
     return True
 
 def format_cert(options, nickname):
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-L',                          # OPERATION: list
                 '-d', options.db_name,         # NSS database
                 '-f', options.passwd_filename, # database password in file
@@ -149,7 +135,7 @@ def create_database(options):
             shutil.rmtree(options.db_dir)
         os.makedirs(options.db_dir)
 
-        cmd_args = ['/usr/bin/certutil',
+        cmd_args = [find_nss_tool('certutil'),
                     '-N',                          # OPERATION: create database
                     '-d', options.db_name,         # NSS database
                     '-f', options.passwd_filename, # database password in file
@@ -166,7 +152,7 @@ def create_ca_cert(options):
     logging.info('creating ca cert: subject="%s", nickname="%s"',
                  options.ca_subject, options.ca_nickname)
 
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-S',                            # OPERATION: create signed cert
                 '-x',                            # self-sign the cert
                 '-d', options.db_name,           # NSS database
@@ -176,7 +162,7 @@ def create_ca_cert(options):
                 '-g', str(options.key_size),     # keysize
                 '-t', 'CT,,CT',                  # trust
                 '-1',                            # add key usage extension
-                '-2',                            # add basic contraints extension
+                '-2',                            # add basic constraints extension
                 '-5',                            # add certificate type extension
                 '-m', str(serial_number),        # cert serial number
                 '-v', str(options.valid_months), # validity in months
@@ -233,7 +219,7 @@ def create_server_cert(options):
     logging.info('creating server cert: subject="%s", nickname="%s"',
                  options.server_subject, options.server_nickname)
 
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-S',                            # OPERATION: create signed cert
                 '-d', options.db_name,           # NSS database
                 '-f', options.passwd_filename,   # database password in file
@@ -277,7 +263,7 @@ def create_client_cert(options):
     logging.info('creating client cert: subject="%s", nickname="%s"',
                  options.client_subject, options.client_nickname)
 
-    cmd_args = ['/usr/bin/certutil',
+    cmd_args = [find_nss_tool('certutil'),
                 '-S',                            # OPERATION: create signed cert
                 '-d', options.db_name,           # NSS database
                 '-f', options.passwd_filename,   # database password in file
@@ -320,23 +306,36 @@ def add_trusted_certs(options):
     logging.info('adding system trusted certs: name="%s" module="%s"',
                  name, module)
 
-    cmd_args = ['/usr/bin/modutil',
+    cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', options.db_name, # NSS database
                 '-add', name,              # module name
                 '-libfile', module,        # module
                 ]
 
-    run_cmd(cmd_args)
-    return name
+    try:
+        run_cmd(cmd_args)
+        logging.info('Successfully added trusted certs module')
+        return name
+    except CmdError as e:
+        # Module not found is not a fatal error - tests can run without it
+        logging.warning('Could not add trusted certs module: %s', e.stderr if e.stderr else e.message)
+        logging.warning('Tests will continue without system trusted certificates')
+        return None
 
-def parse_fips_enabled(string):
+def parse_fips_enabled(string: str) -> bool:
     if re.search('FIPS mode disabled', string):
         return False
     if re.search('FIPS mode enabled', string):
         return True
     raise ValueError('unknown fips enabled string: "%s"' % string)
 
-def get_system_fips_enabled():
+def get_system_fips_enabled() -> bool:
+    # FIPS mode detection is Linux-specific
+    if not sys.platform.startswith("linux"):
+        if logger:
+            logger.debug("FIPS mode detection only available on Linux")
+        return False
+
     fips_path = '/proc/sys/crypto/fips_enabled'
 
     try:
@@ -354,8 +353,8 @@ def get_system_fips_enabled():
         return False
 
 
-def get_db_fips_enabled(db_name):
-    cmd_args = ['/usr/bin/modutil',
+def get_db_fips_enabled(db_name: str) -> bool:
+    cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', db_name,               # NSS database
                 '-chkfips', 'true',              # enable/disable fips
                 ]
@@ -365,9 +364,9 @@ def get_db_fips_enabled(db_name):
         return parse_fips_enabled(stdout)
     except CmdError as e:
         if e.returncode == FIPS_SWITCH_FAILED_ERR:
-            return parse_fips_enabled(e.stdout)
-        else:
-            raise
+            stdout_str = e.stdout if e.stdout else ""
+            return parse_fips_enabled(stdout_str)
+        raise
 
 def set_fips_mode(options):
     if options.fips:
@@ -381,7 +380,7 @@ def set_fips_mode(options):
 
     logging.info('setting fips: %s', state)
 
-    cmd_args = ['/usr/bin/modutil',
+    cmd_args = [find_nss_tool('modutil'),
                 '-dbdir', options.db_name,       # NSS database
                 '-fips', state,                  # enable/disable fips
                 '-force'
@@ -480,7 +479,7 @@ def setup_certs(args):
                         show_certs = False,
                         clean = True,
                         add_trusted_certs = True,
-                        hostname = os.uname()[1],
+                        hostname = 'localhost',
                         db_type = 'sql',
                         db_dir = 'pki',
                         db_passwd = 'DB_passwd',
@@ -493,7 +492,7 @@ def setup_certs(args):
                         client_nickname = '${client_username}',
                         serial_number = 1,
                         key_type = 'rsa',
-                        key_size = 1024,
+                        key_size = 2048,
                         valid_months = 12,
                         ca_path_len = 2,
                         serial_file = '${db_dir}/serial',
@@ -512,8 +511,8 @@ def setup_certs(args):
         if key.startswith('_'):
             continue
         value = getattr(options, key)
-        # Can't substitue on non-string values
-        if not isinstance(value, six.string_types):
+        # Can't substitute on non-string values
+        if not isinstance(value, str):
             continue
         # Don't bother trying to substitute if $ substitution character isn't present
         if '$' not in value:
@@ -541,7 +540,7 @@ def setup_certs(args):
     options.passwd_filename = None
     options.noise_filename = None
 
-    # Set function to clean up on exit, bind fuction with options
+    # Set function to clean up on exit, bind function with options
     def exit_handler_with_options():
         exit_handler(options)
     atexit.register(exit_handler_with_options)

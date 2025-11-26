@@ -207,7 +207,7 @@ def Client():
         print(e.strerror)  # type: ignore[attr-defined]
         try:
             sock.close()
-        except:
+        except Exception:
             pass
         return
 
@@ -215,7 +215,7 @@ def Client():
     if buf == 'Goodbye':
         try:
             sock.shutdown()
-        except:
+        except Exception:
             pass
 
     try:
@@ -297,7 +297,7 @@ def Server():
                 try:
                     client_sock.shutdown(io.PR_SHUTDOWN_RCV)
                     client_sock.close()
-                except:
+                except Exception:
                     pass
                 break
             except Exception as e:

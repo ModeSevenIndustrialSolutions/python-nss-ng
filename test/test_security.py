@@ -235,7 +235,7 @@ class TestResourceCleanup:
         import os
 
         file_path = None
-        with util.temp_file_with_data(b"test data") as path:  # type: ignore[attr-defined]
+        with util.temp_file_with_data(b"test data") as path:
             file_path = path
             assert os.path.exists(path)
 
@@ -286,8 +286,8 @@ class TestTypeHints:
 
         # Check that functions have annotations
         assert hasattr(util.get_build_dir, '__annotations__')
-        assert hasattr(util.find_nss_tool, '__annotations__')  # type: ignore[attr-defined]
-        assert hasattr(util.temp_file_with_data, '__annotations__')  # type: ignore[attr-defined]
+        assert hasattr(util.find_nss_tool, '__annotations__')
+        assert hasattr(util.temp_file_with_data, '__annotations__')
 
 
 @pytest.mark.allow_insecure
