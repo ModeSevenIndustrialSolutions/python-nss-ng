@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2025 The Linux Foundation
+
+# Exclude old build system files from distribution tarballs
+# These are kept in git for historical reference but should not be
+# included in sdist since we now use meson-python
+setup.py export-ignore
+setup.cfg export-ignore
+
+# Exclude development and CI files from distribution
+.gitattributes export-ignore
+.gitignore export-ignore
+.github export-ignore
+.pre-commit-config.yaml export-ignore
+.editorconfig export-ignore
+.codespell export-ignore
+.gitlint export-ignore
+.prettierignore export-ignore
+.yamllint export-ignore
+
+# Exclude import script and related files
+import_files.py export-ignore
+import_log.txt export-ignore
+IMPORT_SUMMARY.md export-ignore
+IMPORTED_FILES.txt export-ignore
+CLEANUP_NOTES.txt export-ignore

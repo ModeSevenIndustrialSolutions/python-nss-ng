@@ -1,0 +1,291 @@
+---
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2025 The Linux Foundation
+
+# Build and test python-nss-ng with NSS/NSPR system dependencies
+name: 'Build with NSS/NSPR'
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!.*'
+      - '!tox.ini'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!.*'
+      - '!tox.ini'
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    name: 'Fedora Python ${{ matrix.python-version }} (${{ matrix.arch }})'
+    runs-on: ${{ matrix.runner }}
+    # Use Fedora container for newer NSS/NSPR versions
+    # Fedora 42 provides NSS 3.117+ with modern cryptographic key types
+    # (edKey, ecMontKey, mldsaKey) which are required by this project.
+    # Ubuntu 24.04 only has NSS 3.98 which lacks these features.
+    container: fedora:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Use Python versions available in Fedora 42
+        # Note: Python 3.13 is not available; use 3.14 instead
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.14']
+        # Build for both x86_64 and ARM64 architectures
+        arch: ['x86_64', 'aarch64']
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    timeout-minutes: 15
+
+    steps:
+      - name: Harden Runner
+        # yamllint disable-line rule:line-length
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+        with:
+          fetch-depth: 0  # Full history needed for meson dist
+
+      - name: Install build dependencies in Fedora container
+        run: |
+          # Install Python version from matrix
+          PY_VER="${{ matrix.python-version }}"
+          dnf install -y \
+            nss-devel \
+            nspr-devel \
+            nss-tools \
+            pkg-config \
+            gcc \
+            gcc-c++ \
+            make \
+            ccache \
+            git \
+            python${PY_VER} \
+            python${PY_VER}-devel
+
+          # Configure Git to trust the workspace directory
+          # This is needed for meson dist to work in containers
+          git config --global --add safe.directory '*'
+          git config --global --add \
+            safe.directory "$(pwd)"
+
+          # Verify Git repository is accessible
+          echo "=== Verifying Git Repository ==="
+          git --version
+          git rev-parse --git-dir || echo "ERROR: Not a git repository"
+          git log --oneline -1 || echo "ERROR: Cannot read git log"
+
+          # Create convenient alias
+          ln -sf /usr/bin/python${PY_VER} /usr/local/bin/python-build
+
+          # Verify installation
+          python-build --version
+          pkg-config --modversion nss
+          pkg-config --modversion nspr
+          echo "=== Final Git Check ==="
+          git status --short || \
+            echo "Git status failed"
+
+      - name: Install Python build tools
+        run: |
+          # Ensure pip is available
+          # (Fedora Python packages don't include pip by default)
+          python-build -m ensurepip
+          python-build -m pip install --upgrade pip
+          python-build -m pip install --break-system-packages \
+            build setuptools wheel setuptools-scm meson ninja
+
+      - name: Configure build environment
+        run: |
+          echo "CC=ccache gcc" >> "$GITHUB_ENV"
+          echo "CXX=ccache g++" >> "$GITHUB_ENV"
+          ccache --version
+          ccache --zero-stats
+
+      - name: Build wheel (skip sdist in container due to Git limitations)
+        run: |
+          python-build -m build --wheel 2>&1
+
+      - name: Install package from wheel
+        run: |
+          python-build -m pip install dist/*.whl
+          # shellcheck disable=SC2261
+          python-build -m pip install pytest>=9.0 \
+            pytest-cov>=7.0 pytest-xdist>=3.8
+
+      - name: Show build info
+        if: always()
+        run: |
+          echo "=== Architecture ==="
+          uname -m
+          echo "=== Python version ==="
+          python-build --version
+          echo "=== NSS version ==="
+          pkg-config --modversion nss || echo "N/A"
+          echo "=== NSPR version ==="
+          pkg-config --modversion nspr || echo "N/A"
+          echo "=== Installed packages ==="
+          python-build -m pip list
+          echo "=== ccache statistics ==="
+          ccache --show-stats || echo "ccache not available"
+
+      - name: Run tests
+        run: |
+          python-build -m pytest test/ -v --tb=short
+
+  build-macos:
+    name: 'macOS Python ${{ matrix.python-version }} (ARM64)'
+    # macOS builds only target Apple Silicon (ARM64)
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        # yamllint disable rule:line-length
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+        with:
+          fetch-depth: 0  # Full history needed for meson dist
+
+      - name: Set up Python ${{ matrix.python-version }}
+        # yamllint disable rule:line-length
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Setup ccache
+        # yamllint disable-line rule:line-length
+        uses: hendrikmuhs/ccache-action@bfa03e1de4d7f7c3e80ad9109feedd05c4f5a716
+        with:
+          # yamllint disable-line rule:line-length
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ matrix.python-version }}-ccache-
+          max-size: 500M
+
+      - name: Install NSS/NSPR via Homebrew
+        run: |
+          # Only install if not already present to avoid warnings
+          brew list nss &>/dev/null || brew install nss
+          brew list nspr &>/dev/null || brew install nspr
+          brew list pkg-config &>/dev/null || brew install pkg-config
+          # Verify installation
+          pkg-config --modversion nss || echo "NSS pkg-config not found"
+          pkg-config --modversion nspr || echo "NSPR pkg-config not found"
+          # Verify NSS tools (certutil, etc.) are available
+          which certutil || echo "WARNING: certutil not found in PATH"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build setuptools wheel setuptools-scm
+
+      - name: Configure build environment
+        run: |
+          echo "CC=ccache clang" >> "$GITHUB_ENV"
+          echo "CXX=ccache clang++" >> "$GITHUB_ENV"
+          ccache --version
+          ccache --zero-stats
+
+      - name: Build source distribution
+        run: |
+          python -m build --sdist 2>&1
+
+      - name: Build wheel
+        run: |
+          python -m build --wheel 2>&1
+
+      - name: Install package from wheel
+        run: |
+          pip install dist/*.whl
+          # shellcheck disable=SC2261
+          pip install pytest>=9.0 pytest-cov>=7.0 pytest-xdist>=3.8
+
+      - name: Show build info
+        if: always()
+        run: |
+          echo "=== Architecture ==="
+          uname -m
+          echo "=== Python version ==="
+          python --version
+          echo "=== Homebrew prefix ==="
+          brew --prefix
+          echo "=== NSS location ==="
+          brew --prefix nss
+          echo "=== NSPR location ==="
+          brew --prefix nspr
+          echo "=== NSS version ==="
+          pkg-config --modversion nss || echo "N/A"
+          echo "=== NSPR version ==="
+          pkg-config --modversion nspr || echo "N/A"
+          echo "=== Installed packages ==="
+          pip list
+          echo "=== ccache statistics ==="
+          ccache --show-stats
+
+      - name: Clean test PKI directories
+        run: |
+          # Remove any existing test PKI directories to ensure
+          # fresh certificates
+          rm -rf test/pki test/pki_* || true
+
+      - name: Run tests
+        run: |
+          pytest test/ -v --tb=short
+
+  build-status-report:
+    name: 'Build Status Report'
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-macos]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Report status
+        run: |
+          {
+            echo "## Build Status Report"
+            echo ""
+            echo "### Fedora Build"
+            echo "Status: ${{ needs.build-linux.result }}"
+            echo ""
+            echo "### macOS Build"
+            echo "Status: ${{ needs.build-macos.result }}"
+            echo ""
+            echo "### Notes"
+            echo "- Fedora builds test Python 3.9, 3.10, 3.11, 3.12, 3.14 with"
+            echo "  NSS 3.117+"
+            echo "- Linux builds run on both x86_64 and aarch64 architectures"
+            echo "- macOS builds target Apple Silicon (ARM64) only"
+            echo "- macOS builds test Python 3.9, 3.10, 3.11, 3.12, 3.13"
+            echo "- Modern cryptographic key types require NSS 3.100+"
+          } >> "$GITHUB_STEP_SUMMARY"
