@@ -1829,7 +1829,7 @@ SECItem_to_base64(SECItem *item, size_t chars_per_line, char *pem_type)
         src_end = base64 + base64_len;
 
         while(src < src_end) {
-            line_len = MIN(chars_per_line, src_end - src);
+            line_len = MIN(chars_per_line, (size_t)(src_end - src));
             if ((line = PyUnicode_FromStringAndSize(src, line_len)) == NULL) {
                 goto fail;
             }
@@ -3532,6 +3532,10 @@ key_type_str(KeyType key_type)
     static char buf[80];
 
     switch(key_type) {
+    case kyberKey:
+    case edKey:
+    case ecMontKey:
+    case mldsaKey:
     case nullKey:     return "NULL";
     case rsaKey:      return "RSA";
     case dsaKey:      return "DSA";
@@ -4815,7 +4819,7 @@ CERTAVA_value_to_pystr(CERTAVA *ava)
      * can't get the canonical name use a dotted-decimal OID
      * representation instead.
      */
-    if ((oid_tag = CERT_GetAVATag(ava)) != -1) {
+    if ((oid_tag = CERT_GetAVATag(ava)) != (SECOidTag)-1) {
         attr_name = ava_oid_tag_to_name(oid_tag);
     }
 
@@ -4879,7 +4883,7 @@ CERTRDN_to_pystr(CERTRDN *rdn)
          * can't get the canonical name use a dotted-decimal OID
          * representation instead.
          */
-        if ((oid_tag = CERT_GetAVATag(ava)) != -1) {
+        if ((oid_tag = CERT_GetAVATag(ava)) != (SECOidTag)-1) {
             attr_name = ava_oid_tag_to_name(oid_tag);
         }
 
@@ -7926,6 +7930,10 @@ PublicKey_format_lines(PyPublicKey *self, PyObject *args, PyObject *kwds)
     case ecKey:
     case rsaPssKey:
     case rsaOaepKey:
+    case kyberKey:
+    case edKey:
+    case ecMontKey:
+    case mldsaKey:
     case nullKey:
         if ((obj = PublicKey_get_key_type_str(self, NULL)) == NULL) {
             goto fail;
@@ -8104,6 +8112,10 @@ PublicKey_new_from_SECKEYPublicKey(SECKEYPublicKey *pk)
     case ecKey:
     case rsaPssKey:
     case rsaOaepKey:
+    case kyberKey:
+    case edKey:
+    case ecMontKey:
+    case mldsaKey:
     case nullKey:
         break;
     }
@@ -10189,7 +10201,7 @@ Certificate_get_extension(Certificate *self, PyObject *args, PyObject *kwds)
                                      &py_oid))
         return NULL;
 
-    if ((oid_tag = get_oid_tag_from_object(py_oid)) == -1) {
+    if ((SECOidTag)(oid_tag = get_oid_tag_from_object(py_oid)) == (SECOidTag)-1) {
         return NULL;
     }
 
@@ -11279,7 +11291,7 @@ AVA_init(AVA *self, PyObject *args, PyObject *kwds)
                                      &py_type, &py_value))
         return -1;
 
-    if ((oid_tag = get_oid_tag_from_object(py_type)) == -1) {
+    if ((SECOidTag)(oid_tag = get_oid_tag_from_object(py_type)) == (SECOidTag)-1) {
         return -1;
     }
 
@@ -11660,7 +11672,7 @@ RDN_subscript(RDN *self, PyObject* item)
     } else if (PyBaseString_Check(item) || PySecItem_Check(item)) {
         int oid_tag;
 
-        if ((oid_tag = get_oid_tag_from_object(item)) == -1) {
+        if ((SECOidTag)(oid_tag = get_oid_tag_from_object(item)) == (SECOidTag)-1) {
             return NULL;
         }
 
@@ -12112,7 +12124,7 @@ DN_subscript(DN *self, PyObject* item)
     } else if (PyBaseString_Check(item) || PySecItem_Check(item)) {
         int oid_tag;
 
-        if ((oid_tag = get_oid_tag_from_object(item)) == -1) {
+        if ((SECOidTag)(oid_tag = get_oid_tag_from_object(item)) == (SECOidTag)-1) {
             return NULL;
         }
 
@@ -23443,21 +23455,21 @@ pk11_create_pbev2_algorithm_id(PyObject *self, PyObject *args, PyObject *kwds)
         return NULL;
 
     if (py_pbe_alg) {
-        if ((pbe_alg_tag = get_oid_tag_from_object(py_pbe_alg)) == -1) {
+        if ((SECOidTag)(pbe_alg_tag = get_oid_tag_from_object(py_pbe_alg)) == (SECOidTag)-1) {
             SECItem_param_release(salt_param);
             return NULL;
         }
     }
 
     if (py_cipher_alg) {
-        if ((cipher_alg_tag = get_oid_tag_from_object(py_cipher_alg)) == -1) {
+        if ((SECOidTag)(cipher_alg_tag = get_oid_tag_from_object(py_cipher_alg)) == (SECOidTag)-1) {
             SECItem_param_release(salt_param);
             return NULL;
         }
     }
 
     if (py_prf_alg) {
-        if ((prf_alg_tag = get_oid_tag_from_object(py_prf_alg)) == -1) {
+        if ((SECOidTag)(prf_alg_tag = get_oid_tag_from_object(py_prf_alg)) == (SECOidTag)-1) {
             SECItem_param_release(salt_param);
             return NULL;
         }
@@ -24043,7 +24055,7 @@ pkcs12_map_cipher(PyObject *self, PyObject *args, PyObject *kwds)
                                      &py_cipher, &key_length))
         return NULL;
 
-    if ((tag = get_oid_tag_from_object(py_cipher)) == -1) {
+    if ((SECOidTag)(tag = get_oid_tag_from_object(py_cipher)) == (SECOidTag)-1) {
         return NULL;
     }
 
@@ -24367,7 +24379,7 @@ Enables all PKCS12 ciphers, which are: \n\
 static PyObject *
 pkcs12_enable_all_ciphers(PyObject *self, PyObject *args)
 {
-    int i;
+    size_t i;
     long cipher;
     long all_ciphers[] = {PKCS12_RC4_40,
                           PKCS12_RC4_128,
