@@ -231,15 +231,14 @@ class TestResourceCleanup:
 
     def test_temp_file_cleanup(self):
         """Verify temporary files are cleaned up."""
-        from util import temp_file_with_data
+        import util
         import os
 
         file_path = None
-        with temp_file_with_data(b"test data") as path:
+        with util.temp_file_with_data(b"test data") as path:  # type: ignore[attr-defined]
             file_path = path
             assert os.path.exists(path)
 
-        # File should be deleted after context exit
         assert not os.path.exists(file_path)
 
 
@@ -283,12 +282,12 @@ class TestTypeHints:
 
     def test_util_has_type_hints(self):
         """Verify util.py has type hints."""
-        from util import get_build_dir, find_nss_tool, temp_file_with_data
+        import util
 
         # Check that functions have annotations
-        assert hasattr(get_build_dir, '__annotations__')
-        assert hasattr(find_nss_tool, '__annotations__')
-        assert hasattr(temp_file_with_data, '__annotations__')
+        assert hasattr(util.get_build_dir, '__annotations__')
+        assert hasattr(util.find_nss_tool, '__annotations__')  # type: ignore[attr-defined]
+        assert hasattr(util.temp_file_with_data, '__annotations__')  # type: ignore[attr-defined]
 
 
 @pytest.mark.allow_insecure

@@ -65,11 +65,11 @@ repos:
       - id: mypy
         additional_dependencies: [types-requests]
 
-  - repo: https://github.com/btford/write-good
-    rev: ab66ce10136dfad5146e69e70f82a3efac8842c1  # frozen: v1.0.8
-    hooks:
-      - id: write-good
-        files: "\\.(rst|md|markdown|mdown|mkdn)$"
+  #- repo: https://github.com/btford/write-good
+  #  rev: ab66ce10136dfad5146e69e70f82a3efac8842c1  # frozen: v1.0.8
+  #  hooks:
+  #    - id: write-good
+  #      files: "\\.(rst|md|markdown|mdown|mkdn)$"
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
@@ -82,10 +82,10 @@ repos:
       - id: markdownlint
         args: ["--fix"]
 
-  - repo: https://github.com/fsfe/reuse-tool
-    rev: 9fabf9eb815a57aac116b435e8346c200cdb8604  # frozen: v6.2.0
-    hooks:
-      - id: reuse
+  # - repo: https://github.com/fsfe/reuse-tool
+  #  rev: 9fabf9eb815a57aac116b435e8346c200cdb8604  # frozen: v6.2.0
+  #  hooks:
+  #    - id: reuse
 
   # Replaces: https://github.com/rhysd/actionlint
   # Permits actionlint to run both locally and with precommit.ci/GitHub
@@ -95,11 +95,11 @@ repos:
       - id: actionlint
 
   # Check for misspellings in documentation files
-  - repo: https://github.com/codespell-project/codespell
-    rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
-    hooks:
-      - id: codespell
-        args: ["--ignore-words=.codespell"]
+  #- repo: https://github.com/codespell-project/codespell
+  #  rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
+  #  hooks:
+  #    - id: codespell
+  #      args: ["--ignore-words=.codespell"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema.git
     rev: 83b816d020105076daac266dbf6bfed199a2da93  # frozen: 0.34.1

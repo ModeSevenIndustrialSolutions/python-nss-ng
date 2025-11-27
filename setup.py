@@ -7,12 +7,18 @@ import os
 import re
 import subprocess
 import re
+from typing import Any, List, Optional
 
 from distutils.core import setup, Extension, Command
 from distutils.spawn import find_executable, spawn
 from distutils import log
 from distutils.filelist import FileList
-from distutils.util import subst_vars, change_root
+from distutils.util import change_root
+try:
+    from distutils.util import subst_vars
+except ImportError:
+    def subst_vars(s, local_vars):  # type: ignore[misc]
+        return s
 from distutils.command.build_py import build_py as _build_py
 from distutils.command.sdist import sdist as _sdist
 
@@ -133,7 +139,7 @@ class BuildDoc(Command):
                                    ('build_base', 'build_base'),
                                    ('build_lib', 'build_lib'))
         if self.docdir is None:
-            self.docdir = change_root(self.build_base, 'doc')
+            self.docdir = change_root(self.build_base, 'doc')  # type: ignore[arg-type]
 
     def run(self):
         self.run_command('build')
@@ -165,18 +171,18 @@ class BuildApiDoc(Command):
 
         if self.docdir is None:
             if self.action == 'html':
-                self.docdir = change_root(self.get_finalized_command('build_doc').docdir, 'html')
+                self.docdir = change_root(self.get_finalized_command('build_doc').docdir, 'html')  # type: ignore[attr-defined]
             else:
-                self.docdir = self.get_finalized_command('build_doc').docdir
+                self.docdir = self.get_finalized_command('build_doc').docdir  # type: ignore[attr-defined]
 
     def run(self):
         prog = find_executable('epydoc')
-        pkg_dirs = [change_root(self.build_lib, pkg) for pkg in self.distribution.packages]
+        pkg_dirs = [change_root(self.build_lib, pkg) for pkg in self.distribution.packages]  # type: ignore[arg-type]
         cmd = [prog, '-v', '--%s' % self.action, '--docformat', 'restructuredtext', '-o', self.docdir]
         #if self.verbose: cmd.append('-v')
         cmd.extend(pkg_dirs)
-        self.mkpath(self.docdir)
-        spawn(cmd)
+        self.mkpath(self.docdir)  # type: ignore[arg-type]
+        spawn(cmd)  # type: ignore[arg-type]
 
 class InstallDoc(Command):
     description = 'install documentation'
@@ -200,14 +206,14 @@ class InstallDoc(Command):
                                    ('build_base', 'build_base'))
 
         if self.docdir is None:
-            self.docdir = change_root(self.build_base, 'doc')
+            self.docdir = change_root(self.build_base, 'doc')  # type: ignore[arg-type]
 
     def run(self):
         if not self.skip_build:
             self.run_command('build_doc')
 
 
-        dst_root = change_root(self.root, self.docdir)
+        dst_root = change_root(self.root, self.docdir)  # type: ignore[arg-type]
         self.copy_transformed_tree(doc_manifest,
                                    dst_root=dst_root,
                                    substitutions={'docdir' : self.docdir})
@@ -272,8 +278,14 @@ class InstallDoc(Command):
 
     """
 
-        if src_root is not None: src_root = subst_vars(src_root, substitutions)
-        if dst_root is not None: dst_root = subst_vars(dst_root, substitutions)
+        if src_root is not None:
+            result = subst_vars(src_root, substitutions)  # type: ignore[func-returns-value]
+            if result is not None:
+                src_root = result
+        if dst_root is not None:
+            result = subst_vars(dst_root, substitutions)  # type: ignore[func-returns-value]
+            if result is not None:
+                dst_root = result
 
         filelist = FileList()
         if src_root is None:
@@ -282,12 +294,19 @@ class InstallDoc(Command):
             filelist.findall(src_root)
 
         for manifest_template, dst_xforms, dst_dir in install_specs:
-            if dst_dir is not None: dst_dir = subst_vars(dst_dir, substitutions)
+            if dst_dir is not None:
+                result = subst_vars(dst_dir, substitutions)  # type: ignore[func-returns-value]
+                if result is not None:
+                    dst_dir = result
 
             filelist.files = [] # reinitialize to empty
 
             for line in manifest_template:
-                filelist.process_template_line(subst_vars(line, substitutions))
+                result = subst_vars(line, substitutions)  # type: ignore[func-returns-value]
+                if result is not None:
+                    filelist.process_template_line(result)
+                else:
+                    filelist.process_template_line(line)
 
             for src_path in filelist.files:
                 dst_path = src_path

@@ -3,15 +3,16 @@ from __future__ import print_function
 
 import argparse
 import sys
+from typing import Any
 
 import nss.nss as nss
 import nss.error as nss_error
 print(sys.path)
-import six
+import six  # type: ignore[import-untyped]
 
 #-------------------------------------------------------------------------------
 
-options = None
+options: Any = None
 
 #-------------------------------------------------------------------------------
 

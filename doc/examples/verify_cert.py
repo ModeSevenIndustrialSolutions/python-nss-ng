@@ -3,9 +3,13 @@ from __future__ import print_function
 
 import argparse
 import sys
+from typing import Any
 
 import nss.nss as nss
 import nss.error as nss_error
+
+# Global variable for command-line options
+options: Any = None
 
 '''
 This example illustrates how one can use NSS to verify (validate) a
