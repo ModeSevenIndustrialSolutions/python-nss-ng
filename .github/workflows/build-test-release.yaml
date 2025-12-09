@@ -186,7 +186,7 @@ jobs:
       - name: "Build source distribution"
         id: python-build-sdist
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
+        uses: lfreleng-actions/python-build-action@main  # Testing
         with:
           artefact_name: python-nss-ng-sdist
           build_formats: sdist
@@ -229,7 +229,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
+        uses: lfreleng-actions/python-build-action@main  # Testing
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -276,7 +276,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
+        uses: lfreleng-actions/python-build-action@main  # Testing
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -322,7 +322,7 @@ jobs:
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-test-action@update-action  # Testing
+        uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
@@ -364,7 +364,7 @@ jobs:
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-test-action@update-action  # Testing
+        uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}

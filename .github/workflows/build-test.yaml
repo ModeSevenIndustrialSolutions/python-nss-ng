@@ -55,7 +55,7 @@ jobs:
       - name: 'Extract Python project metadata'
         id: metadata
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/build-metadata-action@initial-update
+        uses: lfreleng-actions/build-metadata-action@07c18bd2e24f25d2887592094427a198cfb85aae  # v0.1.0
         with:
           path_prefix: '.'
           output_format: summary
@@ -99,7 +99,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
+        uses: lfreleng-actions/python-build-action@main  # Testing
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -143,7 +143,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-build-action@refactor-build-action  # Testing
+        uses: lfreleng-actions/python-build-action@main  # Testing
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -193,7 +193,7 @@ jobs:
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-test-action@update-action  # Testing
+        uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
@@ -241,9 +241,7 @@ jobs:
 
       - name: "Python tests [pytest] (arm64) ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        # uses: lfreleng-actions/python-test-action@b997656111c9b547f8458b18baf6be139e2d2c6c  # v0.1.12
-        # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-test-action@update-action  # Testing
+        uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
@@ -287,7 +285,7 @@ jobs:
         # yamllint disable-line rule:line-length
         # uses: lfreleng-actions/python-audit-action@d2a271bdbf08572dbd8addd3358e5e937ab3739b  # v0.2.3
         # yamllint disable-line rule:line-length
-        uses: modeseven-lfreleng-actions/python-audit-action@update-action  # Testing
+        uses: lfreleng-actions/python-audit-action@update-action  # Testing
         with:
           python_version: ${{ matrix.python-version }}
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
