@@ -118,6 +118,9 @@ omit = [
     "*/_version.py",
 ]
 
+[tool.coverage.xml]
+output = "coverage.xml"
+
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
