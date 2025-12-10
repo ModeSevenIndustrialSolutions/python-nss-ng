@@ -410,7 +410,6 @@ jobs:
         with:
           python_version: "${{ matrix.python-version }}"
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
-          report_artefact: 'true'
 
   python-audit-arm64:
     name: "Python Audit ARM64 ${{ matrix.python-version }}"
@@ -452,7 +451,6 @@ jobs:
         with:
           python_version: "${{ matrix.python-version }}"
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
-          report_artefact: 'true'
 
   sbom-x64:
     name: "Generate SBOM x64"
