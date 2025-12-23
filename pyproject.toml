@@ -110,7 +110,8 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["nss"]
+branch = true
 data_file = ".coverage"
 omit = [
     "*/test/*",
@@ -118,11 +119,7 @@ omit = [
     "*/_version.py",
 ]
 
-[tool.coverage.paths]
-source = [
-    "src/",
-    "*/site-packages/",
-]
+
 
 [tool.coverage.report]
 exclude_lines = [
