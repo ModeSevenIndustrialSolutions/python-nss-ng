@@ -28,11 +28,44 @@ FIPS_ALREADY_OFF_ERR = 13
 def run_cmd(cmd_args: List[str], input: Optional[str] = None) -> Tuple[str, str]:
     logging.debug(' '.join(cmd_args))
     try:
+        # Set up environment to use custom-built NSS libraries
+        # This is needed when certutil was installed from system packages
+        # but we've built our own NSS/NSPR libraries
+        env = os.environ.copy()
+
+        # Try to detect NSS library path from pkg-config
+        nss_lib_path = None
+        try:
+            import subprocess as sp
+            result = sp.run(['pkg-config', '--variable=libdir', 'nss'],
+                          capture_output=True, text=True, check=False)
+            if result.returncode == 0:
+                nss_lib_path = result.stdout.strip()
+        except Exception:
+            pass
+
+        # If we found a custom NSS library path, add it to library search path
+        if nss_lib_path and os.path.exists(nss_lib_path):
+            import platform
+            if platform.system() == 'Darwin':
+                lib_path_var = 'DYLD_LIBRARY_PATH'
+            else:
+                lib_path_var = 'LD_LIBRARY_PATH'
+
+            existing_path = env.get(lib_path_var, '')
+            if existing_path:
+                env[lib_path_var] = f"{nss_lib_path}:{existing_path}"
+            else:
+                env[lib_path_var] = nss_lib_path
+
+            logging.debug(f'Setting {lib_path_var}={env[lib_path_var]}')
+
         p = subprocess.Popen(cmd_args,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
-                             universal_newlines=True)
+                             universal_newlines=True,
+                             env=env)
         stdout, stderr = p.communicate(input)
         returncode = p.returncode
         if returncode != 0:
