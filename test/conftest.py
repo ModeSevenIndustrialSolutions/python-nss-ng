@@ -218,11 +218,35 @@ def test_certs(setup_test_environment):
     # Verify we can actually list certificates from the database
     try:
         import subprocess
+
+        # Set up environment to use custom-built NSS libraries
+        env = os.environ.copy()
+
+        # Try to detect NSS library path from pkg-config
+        nss_lib_path = None
+        try:
+            result = subprocess.run(['pkg-config', '--variable=libdir', 'nss'],
+                                  capture_output=True, text=True, check=False)
+            if result.returncode == 0:
+                nss_lib_path = result.stdout.strip()
+        except Exception:
+            pass
+
+        # If we found a custom NSS library path, add it to LD_LIBRARY_PATH
+        if nss_lib_path and os.path.exists(nss_lib_path):
+            existing_path = env.get('LD_LIBRARY_PATH', '')
+            if existing_path:
+                env['LD_LIBRARY_PATH'] = f"{nss_lib_path}:{existing_path}"
+            else:
+                env['LD_LIBRARY_PATH'] = nss_lib_path
+            logger.debug(f'Setting LD_LIBRARY_PATH={env["LD_LIBRARY_PATH"]} for certutil verification')
+
         certutil_result = subprocess.run(
             ['certutil', '-d', f'sql:{pki_dir}', '-L'],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
+            env=env
         )
         if certutil_result.returncode != 0:
             raise RuntimeError(f"Database verification failed: {certutil_result.stderr}")
