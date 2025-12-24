@@ -11,12 +11,12 @@ build-backend = "mesonpy"
 
 [project]
 name = "python-nss-ng"
-version = "0.1.1"
+version = "1.0.1"
 description = "Python bindings for Network Security Services (NSS) and Netscape Portable Runtime (NSPR)"
 readme = "README.md"
 license = "MPL-2.0 OR GPL-2.0-or-later OR LGPL-2.0-or-later"
 license-files = ["LICENSE", "LICENSES/MPL-2.0.txt"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "John Dennis", email = "jdennis@redhat.com"},
     {name = "Matthew Watkins", email = "mwatkins@linuxfoundation.org"},
@@ -43,7 +43,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Programming Language :: C",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -80,10 +79,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "http://www.mozilla.org/projects/security/pki/python-nss-ng"
-Documentation = "http://www.mozilla.org/projects/security/pki/python-nss-ng"
-Repository = "https://github.com/ModeSevenIndustrialSolutions/python-nss-ng"
-Issues = "https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/issues"
+Homepage = "http://www.mozilla.org/projects/security/pki/python-nss"
+Documentation = "http://www.mozilla.org/projects/security/pki/python-nss"
+Repository = "https://github.com/ModeSevenIndustrialSolutions/python-nss"
+Issues = "https://github.com/ModeSevenIndustrialSolutions/python-nss/issues"
 
 [tool.meson-python.args]
 # Meson build arguments can be specified here if needed
@@ -102,6 +101,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "--cov=nss",
+    "--cov-report=xml",
     "--cov-report=html",
 ]
 markers = [
@@ -121,7 +121,8 @@ omit = [
     "*/_version.py",
 ]
 
-
+[tool.coverage.xml]
+output = "coverage.xml"
 
 [tool.coverage.report]
 exclude_lines = [
