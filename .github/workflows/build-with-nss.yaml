@@ -49,7 +49,7 @@ jobs:
       matrix:
         # Use Python versions available in Fedora 42
         # Note: Python 3.13 is not available; use 3.14 instead
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.14']
+        python-version: ['3.10', '3.11', '3.12', '3.14']
         # Build for both x86_64 and ARM64 architectures
         arch: ['x86_64', 'aarch64']
         include:
@@ -165,7 +165,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     timeout-minutes: 20
 
     steps:
@@ -282,10 +282,10 @@ jobs:
             echo "Status: ${{ needs.build-macos.result }}"
             echo ""
             echo "### Notes"
-            echo "- Fedora builds test Python 3.9, 3.10, 3.11, 3.12, 3.14 with"
+            echo "- Fedora builds test Python 3.10, 3.11, 3.12, 3.14 with"
             echo "  NSS 3.117+"
             echo "- Linux builds run on both x86_64 and aarch64 architectures"
             echo "- macOS builds target Apple Silicon (ARM64) only"
-            echo "- macOS builds test Python 3.9, 3.10, 3.11, 3.12, 3.13"
+            echo "- macOS builds test Python 3.10, 3.11, 3.12, 3.13, 3.14"
             echo "- Modern cryptographic key types require NSS 3.100+"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -117,19 +117,19 @@ repos:
       - id: check-readthedocs
 
   - repo: https://github.com/modeseven-lfit/gha-workflow-linter
-    rev: 19d280b4facd814e660873ce738e09da457eb1c0  # frozen: v0.1.8
+    rev: 383f4b685c20fad9fec1b61909745ed1d5ab1eb0  # frozen: v0.1.13
     hooks:
       - id: gha-workflow-linter
-        args: [lint, --no-auto-fix, .]
+        args: [lint]
 
   # Run tests last to ensure all code changes from other hooks are tested
   - repo: local
     hooks:
       - id: pytest
         name: pytest
-        entry: uv
+        entry: .venv/bin/pytest
         # yamllint disable-line rule:line-length
-        args: [run, pytest, --tb=short, -q, --cov=nss, --cov-report=xml, --cov-report=html]
+        args: [--tb=short, -q, --cov=nss, --cov-report=xml, --cov-report=html]
         language: system
         pass_filenames: false
         always_run: true

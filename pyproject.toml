@@ -10,7 +10,7 @@ requires = [
 build-backend = "mesonpy"
 
 [project]
-name = "python-nss-ng"
+name = "python-nss"
 version = "1.0.1"
 description = "Python bindings for Network Security Services (NSS) and Netscape Portable Runtime (NSPR)"
 readme = "README.md"
@@ -63,7 +63,6 @@ test = [
     "meson>=1.2.0",
     "meson-python>=0.16.0",
     "ninja",
-    "filelock>=3.20.1",
 ]
 dev = [
     "pytest>=8.4.2",
@@ -75,7 +74,6 @@ dev = [
     "meson>=1.2.0",
     "meson-python>=0.16.0",
     "ninja",
-    "filelock>=3.20.1",
 ]
 
 [project.urls]

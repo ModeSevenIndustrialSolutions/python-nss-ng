@@ -69,7 +69,7 @@ jobs:
       - name: 'Verify pushed tag'
         id: 'tag-validate'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/tag-validate-action@ea114d32becba39b63b9797ebcee95bcbdfd0057  # v0.1.0
+        uses: lfreleng-actions/tag-validate-action@fdc054551b7cb082e4f283934c0878d5f15478f1  # v0.1.0
         with:
           require_type: 'semver'
           require_signed: 'true'
@@ -649,7 +649,7 @@ jobs:
 
       - name: 'Test PyPI publishing'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/pypi-publish-action@53c5dfd85b6a8919216a58a8ed9a908c5bce1d3e  # v0.1.2
+        uses: lfreleng-actions/pypi-publish-action@4ac0285ce977ab77e620740e004a1498d301e53e  # v0.1.2
         with:
           environment: 'development'
           tag: "${{ needs.tag-validate.outputs.tag }}"
@@ -678,7 +678,7 @@ jobs:
 
       - name: 'PyPI release'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/pypi-publish-action@53c5dfd85b6a8919216a58a8ed9a908c5bce1d3e  # v0.1.2
+        uses: lfreleng-actions/pypi-publish-action@4ac0285ce977ab77e620740e004a1498d301e53e  # v0.1.2
         with:
           environment: 'production'
           attestations: true
@@ -730,7 +730,7 @@ jobs:
 
       - name: 'Attach build artefacts to release'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/release-assets-action@34a4887ec24e0f9ff358a872beb69394683079a6  # v0.1.0
+        uses: lfreleng-actions/release-assets-action@985ecd2ba521dde165514af406dd114d3db5dab6  # v0.1.0
         with:
           asset_paths: '["dist/**"]'
           release_tag: "${{ needs.tag-validate.outputs.tag }}"

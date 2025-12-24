@@ -3534,7 +3534,9 @@ key_type_str(KeyType key_type)
     case kyberKey:
     case edKey:
     case ecMontKey:
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR >= 118)
     case mldsaKey:
+#endif
     case nullKey:     return "NULL";
     case rsaKey:      return "RSA";
     case dsaKey:      return "DSA";
@@ -7885,7 +7887,9 @@ PublicKey_format_lines(PyPublicKey *self, PyObject *args, PyObject *kwds)
     case kyberKey:
     case edKey:
     case ecMontKey:
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR >= 118)
     case mldsaKey:
+#endif
     case nullKey:
         if ((obj = PublicKey_get_key_type_str(self, NULL)) == NULL) {
             goto fail;
@@ -8067,7 +8071,9 @@ PublicKey_new_from_SECKEYPublicKey(SECKEYPublicKey *pk)
     case kyberKey:
     case edKey:
     case ecMontKey:
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR >= 118)
     case mldsaKey:
+#endif
     case nullKey:
         break;
     }
