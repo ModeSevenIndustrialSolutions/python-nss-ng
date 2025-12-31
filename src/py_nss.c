@@ -7882,7 +7882,9 @@ PublicKey_format_lines(PublicKey *self, PyObject *args, PyObject *kwds)
     case kyberKey:
     case edKey:
     case ecMontKey:
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR >= 118)
     case mldsaKey:
+#endif
         if ((obj = PublicKey_get_key_type_str(self, NULL)) == NULL) {
             goto fail;
         }
@@ -8064,7 +8066,9 @@ PublicKey_new_from_SECKEYPublicKey(SECKEYPublicKey *pk)
     case kyberKey:
     case edKey:
     case ecMontKey:
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR >= 118)
     case mldsaKey:
+#endif
         break;
     }
 
