@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 #
-# Makefile for python-nss-1.0.1
+# Makefile for python-nss-ng
 # Handles NSS/NSPR dependencies and environment setup for CI builds
 
 .PHONY: help deps-nss deps-test deps-build clean env-setup \
@@ -9,7 +9,7 @@
 
 # Default target
 help:
-	@echo "python-nss-1.0.1 Makefile"
+	@echo "python-nss-ng Makefile"
 	@echo ""
 	@echo "Targets:"
 	@echo "  deps-nss           - Build and install NSS/NSPR from source"

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Safe file importer: Copies files from source to destination only if they don't exist.
-This script recursively copies all files and directories from python-nss-ng to
-python-nss-1.0.1, but ONLY if they don't already exist in the destination.
+This script is a legacy utility from the repository migration.
+Repository has been renamed to python-nss-ng.
 NO files will be overwritten.
 """
 
