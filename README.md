@@ -5,8 +5,8 @@ SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # python-nss-ng
 
-[![Build with NSS/NSPR](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/build-with-nss.yaml/badge.svg)](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/build-with-nss.yaml)
-[![Python Build/Test](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/build-test.yaml/badge.svg)](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/build-test.yaml)
+[![Platform Compatibility](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/compatibility.yaml/badge.svg)](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/compatibility.yaml)
+[![CI/CD Pipeline](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/build-test.yaml/badge.svg)](https://github.com/ModeSevenIndustrialSolutions/python-nss-ng/actions/workflows/build-test.yaml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 

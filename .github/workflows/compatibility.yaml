@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-# Build and test python-nss-ng with NSS/NSPR system dependencies
-name: 'Build with NSS/NSPR'
+# Platform compatibility testing with system-provided NSS/NSPR packages
+name: 'Platform Compatibility'
 
 # yamllint disable-line rule:truthy
 on:

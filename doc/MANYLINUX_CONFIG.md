@@ -17,11 +17,11 @@ Manylinux is a standard for building Python wheels that work across
 Linux distributions. Different manylinux versions target different base
 glibc versions:
 
-| Tag | glibc Version | Compatible Distributions |
-|-----|---------------|-------------------------|
-| `manylinux2014` | 2.17 | RHEL 7+, Ubuntu 14.04+, Debian 8+ |
-| `manylinux_2_28` | 2.28 | RHEL 8+, Ubuntu 20.04+, Debian 11+ |
-| `manylinux_2_34` | 2.34 | RHEL 9+, Ubuntu 22.04+, Fedora 35+ |
+| Tag              | glibc Version | Compatible Distributions           |
+| ---------------- | ------------- | ---------------------------------- |
+| `manylinux2014`  | 2.17          | RHEL 7+, Ubuntu 14.04+, Debian 8+  |
+| `manylinux_2_28` | 2.28          | RHEL 8+, Ubuntu 20.04+, Debian 11+ |
+| `manylinux_2_34` | 2.34          | RHEL 9+, Ubuntu 22.04+, Fedora 35+ |
 
 ## Current Configuration
 
@@ -274,11 +274,11 @@ Auditwheel handles both architectures automatically, producing:
 
 The project tests wheels on:
 
-| Platform | Arch | Python Versions |
-|----------|------|----------------|
-| Fedora Latest | x86_64 | 3.9, 3.10, 3.11, 3.12, 3.14 |
+| Platform      | Arch    | Python Versions             |
+| ------------- | ------- | --------------------------- |
+| Fedora Latest | x86_64  | 3.9, 3.10, 3.11, 3.12, 3.14 |
 | Fedora Latest | aarch64 | 3.9, 3.10, 3.11, 3.12, 3.14 |
-| macOS Latest | arm64 | 3.9, 3.10, 3.11, 3.12, 3.13 |
+| macOS Latest  | arm64   | 3.9, 3.10, 3.11, 3.12, 3.13 |
 
 macOS wheels don't use manylinux tags (they use macosx_* tags).
 
