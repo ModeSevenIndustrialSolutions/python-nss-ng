@@ -51,6 +51,44 @@ def interval_to_microseconds(interval: int) -> int:
     """Convert NSPR interval to microseconds."""
     ...
 
+def interval_now() -> int:
+    """Get current time as NSPR interval."""
+    ...
+
+def ticks_per_second() -> int:
+    """Get the number of ticks per second."""
+    ...
+
+# Network byte order conversion
+def htons(value: int) -> int:
+    """Convert 16-bit integer from host to network byte order."""
+    ...
+
+def htonl(value: int) -> int:
+    """Convert 32-bit integer from host to network byte order."""
+    ...
+
+def ntohs(value: int) -> int:
+    """Convert 16-bit integer from network to host byte order."""
+    ...
+
+def ntohl(value: int) -> int:
+    """Convert 32-bit integer from network to host byte order."""
+    ...
+
+# Protocol lookup
+def get_proto_by_name(name: str) -> int:
+    """Get protocol number by name."""
+    ...
+
+def get_proto_by_number(number: int) -> str:
+    """Get protocol name by number."""
+    ...
+
+def addr_family_name(family: int) -> str:
+    """Get the name of an address family."""
+    ...
+
 # Network address family constants
 PR_AF_INET: int
 PR_AF_INET6: int
@@ -128,6 +166,16 @@ class NetworkAddress:
         """Detailed string representation."""
         ...
 
+    def set_from_string(self, addr_str: str, family: int = PR_AF_INET) -> None:
+        """
+        Set address from string representation.
+
+        Args:
+            addr_str: Address string
+            family: Address family
+        """
+        ...
+
 class HostEntry:
     """Represents a host entry from name resolution."""
 
@@ -144,6 +192,14 @@ class HostEntry:
     @property
     def addresses(self) -> List[NetworkAddress]:
         """Get list of network addresses."""
+        ...
+
+    def get_network_addresses(self, family: int = PR_AF_INET) -> List[NetworkAddress]:
+        """Get network addresses filtered by family."""
+        ...
+
+    def get_network_address(self, family: int = PR_AF_INET) -> NetworkAddress:
+        """Get first network address matching family."""
         ...
 
 class AddrInfo:
@@ -374,6 +430,52 @@ class Socket:
 
     def fileno(self) -> int:
         """Get the file descriptor number."""
+        ...
+
+    def read(self, size: int = -1, timeout: Optional[int] = None) -> bytes:
+        """Read data from socket."""
+        ...
+
+    def readline(self, size: int = -1, timeout: Optional[int] = None) -> bytes:
+        """Read a line from socket."""
+        ...
+
+    def readlines(self, sizehint: int = -1, timeout: Optional[int] = None) -> List[bytes]:
+        """Read lines from socket."""
+        ...
+
+    def sendall(self, data: bytes, flags: int = 0, timeout: Optional[int] = None) -> None:
+        """Send all data over socket."""
+        ...
+
+    def accept_read(
+        self,
+        buf_size: int = 4096,
+        timeout: Optional[int] = None
+    ) -> Tuple['Socket', NetworkAddress, bytes]:
+        """Accept connection and read data in one operation."""
+        ...
+
+    def makefile(self, mode: str = 'r', buffering: int = -1) -> Any:
+        """Create file-like object from socket."""
+        ...
+
+    @staticmethod
+    def new_tcp_pair() -> Tuple['Socket', 'Socket']:
+        """Create a pair of connected TCP sockets."""
+        ...
+
+    @staticmethod
+    def poll(
+        poll_desc_list: List[Tuple['Socket', int, int]],
+        timeout: Optional[int] = None
+    ) -> List[Tuple['Socket', int, int]]:
+        """Poll multiple sockets for I/O events."""
+        ...
+
+    @staticmethod
+    def import_tcp_socket(sock: socket.socket) -> 'Socket':
+        """Import a Python TCP socket as an NSPR socket."""
         ...
 
 # File I/O operations

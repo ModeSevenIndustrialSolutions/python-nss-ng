@@ -23,17 +23,121 @@ def set_france_policy() -> None:
     """Set France-specific SSL policy."""
     ...
 
+# SSL Options
+def set_ssl_default_option(option: int, value: bool) -> None:
+    """Set a default SSL option for all new sockets."""
+    ...
+
+def get_ssl_default_option(option: int) -> bool:
+    """Get a default SSL option value."""
+    ...
+
+# Cipher preferences
+def set_default_cipher_pref(cipher: int, enabled: bool) -> None:
+    """Set default cipher preference for all new sockets."""
+    ...
+
+def get_default_cipher_pref(cipher: int) -> bool:
+    """Get default cipher preference."""
+    ...
+
+def set_cipher_policy(cipher: int, policy: int) -> None:
+    """Set cipher policy."""
+    ...
+
+def get_cipher_policy(cipher: int) -> int:
+    """Get cipher policy."""
+    ...
+
 # SSL Version Range
-def get_default_ssl_version_range(variant: int) -> Tuple[int, int]:
+def get_default_ssl_version_range(variant: int = 0) -> Tuple[int, int]:
     """Get the default SSL/TLS version range."""
     ...
 
 def set_default_ssl_version_range(
-    variant: int,
     min_version: int,
-    max_version: int
+    max_version: int,
+    variant: int = 0
 ) -> None:
     """Set the default SSL/TLS version range."""
+    ...
+
+def get_supported_ssl_version_range(variant: int = 0) -> Tuple[int, int]:
+    """Get the supported SSL/TLS version range."""
+    ...
+
+def get_ssl_version_from_major_minor(
+    major: int,
+    minor: int
+) -> int:
+    """Get SSL version from major and minor version numbers."""
+    ...
+
+def ssl_library_version_name(version: int = 0) -> str:
+    """Get the name of an SSL library version."""
+    ...
+
+def ssl_library_version_from_name(name: str) -> int:
+    """Get the SSL library version from its name."""
+    ...
+
+# Cipher suite info
+def get_cipher_suite_info(cipher: int) -> 'SSLCipherSuiteInfo':
+    """Get information about a cipher suite."""
+    ...
+
+def ssl_cipher_suite_name(cipher: int) -> str:
+    """Get the name of a cipher suite."""
+    ...
+
+def ssl_cipher_suite_from_name(name: str) -> int:
+    """Get the cipher suite from its name."""
+    ...
+
+# Session cache management
+def config_server_session_id_cache(
+    max_cache_entries: int = 0,
+    timeout: int = 0,
+    ssl3_timeout: int = 0,
+    directory: Optional[str] = None
+) -> None:
+    """Configure the server session ID cache."""
+    ...
+
+def config_mp_server_sid_cache(
+    max_cache_entries: int = 0,
+    timeout: int = 0,
+    ssl3_timeout: int = 0,
+    directory: Optional[str] = None
+) -> None:
+    """Configure multi-process server session ID cache."""
+    ...
+
+def config_server_session_id_cache_with_opt(
+    timeout: int = 0,
+    ssl3_timeout: int = 0,
+    directory: Optional[str] = None,
+    max_cache_entries: int = 0,
+    max_cert_cache_entries: int = 0,
+    max_srv_name_cache_entries: int = 0
+) -> None:
+    """Configure server session ID cache with additional options."""
+    ...
+
+def get_max_server_cache_locks() -> int:
+    """Get the maximum number of server cache locks."""
+    ...
+
+def set_max_server_cache_locks(max_locks: int) -> None:
+    """Set the maximum number of server cache locks."""
+    ...
+
+def clear_session_cache() -> None:
+    """Clear the SSL session cache."""
+    ...
+
+def shutdown_server_session_id_cache() -> None:
+    """Shutdown the server session ID cache."""
     ...
 
 # SSL Constants
@@ -96,6 +200,10 @@ SSL_REQUEST_ALWAYS: int
 # Variant types
 ssl_variant_stream: int
 ssl_variant_datagram: int
+
+# Additional types
+SSLChannelInfo = Any
+SSLCipherSuiteInfo = Any
 
 class SSLSocket:
     """SSL socket class wrapping NSPR sockets."""
@@ -224,20 +332,82 @@ class SSLSocket:
         """Force the SSL handshake to complete."""
         ...
 
-    def get_peer_certificate(self) -> Any:
+    def config_secure_server(
+        self,
+        cert: Any,
+        private_key: Any,
+        kea_type: int
+    ) -> None:
+        """Configure socket as a secure server."""
+        ...
+
+    def get_peer_certificate(self, force_handshake: bool = False) -> Any:
         """Get the peer's certificate after handshake."""
         ...
 
-    def get_peer_name(self) -> str:
-        """Get the peer's network address."""
+    def get_certificate(self, force_handshake: bool = False) -> Any:
+        """Get the local certificate."""
         ...
 
-    def get_channel_info(self) -> Any:
+    def invalidate_session(self) -> None:
+        """Invalidate the current SSL session."""
+        ...
+
+    def data_pending(self) -> int:
+        """Check if data is pending on the socket."""
+        ...
+
+    def get_security_status(self) -> Tuple[int, str, int, int, str, str, str]:
+        """Get security status information."""
+        ...
+
+    def get_session_id(self) -> bytes:
+        """Get the SSL session ID."""
+        ...
+
+    def set_sock_peer_id(self, peer_id: str) -> None:
+        """Set the peer ID for session caching."""
+        ...
+
+    def set_certificate_db(self, certdb: Any) -> None:
+        """Set the certificate database for this socket."""
+        ...
+
+    def force_handshake_timeout(self, timeout: int) -> None:
+        """Force handshake with timeout."""
+        ...
+
+    def rehandshake(self, flush_cache: bool = False) -> None:
+        """Initiate SSL renegotiation."""
+        ...
+
+    def rehandshake_timeout(self, flush_cache: bool, timeout: int) -> None:
+        """Initiate SSL renegotiation with timeout."""
+        ...
+
+    @staticmethod
+    def import_tcp_socket(sock: socket.socket) -> 'SSLSocket':
+        """Import a Python TCP socket as an SSL socket."""
+        ...
+
+    def get_ssl_channel_info(self) -> 'SSLChannelInformation':
         """Get SSL channel information."""
         ...
 
-    def get_cipher_suite_info(self) -> Any:
-        """Get information about the negotiated cipher suite."""
+    def get_negotiated_host(self) -> str:
+        """Get the negotiated hostname (SNI)."""
+        ...
+
+    def connection_info_format_lines(self, level: int = 0) -> Any:
+        """Format connection information as indented lines."""
+        ...
+
+    def connection_info_format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format connection information as a string."""
+        ...
+
+    def connection_info_str(self) -> str:
+        """Get connection information as a string."""
         ...
 
     def set_cipher_pref(self, cipher: int, enabled: bool) -> None:
@@ -328,7 +498,7 @@ class SSLSocket:
         """Create a file-like object from the socket."""
         ...
 
-class SSLChannelInfo:
+class SSLChannelInformation:
     """Information about an SSL channel."""
 
     @property
@@ -347,11 +517,44 @@ class SSLChannelInfo:
         ...
 
     @property
-    def keay_exchange_key_bits(self) -> int:
+    def key_exchange_key_bits(self) -> int:
         """Get the key exchange key length in bits."""
         ...
 
-class SSLCipherSuiteInfo:
+    @property
+    def creation_time(self) -> int:
+        """Get the creation time."""
+        ...
+
+    @property
+    def last_access_time(self) -> int:
+        """Get the last access time."""
+        ...
+
+    @property
+    def expiration_time(self) -> int:
+        """Get the expiration time."""
+        ...
+
+    @property
+    def compression_method(self) -> int:
+        """Get the compression method."""
+        ...
+
+    @property
+    def compression_method_name(self) -> str:
+        """Get the compression method name."""
+        ...
+
+    def format_lines(self, level: int = 0) -> Any:
+        """Format as indented lines."""
+        ...
+
+    def format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format as a string."""
+        ...
+
+class SSLCipherSuiteInformation:
     """Information about an SSL cipher suite."""
 
     @property
@@ -417,6 +620,14 @@ class SSLCipherSuiteInfo:
     @property
     def is_exportable(self) -> bool:
         """Check if the cipher suite is exportable."""
+        ...
+
+    def format_lines(self, level: int = 0) -> Any:
+        """Format as indented lines."""
+        ...
+
+    def format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format as a string."""
         ...
 
 # Cipher suite constants (examples - there are many more)

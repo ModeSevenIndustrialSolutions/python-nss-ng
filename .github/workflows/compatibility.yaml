@@ -136,7 +136,7 @@ jobs:
           python-build -m pip install dist/*.whl
           # shellcheck disable=SC2261
           python-build -m pip install pytest>=9.0 \
-            pytest-cov>=7.0 pytest-xdist>=3.8
+            pytest-cov>=7.0 pytest-xdist>=3.8 hypothesis>=6.0
 
       - name: Show build info
         if: always()
@@ -228,7 +228,7 @@ jobs:
         run: |
           pip install dist/*.whl
           # shellcheck disable=SC2261
-          pip install pytest>=9.0 pytest-cov>=7.0 pytest-xdist>=3.8
+          pip install pytest>=9.0 pytest-cov>=7.0 pytest-xdist>=3.8 hypothesis>=6.0
 
       - name: Show build info
         if: always()

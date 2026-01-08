@@ -138,6 +138,7 @@ def load_tests(loader, tests, pattern):
 
 #-------------------------------------------------------------------------------
 
+@pytest.mark.xdist_group("pkcs12_serial")
 class TestPKCS12Decoder:
     """Test PKCS12 decoder functionality."""
 
@@ -265,6 +266,7 @@ class TestPKCS12Decoder:
 
 #-------------------------------------------------------------------------------
 
+@pytest.mark.xdist_group("pkcs12_serial")
 class TestPKCS12Export:
     """Test PKCS12 export functionality."""
 

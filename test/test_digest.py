@@ -3,6 +3,8 @@
 
 import subprocess
 import sys
+import platform
+import shutil
 import pytest
 
 import nss.nss as nss
@@ -16,15 +18,54 @@ chunk_size = 128
 
 #-------------------------------------------------------------------------------
 
+def find_hash_command(algorithm):
+    """
+    Find the appropriate hash command for the current platform.
+
+    Returns (command, needs_algorithm_arg) tuple or (None, None) if not found.
+    """
+    system = platform.system()
+
+    if system == 'Darwin':  # macOS
+        if algorithm == 'md5':
+            cmd = shutil.which('md5')
+            if cmd:
+                return (cmd, False)  # md5 doesn't need -r flag on macOS
+        else:
+            # macOS uses 'shasum' for SHA algorithms
+            cmd = shutil.which('shasum')
+            if cmd:
+                # Map algorithm names to shasum arguments
+                shasum_args = {
+                    'sha1': '-a 1',
+                    'sha256': '-a 256',
+                    'sha512': '-a 512',
+                }
+                return (cmd, shasum_args.get(algorithm))
+    else:  # Linux and others
+        # Linux typically has md5sum, sha1sum, sha256sum, sha512sum
+        cmd_name = f'{algorithm}sum'
+        cmd = shutil.which(cmd_name)
+        if cmd:
+            return (cmd, None)
+
+    return (None, None)
+
+
 class TestDigest:
     """Test digest/hash functions."""
 
-    def do_test(self, nss_db_context, name, ref_cmd, nss_digest_func, hash_oid):
+    def do_test(self, nss_db_context, name, algorithm, nss_digest_func, hash_oid):
         hash_oid_name = nss.oid_str(hash_oid)
 
         if verbose:
             print('running test %s: nss_digest_func=%s hash_oid=%s in_filename=%s' % \
                 (name, nss_digest_func.__name__, hash_oid_name, in_filename))
+
+        # Find the appropriate hash command for this platform
+        ref_cmd, extra_args = find_hash_command(algorithm)
+        if ref_cmd is None:
+            pytest.skip(f"No {algorithm} command found on this platform")
 
         # read binary data in from the file
         with open(in_filename, "rb") as f:
@@ -42,10 +83,25 @@ class TestDigest:
         #
         # We want to read the reference result from the subprocess as text
         # not binary, thus universal_newlines must be True.
-        proc = subprocess.Popen([ref_cmd, in_filename], stdout=subprocess.PIPE,
-                                universal_newlines=True)
+        if extra_args:
+            # macOS shasum needs algorithm argument
+            cmd = f"{ref_cmd} {extra_args} {in_filename}"
+            proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                                    universal_newlines=True)
+        else:
+            # Linux commands and macOS md5
+            proc = subprocess.Popen([ref_cmd, in_filename], stdout=subprocess.PIPE,
+                                    universal_newlines=True)
         stdout, stderr = proc.communicate()
-        reference_digest = stdout.split()[0]
+
+        # Parse output - format varies by command
+        if platform.system() == 'Darwin' and algorithm == 'md5':
+            # macOS md5 output: "MD5 (filename) = hash"
+            reference_digest = stdout.split('=')[-1].strip()
+        else:
+            # Linux and macOS shasum output: "hash  filename"
+            reference_digest = stdout.split()[0]
+
         if verbose:
             print('reference_digest\n%s' % (reference_digest))
 
@@ -100,16 +156,16 @@ class TestDigest:
             (hash_oid_name, reference_digest, test_digest)
 
     def test_md5(self, nss_db_context):
-        self.do_test(nss_db_context, 'md5', 'md5sum', nss.md5_digest, nss.SEC_OID_MD5)
+        self.do_test(nss_db_context, 'md5', 'md5', nss.md5_digest, nss.SEC_OID_MD5)
 
     def test_sha1(self, nss_db_context):
-        self.do_test(nss_db_context, 'sha1', 'sha1sum', nss.sha1_digest, nss.SEC_OID_SHA1)
+        self.do_test(nss_db_context, 'sha1', 'sha1', nss.sha1_digest, nss.SEC_OID_SHA1)
 
     def test_sha256(self, nss_db_context):
-        self.do_test(nss_db_context, 'sha256', 'sha256sum', nss.sha256_digest, nss.SEC_OID_SHA256)
+        self.do_test(nss_db_context, 'sha256', 'sha256', nss.sha256_digest, nss.SEC_OID_SHA256)
 
     def test_sha512(self, nss_db_context):
-        self.do_test(nss_db_context, 'sha512', 'sha512sum', nss.sha512_digest, nss.SEC_OID_SHA512)
+        self.do_test(nss_db_context, 'sha512', 'sha512', nss.sha512_digest, nss.SEC_OID_SHA512)
 
 
 #-------------------------------------------------------------------------------

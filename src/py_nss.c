@@ -9407,8 +9407,9 @@ Certificate_set_trust_attributes(Certificate *self, PyObject *args)
      * context, so NSS can't prompt for the password if it needs to.
      * check to see if the failure was token not logged in and log in
      * if need be.
+     *
+     * Don't release GIL when passing Python objects to C functions
      */
-    Py_BEGIN_ALLOW_THREADS
     if ((result = CERT_ChangeCertTrust(certdb_handle, self->cert, trust)) != SECSuccess) {
 	if (PORT_GetError() == SEC_ERROR_TOKEN_NOT_LOGGED_IN) {
 	    if ((result = PK11_Authenticate(slot, PR_TRUE, pin_args)) != SECSuccess) {
@@ -9420,7 +9421,6 @@ Certificate_set_trust_attributes(Certificate *self, PyObject *args)
             }
         }
     }
-    Py_END_ALLOW_THREADS
 
  exit:
     Py_DECREF(pin_args);
@@ -9762,14 +9762,12 @@ Certificate_verify_now(Certificate *self, PyObject *args)
     check_sig = PyBoolAsPRBool(py_check_sig);
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if (CERT_VerifyCertificateNow(py_certdb->handle, self->cert, check_sig,
                                   required_usages, pin_args, &returned_usages) != SECSuccess) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_cert_verify_error(returned_usages, NULL, NULL);
     }
-    Py_END_ALLOW_THREADS
     Py_DECREF(pin_args);
 
     return PyLong_FromLong(returned_usages);
@@ -9873,15 +9871,13 @@ Certificate_verify(Certificate *self, PyObject *args)
     check_sig = PyBoolAsPRBool(py_check_sig);
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if (CERT_VerifyCertificate(py_certdb->handle, self->cert, check_sig,
                                required_usages, pr_time, pin_args,
                                NULL, &returned_usages) != SECSuccess) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_cert_verify_error(returned_usages, NULL, NULL);
     }
-    Py_END_ALLOW_THREADS
     Py_DECREF(pin_args);
 
     return PyLong_FromLong(returned_usages);
@@ -9980,15 +9976,13 @@ Certificate_verify_with_log(Certificate *self, PyObject *args)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if (CERT_VerifyCertificate(py_certdb->handle, self->cert, check_sig,
                                required_usages, pr_time, pin_args,
                                &py_log->log, &returned_usages) != SECSuccess) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_cert_verify_error(returned_usages, (PyObject *)py_log, NULL);
     }
-    Py_END_ALLOW_THREADS
     Py_DECREF(pin_args);
 
     return Py_BuildValue("KN", returned_usages, py_log);
@@ -10074,14 +10068,12 @@ Certificate_check_ocsp_status(Certificate *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if (CERT_CheckOCSPStatus(py_certdb->handle, self->cert,
                              pr_time, pin_args) != SECSuccess) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
     Py_RETURN_TRUE;
@@ -13146,13 +13138,11 @@ cert_get_cert_nicknames(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((cert_nicknames = CERT_GetCertNicknames(py_certdb->handle, what, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -13775,13 +13765,11 @@ PK11Slot_authenticate(PK11Slot *self, PyObject *args)
     }
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if (PK11_Authenticate(self->slot, load_certs, pin_args) != SECSuccess) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
-        return set_nspr_error("Unable to authenticate");
+        return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -14063,14 +14051,12 @@ PK11Slot_key_gen(PK11Slot *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((sym_key = PK11_KeyGen(self->slot, mechanism, py_sec_param ? &py_sec_param->item : NULL,
                                key_size, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -14181,17 +14167,15 @@ PK11Slot_generate_key_pair(PK11Slot *self, PyObject *args)
         break;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((priv_key = PK11_GenerateKeyPair(self->slot, mechanism, key_params,
                                          &pub_key,
                                          token     ? PR_TRUE : PR_FALSE,
                                          sensitive ? PR_TRUE : PR_FALSE,
                                          pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         set_nspr_error(NULL);
         goto fail;
     }
-    Py_END_ALLOW_THREADS
 
     Py_CLEAR(pin_args);
 
@@ -14292,14 +14276,12 @@ PK11Slot_pbe_key_gen(PK11Slot *self, PyObject *args)
     pwitem.data = (unsigned char *)password;
     pwitem.len = password_len;
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((sym_key = PK11_PBEKeyGen(self->slot, &py_algid->id,
                                   &pwitem, PR_FALSE, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -20858,8 +20840,9 @@ pk11_set_password_callback(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyCallable_Check(callback)) {
-        PyErr_SetString(PyExc_TypeError, "callback must be callable");
+    /* Allow None to clear the callback */
+    if (callback != Py_None && !PyCallable_Check(callback)) {
+        PyErr_SetString(PyExc_TypeError, "callback must be callable or None");
         return NULL;
     }
 
@@ -20867,7 +20850,12 @@ pk11_set_password_callback(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    PK11_SetPasswordFunc(PK11_password_callback);
+    /* Only set the NSS password function if callback is not None */
+    if (callback != Py_None) {
+        PK11_SetPasswordFunc(PK11_password_callback);
+    } else {
+        PK11_SetPasswordFunc(NULL);
+    }
 
     Py_RETURN_NONE;
 }
@@ -20914,13 +20902,11 @@ pk11_list_certs(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((cert_list = PK11_ListCerts(type, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -20972,13 +20958,11 @@ pk11_find_certs_from_email_addr(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((cert_list = PK11_FindCertsFromEmailAddress(email_addr, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -21030,13 +21014,11 @@ pk11_find_certs_from_nickname(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((cert_list = PK11_FindCertsFromNickname(nickname, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -21090,17 +21072,20 @@ pk11_find_cert_from_nickname(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
-    if ((cert = PK11_FindCertFromNickname(nickname, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
+    /* Pass NULL to NSS if there are no pin arguments, not an empty tuple */
+    cert = PK11_FindCertFromNickname(nickname,
+                                     (argc > n_base_args) ? pin_args : NULL);
+
+    if (cert == NULL) {
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
     if ((py_cert = Certificate_new_from_CERTCertificate(cert, false)) == NULL) {
+        CERT_DestroyCertificate(cert);
         return NULL;
     }
 
@@ -21150,13 +21135,11 @@ pk11_find_key_by_any_cert(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((private_key = PK11_FindKeyByAnyCert(py_cert->cert, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -21942,12 +21925,11 @@ nss_nss_init_context(PyObject *self, PyObject *args, PyObject *kwds)
         set_nspr_error(NULL);
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when creating Python objects */
     if ((py_init_context = InitContext_new_from_NSSInitContext(init_context)) == NULL) {
         NSS_ShutdownContext(init_context);
         init_context = NULL;
     }
-    Py_END_ALLOW_THREADS
 
     if (cert_dir)    PyMem_Free(cert_dir);
     if (cert_prefix) PyMem_Free(cert_prefix);
@@ -22560,13 +22542,11 @@ pk11_get_best_slot(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((slot = PK11_GetBestSlot(mechanism, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -22868,14 +22848,12 @@ pk11_import_sym_key(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((sym_key = PK11_ImportSymKey(py_slot->slot, mechanism, origin, operation,
                                      &py_key_data->item, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -23271,14 +23249,12 @@ pk11_import_crl(PyObject *self, PyObject *args)
 
     pin_args = PyTuple_GetSlice(args, n_base_args, argc);
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((signed_crl = PK11_ImportCRL(py_slot->slot, &py_der_signed_crl->item, url,
                                      type, pin_args, import_options, NULL, decode_options)) == NULL) {
-	Py_BLOCK_THREADS
         Py_DECREF(pin_args);
         return set_nspr_error(NULL);
     }
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(pin_args);
 
@@ -24523,13 +24499,11 @@ pkcs12_export(PyObject *self, PyObject *args, PyObject *kwds)
         pin_args = NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    /* Don't release GIL when passing Python objects to C functions */
     if ((cert_list = PK11_FindCertsFromNickname(utf8_nickname, pin_args)) == NULL) {
-	Py_BLOCK_THREADS
         PyErr_Format(PyExc_ValueError, "failed to find certs for nickname = \"%s\"", utf8_nickname);
         goto exit;
     }
-    Py_END_ALLOW_THREADS
 
     /* User certs are those with private keys, retain only those */
     if (CERT_FilterCertListForUserCerts(cert_list) != SECSuccess ||

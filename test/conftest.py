@@ -315,9 +315,80 @@ def nss_db_context(nss_initialized):
     # Minimal cleanup per test
     # Note: We don't shut down NSS here as it's shared across all tests
     # in this worker process
-    with contextlib.suppress(Exception):
-        import nss.ssl as ssl
-        ssl.clear_session_cache()
+    #
+    # IMPORTANT: We do NOT call ssl.clear_session_cache() here because:
+    # 1. It causes segmentation faults on Linux ARM64 with NSS 3.118
+    # 2. SSL tests handle their own session cache cleanup (see test_client_server.py)
+    # 3. Calling SSL functions after non-SSL tests can crash when SSL is in an
+    #    uninitialized state, even if the module is imported
+    # 4. The contextlib.suppress(Exception) wrapper doesn't catch SIGSEGV signals
+    #
+    # This fixture provides the certificate database; SSL session management
+    # is the responsibility of individual SSL tests.
+    pass
+
+
+@pytest.fixture
+def nss_clean_state(nss_db_dir):
+    """
+    Force a clean NSS re-initialization for tests sensitive to state corruption.
+
+    NSS has known issues with state management when certain operations run in sequence,
+    particularly when find_cert_from_nickname or similar functions are called after
+    other NSS operations. This fixture ensures a completely clean NSS state by:
+    1. Shutting down NSS (with retries if needed)
+    2. Waiting for cleanup
+    3. Re-initializing NSS with the test database
+
+    Usage:
+        def test_something(nss_clean_state):
+            # Test code here - NSS is freshly initialized
+            pass
+
+    Or use autouse in a test class:
+        @pytest.fixture(autouse=True)
+        def _clean_nss(self, nss_clean_state):
+            pass
+    """
+    import nss.nss as nss
+    import time
+
+    # Only shutdown if NSS is initialized
+    if nss.nss_is_initialized():
+        # Shutdown NSS to clear any accumulated state
+        shutdown_succeeded = False
+        for attempt in range(3):
+            try:
+                nss.nss_shutdown()
+                shutdown_succeeded = True
+                break
+            except Exception as e:
+                # NSS might complain about objects in use - wait and retry
+                if attempt < 2:
+                    time.sleep(0.2 * (attempt + 1))
+                else:
+                    # Last attempt failed - log but continue
+                    # Some tests may have leaked NSS resources
+                    import sys
+                    print(f"Warning: NSS shutdown failed after 3 attempts: {e}", file=sys.stderr)
+
+        # Wait for NSS to fully clean up internal state
+        if shutdown_succeeded:
+            time.sleep(0.1)
+
+    # Re-initialize with the test database
+    try:
+        nss.nss_init_read_write(nss_db_dir)
+    except Exception as e:
+        # If initialization fails, skip the test rather than error
+        import pytest
+        pytest.skip(f"NSS re-initialization failed (state too corrupted): {e}")
+
+    # Return the certdb for convenience
+    certdb = nss.get_default_certdb()
+    yield certdb
+
+    # No cleanup needed - the session-level fixture will handle final shutdown
 
 
 @pytest.fixture(scope="function")

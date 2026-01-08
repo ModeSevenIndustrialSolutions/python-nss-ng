@@ -64,6 +64,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
+        exclude: ^mutants/
 
   #- repo: https://github.com/btford/write-good
   #  rev: ab66ce10136dfad5146e69e70f82a3efac8842c1  # frozen: v1.0.8

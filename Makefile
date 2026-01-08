@@ -58,7 +58,7 @@ ifeq ($(PLATFORM),linux)
 	sudo apt-get install -y meson ninja-build || true
 endif
 	python -m pip install --upgrade pip || true
-	python -m pip install meson-python meson ninja || true
+	python -m pip install meson-python meson ninja pytest pytest-cov pytest-timeout pytest-xdist hypothesis mypy || true
 
 # Install build dependencies (minimal set for build jobs)
 deps-build:

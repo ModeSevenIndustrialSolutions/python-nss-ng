@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import sys
 import os
-import unittest
+import pytest
 from typing import BinaryIO
 
 import nss.nss as nss
@@ -67,15 +67,14 @@ def setup_contexts(mechanism, key, iv):
 
 #-------------------------------------------------------------------------------
 
-class TestCipher(unittest.TestCase):
-    def setUp(self):
-        nss.nss_init_nodb()
+class TestCipher:
+    @pytest.fixture(autouse=True)
+    def setup_cipher(self, nss_db_context):
+        """Setup encoding and decoding contexts for each test."""
         self.encoding_ctx, self.decoding_ctx = setup_contexts(mechanism, key, iv)
-
-    def tearDown(self):
+        yield
         del self.encoding_ctx
         del self.decoding_ctx
-        nss.nss_shutdown()
 
     def test_string(self):
         if verbose:
@@ -99,9 +98,8 @@ class TestCipher(unittest.TestCase):
 
         # Validate the encryption/decryption by comparing the decoded text with
         # the original plain text, they should match.
-        self.assertEqual(decoded_text, plain_text)
-
-        self.assertNotEqual(cipher_text, plain_text)
+        assert decoded_text == plain_text, "Decoded text should match original plain text"
+        assert cipher_text != plain_text, "Cipher text should not match plain text"
 
     def test_file(self):
         encrypted_filename = os.path.basename(in_filename) + ".encrypted"
@@ -155,13 +153,9 @@ class TestCipher(unittest.TestCase):
         with open(decrypted_filename, "rb") as f:
             decrypted_data = f.read()
 
-        if decrypted_data != in_data:
-            result = 1
-            print("FAILED! decrypted_data != in_data")
-
-        if encrypted_data == in_data:
-            result = 1
-            print("FAILED! encrypted_data == in_data")
+        # Validate the encryption/decryption
+        assert decrypted_data == in_data, "Decrypted data should match original input"
+        assert encrypted_data != in_data, "Encrypted data should not match original input"
 
         # clean up
         os.unlink(encrypted_filename)
@@ -172,4 +166,4 @@ class TestCipher(unittest.TestCase):
 #-------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main([__file__, '-v'])

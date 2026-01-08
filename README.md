@@ -160,6 +160,32 @@ brew install nss
 
 ### Running Tests
 
+#### Quick Start (Automated)
+
+Use the comprehensive test runner script that handles all setup:
+
+```bash
+# Run all tests (handles setup, builds C extension, creates certificates)
+./scripts/run-all-tests.sh
+
+# Quick mode: pure Python tests only (no C extension build needed)
+./scripts/run-all-tests.sh --quick
+
+# Other options
+./scripts/run-all-tests.sh --help
+```
+
+The script automatically:
+
+- Checks for dependencies (uv, NSS, NSPR)
+- Creates virtual environment
+- Installs test dependencies
+- Builds C extension (if needed)
+- Sets up test certificates
+- Runs tests
+
+#### Manual Testing
+
 ```bash
 # Install with test dependencies
 uv pip install -e ".[test]"
