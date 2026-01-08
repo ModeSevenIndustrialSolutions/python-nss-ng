@@ -154,7 +154,7 @@ Updated all GitHub Actions workflows to use Makefile targets:
 - ✅ `.github/workflows/build-test.yaml` - Updated all jobs
 - ✅ `.github/workflows/build-test-release.yaml` - Updated all jobs
 
-#### python-nss-1.0.1/
+#### python-nss-ng/
 
 - ✅ `.github/scripts/install-nss.sh` - Enhanced, platform-agnostic
 - ✅ `Makefile` - New file

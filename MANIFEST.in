@@ -26,9 +26,7 @@ exclude src/_version.py
 include pyproject.toml
 include meson.build
 
-# Exclude old build system files
-exclude setup.py
-exclude setup.cfg
+
 
 # Exclude build artifacts and cache
 global-exclude *.pyc
