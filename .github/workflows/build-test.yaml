@@ -261,7 +261,10 @@ jobs:
             python3 -m pip list | grep python-nss-ng || \
               echo "Package not in pip list"
             echo ""
-            echo "Searching for nss package in all site-packages:"
+            echo "Getting pip show output:"
+            python3 -m pip show python-nss-ng || echo "pip show failed"
+            echo ""
+            echo "Searching for nss package in all locations:"
             PYVER="${{ matrix.python-version }}"
             find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
               -type d 2>/dev/null || echo "Not found in .local"
@@ -269,6 +272,16 @@ jobs:
               -type d 2>/dev/null || echo "Not found in /usr/local"
             find /usr/lib/python3/dist-packages/ -name "nss" \
               -type d 2>/dev/null || echo "Not found in dist-packages"
+            echo ""
+            echo "Searching for ANY python-nss-ng files:"
+            find /home/runner/.local/lib/python${PYVER}/ \
+              -name "*python*nss*" 2>/dev/null | head -20 || true
+            find /usr/local/lib/python${PYVER}/ \
+              -name "*python*nss*" 2>/dev/null | head -20 || true
+            echo ""
+            echo "Searching for .so files with nss:"
+            find /home/runner/.local/lib/python${PYVER}/ \
+              -name "*nss*.so" 2>/dev/null || echo "No .so files found"
             echo ""
             echo "Checking pip cache:"
             ls -la /home/runner/.cache/pip/wheels/ 2>/dev/null || true
@@ -370,7 +383,10 @@ jobs:
             python3 -m pip list | grep python-nss-ng || \
               echo "Package not in pip list"
             echo ""
-            echo "Searching for nss package in all site-packages:"
+            echo "Getting pip show output:"
+            python3 -m pip show python-nss-ng || echo "pip show failed"
+            echo ""
+            echo "Searching for nss package in all locations:"
             PYVER="${{ matrix.python-version }}"
             find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
               -type d 2>/dev/null || echo "Not found in .local"
@@ -378,6 +394,16 @@ jobs:
               -type d 2>/dev/null || echo "Not found in /usr/local"
             find /usr/lib/python3/dist-packages/ -name "nss" \
               -type d 2>/dev/null || echo "Not found in dist-packages"
+            echo ""
+            echo "Searching for ANY python-nss-ng files:"
+            find /home/runner/.local/lib/python${PYVER}/ \
+              -name "*python*nss*" 2>/dev/null | head -20 || true
+            find /usr/local/lib/python${PYVER}/ \
+              -name "*python*nss*" 2>/dev/null | head -20 || true
+            echo ""
+            echo "Searching for .so files with nss:"
+            find /home/runner/.local/lib/python${PYVER}/ \
+              -name "*nss*.so" 2>/dev/null || echo "No .so files found"
             echo ""
             echo "Checking pip cache:"
             ls -la /home/runner/.cache/pip/wheels/ 2>/dev/null || true
