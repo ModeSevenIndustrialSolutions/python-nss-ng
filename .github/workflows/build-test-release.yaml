@@ -147,7 +147,7 @@ jobs:
       - name: 'Extract Python project metadata'
         id: metadata
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/build-metadata-action@c8d6f8396301edd325ac90db463850048f5fe20c # v0.1.1
+        uses: lfreleng-actions/build-metadata-action@c8d6f8396301edd325ac90db463850048f5fe20c  # v0.1.1
         with:
           path_prefix: '.'
           output_format: summary
@@ -187,7 +187,7 @@ jobs:
       - name: "Build source distribution"
         id: python-build-sdist
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8f567398591014dd5627961aaa9ec17816b072f0 # v1.0.2
+        uses: lfreleng-actions/python-build-action@8f567398591014dd5627961aaa9ec17816b072f0  # v1.0.2
         with:
           artefact_name: python-nss-ng-sdist
           build_formats: sdist
@@ -220,7 +220,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8f567398591014dd5627961aaa9ec17816b072f0 # v1.0.2
+        uses: lfreleng-actions/python-build-action@8f567398591014dd5627961aaa9ec17816b072f0  # v1.0.2
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -259,7 +259,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8f567398591014dd5627961aaa9ec17816b072f0 # v1.0.2
+        uses: lfreleng-actions/python-build-action@8f567398591014dd5627961aaa9ec17816b072f0  # v1.0.2
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -295,6 +295,62 @@ jobs:
         run: |
             make deps-nss deps-test env-github-actions
 
+      - name: Verify NSS libraries and environment
+        run: |
+            echo "=== Library Path Diagnostics ==="
+            echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+            echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"
+            echo ""
+            echo "=== NSS Libraries in /usr/lib ==="
+            ls -la /usr/lib/libnss* /usr/lib/libnspr* 2>/dev/null || \
+              echo "Not found in /usr/lib"
+            echo ""
+            echo "=== NSS Libraries in /usr/lib/x86_64-linux-gnu ==="
+            ls -la /usr/lib/x86_64-linux-gnu/libnss* \
+              /usr/lib/x86_64-linux-gnu/libnspr* 2>/dev/null || \
+              echo "Not found in /usr/lib/x86_64-linux-gnu"
+            echo ""
+            echo "=== ldconfig cache ==="
+            ldconfig -p | grep -E '(nss|nspr)' || \
+              echo "NSS/NSPR not in ldconfig cache"
+            echo ""
+            echo "=== pkg-config ==="
+            pkg-config --exists nss && \
+              echo "NSS found: $(pkg-config --modversion nss)" || \
+              echo "NSS not found by pkg-config"
+            pkg-config --exists nspr && \
+              echo "NSPR found: $(pkg-config --modversion nspr)" || \
+              echo "NSPR not found by pkg-config"
+
+      - name: Verify Python can import nss module
+        run: |
+            echo "=== Python Import Diagnostics ==="
+            python3 -c "import sys; print('Python sys.path:', sys.path)" \
+              || true
+            echo ""
+            echo "=== Attempting to import nss ==="
+            python3 -c "import nss; print('SUCCESS: nss imported')" 2>&1 \
+              || echo "FAILED: Cannot import nss"
+            echo ""
+            echo "=== Checking for ImportError details ==="
+            python3 -c "
+            import sys
+            try:
+                import nss.nss
+                print('SUCCESS: nss.nss imported')
+            except ImportError as e:
+                print(f'ImportError: {e}')
+                import traceback
+                traceback.print_exc()
+            " 2>&1 || true
+            echo ""
+            echo "=== Checking installed nss package ==="
+            python3 -c "import sys; import site; \
+              print('site-packages:', site.getsitepackages())" || true
+            PYVER="${{ matrix.python-version }}"
+            ls -la /home/runner/.local/lib/python${PYVER}/site-packages/nss/ \
+              2>/dev/null || echo "nss package not found"
+
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
@@ -303,6 +359,26 @@ jobs:
           # yamllint disable-line rule:line-length
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}-coverage
           report_artefact: 'true'
+
+      - name: Post-test diagnostics (if test failed)
+        if: failure()
+        run: |
+            echo "=== POST-TEST DIAGNOSTICS ==="
+            echo "Checking where package was actually installed..."
+            python3 -m pip list | grep python-nss-ng || \
+              echo "Package not in pip list"
+            echo ""
+            echo "Searching for nss package in all site-packages:"
+            PYVER="${{ matrix.python-version }}"
+            find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in .local"
+            find /usr/local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in /usr/local"
+            find /usr/lib/python3/dist-packages/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in dist-packages"
+            echo ""
+            echo "Checking pip cache:"
+            ls -la /home/runner/.cache/pip/wheels/ 2>/dev/null || true
 
   python-tests-arm64:
     name: "Python Tests ARM64 ${{ matrix.python-version }}"
@@ -328,6 +404,62 @@ jobs:
         run: |
           make deps-nss deps-test env-github-actions
 
+      - name: Verify NSS libraries and environment
+        run: |
+            echo "=== Library Path Diagnostics ==="
+            echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+            echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"
+            echo ""
+            echo "=== NSS Libraries in /usr/lib ==="
+            ls -la /usr/lib/libnss* /usr/lib/libnspr* 2>/dev/null || \
+              echo "Not found in /usr/lib"
+            echo ""
+            echo "=== NSS Libraries in /usr/lib/aarch64-linux-gnu ==="
+            ls -la /usr/lib/aarch64-linux-gnu/libnss* \
+              /usr/lib/aarch64-linux-gnu/libnspr* 2>/dev/null || \
+              echo "Not found in /usr/lib/aarch64-linux-gnu"
+            echo ""
+            echo "=== ldconfig cache ==="
+            ldconfig -p | grep -E '(nss|nspr)' || \
+              echo "NSS/NSPR not in ldconfig cache"
+            echo ""
+            echo "=== pkg-config ==="
+            pkg-config --exists nss && \
+              echo "NSS found: $(pkg-config --modversion nss)" || \
+              echo "NSS not found by pkg-config"
+            pkg-config --exists nspr && \
+              echo "NSPR found: $(pkg-config --modversion nspr)" || \
+              echo "NSPR not found by pkg-config"
+
+      - name: Verify Python can import nss module
+        run: |
+            echo "=== Python Import Diagnostics ==="
+            python3 -c "import sys; print('Python sys.path:', sys.path)" \
+              || true
+            echo ""
+            echo "=== Attempting to import nss ==="
+            python3 -c "import nss; print('SUCCESS: nss imported')" 2>&1 \
+              || echo "FAILED: Cannot import nss"
+            echo ""
+            echo "=== Checking for ImportError details ==="
+            python3 -c "
+            import sys
+            try:
+                import nss.nss
+                print('SUCCESS: nss.nss imported')
+            except ImportError as e:
+                print(f'ImportError: {e}')
+                import traceback
+                traceback.print_exc()
+            " 2>&1 || true
+            echo ""
+            echo "=== Checking installed nss package ==="
+            python3 -c "import sys; import site; \
+              print('site-packages:', site.getsitepackages())" || true
+            PYVER="${{ matrix.python-version }}"
+            ls -la /home/runner/.local/lib/python${PYVER}/site-packages/nss/ \
+              2>/dev/null || echo "nss package not found"
+
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
@@ -336,6 +468,26 @@ jobs:
           # yamllint disable-line rule:line-length
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}-coverage
           report_artefact: 'true'
+
+      - name: Post-test diagnostics (if test failed)
+        if: failure()
+        run: |
+            echo "=== POST-TEST DIAGNOSTICS ==="
+            echo "Checking where package was actually installed..."
+            python3 -m pip list | grep python-nss-ng || \
+              echo "Package not in pip list"
+            echo ""
+            echo "Searching for nss package in all site-packages:"
+            PYVER="${{ matrix.python-version }}"
+            find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in .local"
+            find /usr/local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in /usr/local"
+            find /usr/lib/python3/dist-packages/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in dist-packages"
+            echo ""
+            echo "Checking pip cache:"
+            ls -la /home/runner/.cache/pip/wheels/ 2>/dev/null || true
 
   python-audit-x64:
     name: "Python Audit x64 ${{ matrix.python-version }}"
@@ -363,7 +515,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75 # v0.2.5
+        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75  # v0.2.5
         with:
           python_version: "${{ matrix.python-version }}"
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
@@ -394,7 +546,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75 # v0.2.5
+        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75  # v0.2.5
         with:
           python_version: "${{ matrix.python-version }}"
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}

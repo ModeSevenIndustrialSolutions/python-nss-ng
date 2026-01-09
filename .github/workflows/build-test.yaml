@@ -253,6 +253,26 @@ jobs:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}-coverage
           report_artefact: 'true'
 
+      - name: Post-test diagnostics (if test failed)
+        if: failure()
+        run: |
+            echo "=== POST-TEST DIAGNOSTICS ==="
+            echo "Checking where package was actually installed..."
+            python3 -m pip list | grep python-nss-ng || \
+              echo "Package not in pip list"
+            echo ""
+            echo "Searching for nss package in all site-packages:"
+            PYVER="${{ matrix.python-version }}"
+            find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in .local"
+            find /usr/local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in /usr/local"
+            find /usr/lib/python3/dist-packages/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in dist-packages"
+            echo ""
+            echo "Checking pip cache:"
+            ls -la /home/runner/.cache/pip/wheels/ 2>/dev/null || true
+
   python-tests-arm64:
     name: "Python Tests ARM64 ${{ matrix.python-version }}"
     runs-on: 'ubuntu-24.04-arm'
@@ -342,6 +362,26 @@ jobs:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}-coverage
           report_artefact: 'true'
 
+      - name: Post-test diagnostics (if test failed)
+        if: failure()
+        run: |
+            echo "=== POST-TEST DIAGNOSTICS ==="
+            echo "Checking where package was actually installed..."
+            python3 -m pip list | grep python-nss-ng || \
+              echo "Package not in pip list"
+            echo ""
+            echo "Searching for nss package in all site-packages:"
+            PYVER="${{ matrix.python-version }}"
+            find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in .local"
+            find /usr/local/lib/python${PYVER}/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in /usr/local"
+            find /usr/lib/python3/dist-packages/ -name "nss" \
+              -type d 2>/dev/null || echo "Not found in dist-packages"
+            echo ""
+            echo "Checking pip cache:"
+            ls -la /home/runner/.cache/pip/wheels/ 2>/dev/null || true
+
   python-audit-x64:
     name: "Python Audit x64 ${{ matrix.python-version }}"
     runs-on: 'ubuntu-latest'
@@ -368,7 +408,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75 # v0.2.5
+        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75  # v0.2.5
         with:
           python_version: ${{ matrix.python-version }}
           # yamllint disable-line rule:line-length
@@ -400,7 +440,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75 # v0.2.5
+        uses: lfreleng-actions/python-audit-action@ec8d84ca14c0413a2b2c6612a3e15b9803f9de75  # v0.2.5
         with:
           python_version: ${{ matrix.python-version }}
           # yamllint disable-line rule:line-length

@@ -229,6 +229,37 @@ fi
 echo "Installing binaries..."
 sudo cp -L Release/bin/* "${INSTALL_PREFIX}/bin/" 2>/dev/null || true
 
+# Remove old system NSS/NSPR libraries to avoid conflicts
+echo ""
+echo "Removing old system NSS/NSPR libraries to avoid version conflicts..."
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    # Remove old ARM64 system libraries
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnss3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnspr4.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnssutil3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnsssysinit.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnssckbi.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnssdbm3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libnssdbm3.chk 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libplc4.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libplds4.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libsmime3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/aarch64-linux-gnu/libssl3.so* 2>/dev/null || true
+elif [ "$ARCH" = "x86_64" ]; then
+    # Remove old x86_64 system libraries
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnss3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnspr4.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnssutil3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnsssysinit.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnssckbi.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnssdbm3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libnssdbm3.chk 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libplc4.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libplds4.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libsmime3.so* 2>/dev/null || true
+    sudo rm -f /usr/lib/x86_64-linux-gnu/libssl3.so* 2>/dev/null || true
+fi
+
 # Update library cache
 sudo ldconfig
 
