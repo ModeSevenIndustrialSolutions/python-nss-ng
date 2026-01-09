@@ -264,6 +264,20 @@ jobs:
             echo "Getting pip show output:"
             python3 -m pip show python-nss-ng || echo "pip show failed"
             echo ""
+            echo "Extracting actual installation location:"
+            INSTALL_LOC=$(python3 -m pip show python-nss-ng | \
+              grep "Location:" | cut -d' ' -f2)
+            echo "Package installed at: ${INSTALL_LOC}"
+            if [ -n "${INSTALL_LOC}" ]; then
+                echo "Checking for nss package in actual location:"
+                ls -la "${INSTALL_LOC}/nss/" 2>/dev/null || \
+                  echo "nss directory not found at ${INSTALL_LOC}"
+                echo ""
+                echo "Checking for .so files in actual location:"
+                find "${INSTALL_LOC}/nss/" -name "*.so" 2>/dev/null || \
+                  echo "No .so files found"
+            fi
+            echo ""
             echo "Searching for nss package in all locations:"
             PYVER="${{ matrix.python-version }}"
             find /home/runner/.local/lib/python${PYVER}/ -name "nss" \
@@ -385,6 +399,20 @@ jobs:
             echo ""
             echo "Getting pip show output:"
             python3 -m pip show python-nss-ng || echo "pip show failed"
+            echo ""
+            echo "Extracting actual installation location:"
+            INSTALL_LOC=$(python3 -m pip show python-nss-ng | \
+              grep "Location:" | cut -d' ' -f2)
+            echo "Package installed at: ${INSTALL_LOC}"
+            if [ -n "${INSTALL_LOC}" ]; then
+                echo "Checking for nss package in actual location:"
+                ls -la "${INSTALL_LOC}/nss/" 2>/dev/null || \
+                  echo "nss directory not found at ${INSTALL_LOC}"
+                echo ""
+                echo "Checking for .so files in actual location:"
+                find "${INSTALL_LOC}/nss/" -name "*.so" 2>/dev/null || \
+                  echo "No .so files found"
+            fi
             echo ""
             echo "Searching for nss package in all locations:"
             PYVER="${{ matrix.python-version }}"
