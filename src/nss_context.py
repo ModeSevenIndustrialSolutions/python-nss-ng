@@ -27,7 +27,7 @@ Example usage:
 import contextlib
 import logging
 from collections.abc import Callable, Generator
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +56,8 @@ class NSSContext:
 
     def __init__(
         self,
-        db_name: Optional[str] = None,
-        password_callback: Optional[Callable[..., Any]] = None,
+        db_name: str | None = None,
+        password_callback: Callable[..., Any] | None = None,
         flags: int = 0,
     ):
         """Initialize NSS context manager."""
@@ -109,8 +109,8 @@ class NSSContext:
 
 @contextlib.contextmanager
 def nss_context(
-    db_name: Optional[str] = None,
-    password_callback: Optional[Callable[..., Any]] = None,
+    db_name: str | None = None,
+    password_callback: Callable[..., Any] | None = None,
     flags: int = 0,
 ) -> Generator[None, None, None]:
     """

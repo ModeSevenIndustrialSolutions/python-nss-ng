@@ -42,6 +42,18 @@ if cc.get_id() == 'clang' or cc.get_id() == 'gcc'
   ])
 endif
 
+# Set up RPATH so extension modules can find NSS/NSPR libraries
+# This ensures the .so files can load even when LD_LIBRARY_PATH isn't set
+link_args = []
+if host_machine.system() == 'linux'
+  # Add RPATH for standard library locations
+  link_args += [
+    '-Wl,-rpath,/usr/lib',
+    '-Wl,-rpath,/usr/lib/x86_64-linux-gnu',
+    '-Wl,-rpath,/usr/lib/aarch64-linux-gnu',
+  ]
+endif
+
 # Common include directories
 inc_dirs = include_directories('src')
 
@@ -58,6 +70,7 @@ py.extension_module(
   dependencies: [py_dep, nss_dep, nspr_dep],
   include_directories: inc_dirs,
   c_args: warning_flags,
+  link_args: link_args,
   install: true,
   subdir: 'nss',
 )
@@ -69,6 +82,7 @@ py.extension_module(
   dependencies: [py_dep, nss_dep, nspr_dep],
   include_directories: inc_dirs,
   c_args: warning_flags,
+  link_args: link_args,
   install: true,
   subdir: 'nss',
 )
@@ -80,6 +94,7 @@ py.extension_module(
   dependencies: [py_dep, nss_dep, nspr_dep],
   include_directories: inc_dirs,
   c_args: warning_flags,
+  link_args: link_args,
   install: true,
   subdir: 'nss',
 )
@@ -91,6 +106,7 @@ py.extension_module(
   dependencies: [py_dep, nss_dep, nspr_dep],
   include_directories: inc_dirs,
   c_args: warning_flags,
+  link_args: link_args,
   install: true,
   subdir: 'nss',
 )
