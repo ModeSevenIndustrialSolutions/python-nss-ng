@@ -9,14 +9,14 @@
 
 #define PACKAGE_NAME "nss"
 
-#if PY_VERSION_HEX < 0x03090000
-#error "Python version must be at least 3.9"
+#if PY_VERSION_HEX < 0x030A0000
+#error "Python version must be at least 3.10"
 #endif
 
 #define PyNone_Check(x) ((x) == Py_None)
 
 /******************************************************************************
- *                              Python 3.9+                                   *
+ *                              Python 3.10+                                  *
  ******************************************************************************/
 
 #define IS_PY3K
