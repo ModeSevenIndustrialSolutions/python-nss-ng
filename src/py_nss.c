@@ -1989,6 +1989,7 @@ SECItemConvert(PyObject *obj, SECItem_param **param)
 
     if (PySecItem_Check(obj)) {
         if ((ip = PyMem_MALLOC(sizeof(SECItem_param))) == NULL) {
+            PyErr_NoMemory();
             return 0;
         }
         ip->item = ((SecItem *)obj)->item;
@@ -1997,6 +1998,7 @@ SECItemConvert(PyObject *obj, SECItem_param **param)
         return 1;
     } else if (PyObject_CheckBuffer(obj)) {
         if ((ip = PyMem_MALLOC(sizeof(SECItem_param))) == NULL) {
+            PyErr_NoMemory();
             return 0;
         }
 
@@ -2028,6 +2030,7 @@ SECItemOrNoneConvert(PyObject *obj, SECItem_param **param)
 
     if (PySecItem_Check(obj)) {
         if ((ip = PyMem_MALLOC(sizeof(SECItem_param))) == NULL) {
+            PyErr_NoMemory();
             return 0;
         }
         ip->item = ((SecItem *)obj)->item;
@@ -2036,6 +2039,7 @@ SECItemOrNoneConvert(PyObject *obj, SECItem_param **param)
         return 1;
     } else if (PyObject_CheckBuffer(obj)) {
         if ((ip = PyMem_MALLOC(sizeof(SECItem_param))) == NULL) {
+            PyErr_NoMemory();
             return 0;
         }
 
