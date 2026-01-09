@@ -260,8 +260,29 @@ elif [ "$ARCH" = "x86_64" ]; then
     sudo rm -f /usr/lib/x86_64-linux-gnu/libssl3.so* 2>/dev/null || true
 fi
 
+# Ensure /usr/lib is in the dynamic linker search path
+echo ""
+echo "Configuring dynamic linker..."
+echo "/usr/lib" | sudo tee /etc/ld.so.conf.d/nss-custom.conf > /dev/null
+
+# Create additional symlinks in /lib for better compatibility
+echo "Creating library symlinks in /lib..."
+sudo ln -sf /usr/lib/libnss3.so /lib/libnss3.so 2>/dev/null || true
+sudo ln -sf /usr/lib/libnspr4.so /lib/libnspr4.so 2>/dev/null || true
+sudo ln -sf /usr/lib/libnssutil3.so /lib/libnssutil3.so 2>/dev/null || true
+sudo ln -sf /usr/lib/libssl3.so /lib/libssl3.so 2>/dev/null || true
+sudo ln -sf /usr/lib/libsmime3.so /lib/libsmime3.so 2>/dev/null || true
+sudo ln -sf /usr/lib/libplc4.so /lib/libplc4.so 2>/dev/null || true
+sudo ln -sf /usr/lib/libplds4.so /lib/libplds4.so 2>/dev/null || true
+
 # Update library cache
+echo "Updating library cache..."
 sudo ldconfig
+
+# Verify libraries are in cache
+echo ""
+echo "Verifying NSS/NSPR in ldconfig cache:"
+ldconfig -p | grep -E '(nss3|nspr4)' || echo "WARNING: NSS/NSPR not in cache"
 
 # Create pkg-config files
 echo ""
