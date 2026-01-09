@@ -201,7 +201,30 @@ sudo cp -r private/nss/* "${INSTALL_PREFIX}/include/nss/"
 
 # Libraries and binaries are in dist/Release
 echo "Installing libraries..."
-sudo cp -L Release/lib/*.so "${INSTALL_PREFIX}/lib/"
+
+# Detect architecture and set appropriate library directory
+ARCH=$(uname -m)
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    # On ARM64, use the multiarch lib directory
+    LIB_DIR="${INSTALL_PREFIX}/lib/aarch64-linux-gnu"
+    echo "Detected ARM64 architecture - installing to ${LIB_DIR}"
+    sudo mkdir -p "${LIB_DIR}"
+    sudo cp -L Release/lib/*.so "${LIB_DIR}/"
+    # Also install to standard lib for pkg-config
+    sudo cp -L Release/lib/*.so "${INSTALL_PREFIX}/lib/"
+elif [ "$ARCH" = "x86_64" ]; then
+    # On x86_64, use the multiarch lib directory
+    LIB_DIR="${INSTALL_PREFIX}/lib/x86_64-linux-gnu"
+    echo "Detected x86_64 architecture - installing to ${LIB_DIR}"
+    sudo mkdir -p "${LIB_DIR}"
+    sudo cp -L Release/lib/*.so "${LIB_DIR}/"
+    # Also install to standard lib for pkg-config
+    sudo cp -L Release/lib/*.so "${INSTALL_PREFIX}/lib/"
+else
+    # Fallback to standard lib directory
+    echo "Using standard lib directory for architecture: ${ARCH}"
+    sudo cp -L Release/lib/*.so "${INSTALL_PREFIX}/lib/"
+fi
 
 echo "Installing binaries..."
 sudo cp -L Release/bin/* "${INSTALL_PREFIX}/bin/" 2>/dev/null || true
