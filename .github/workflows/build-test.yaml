@@ -244,6 +244,39 @@ jobs:
             ls -la /home/runner/.local/lib/python${PYVER}/site-packages/nss/ \
               2>/dev/null || echo "nss package not found"
 
+      - name: Test import with actual Python that will run tests
+        run: |
+            echo "=== Testing import with hostedtoolcache Python ==="
+            PYTHON_PATH="/opt/hostedtoolcache/Python/3.12.12/x64/bin/python3"
+            if [ -f "$PYTHON_PATH" ]; then
+                echo "Using: $PYTHON_PATH"
+                $PYTHON_PATH -c "import sys; print('Python:', sys.executable)"
+                echo "Attempting import..."
+                $PYTHON_PATH -c "import nss; print('SUCCESS: nss imported')" \
+                  || \
+                  echo "FAILED to import nss"
+                echo ""
+                echo "Checking sys.path:"
+                $PYTHON_PATH -c "import sys; print('\n'.join(sys.path))"
+                echo ""
+                echo "Trying to import with detailed error:"
+                $PYTHON_PATH -c "
+                import sys
+                import traceback
+                try:
+                    import nss.error
+                    print('SUCCESS: nss.error imported')
+                except Exception as e:
+                    print('FAILED: ' + type(e).__name__ + ': ' + str(e))
+                    traceback.print_exc()
+                "
+            else
+                echo "Python not found at $PYTHON_PATH, trying python3.12"
+                which python3.12 && \
+                  python3.12 -c "import nss; print('SUCCESS')" || \
+                  echo "FAILED with python3.12"
+            fi
+
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
@@ -379,6 +412,39 @@ jobs:
             PYVER="${{ matrix.python-version }}"
             ls -la /home/runner/.local/lib/python${PYVER}/site-packages/nss/ \
               2>/dev/null || echo "nss package not found"
+
+      - name: Test import with actual Python that will run tests
+        run: |
+            echo "=== Testing import with hostedtoolcache Python ==="
+            PYTHON_PATH="/opt/hostedtoolcache/Python/3.12.12/arm64/bin/python3"
+            if [ -f "$PYTHON_PATH" ]; then
+                echo "Using: $PYTHON_PATH"
+                $PYTHON_PATH -c "import sys; print('Python:', sys.executable)"
+                echo "Attempting import..."
+                $PYTHON_PATH -c "import nss; print('SUCCESS: nss imported')" \
+                  || \
+                  echo "FAILED to import nss"
+                echo ""
+                echo "Checking sys.path:"
+                $PYTHON_PATH -c "import sys; print('\n'.join(sys.path))"
+                echo ""
+                echo "Trying to import with detailed error:"
+                $PYTHON_PATH -c "
+                import sys
+                import traceback
+                try:
+                    import nss.error
+                    print('SUCCESS: nss.error imported')
+                except Exception as e:
+                    print('FAILED: ' + type(e).__name__ + ': ' + str(e))
+                    traceback.print_exc()
+                "
+            else
+                echo "Python not found at $PYTHON_PATH, trying python3.12"
+                which python3.12 && \
+                  python3.12 -c "import nss; print('SUCCESS')" || \
+                  echo "FAILED with python3.12"
+            fi
 
       - name: "Python tests [pytest] (arm64) ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
