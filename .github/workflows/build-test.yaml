@@ -630,7 +630,7 @@ jobs:
 
       - name: "Security scan with Grype (SARIF)"
         # yamllint disable-line rule:line-length
-        uses: anchore/scan-action@0d444ed77d83ee2ba7f5ced0d90d640a1281d762  # v7.3.0
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c  # v7.3.2
         id: grype-sarif
         with:
           sbom: "${{ steps.sbom.outputs.sbom_json_path }}"
@@ -640,7 +640,7 @@ jobs:
 
       - name: "Security scan with Grype (Text/Table)"
         # yamllint disable-line rule:line-length
-        uses: anchore/scan-action@0d444ed77d83ee2ba7f5ced0d90d640a1281d762  # v7.3.0
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c  # v7.3.2
         id: grype-table
         if: always()
         with:
@@ -710,7 +710,7 @@ jobs:
 
       - name: "Security scan with Grype (SARIF)"
         # yamllint disable-line rule:line-length
-        uses: anchore/scan-action@0d444ed77d83ee2ba7f5ced0d90d640a1281d762  # v7.3.0
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c  # v7.3.2
         id: grype-sarif
         with:
           sbom: "${{ steps.sbom.outputs.sbom_json_path }}"
@@ -720,7 +720,7 @@ jobs:
 
       - name: "Security scan with Grype (Text/Table)"
         # yamllint disable-line rule:line-length
-        uses: anchore/scan-action@0d444ed77d83ee2ba7f5ced0d90d640a1281d762  # v7.3.0
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c  # v7.3.2
         id: grype-table
         if: always()
         with:
