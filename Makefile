@@ -4,8 +4,8 @@
 # Makefile for python-nss-ng
 # Handles NSS/NSPR dependencies and environment setup for CI builds
 
-.PHONY: help deps-nss deps-test deps-build clean env-setup \
-        env-github-actions
+.PHONY: help deps-nss deps-test deps-test-system deps-build clean \
+        env-setup env-github-actions
 
 # Default target
 help:
@@ -13,7 +13,8 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  deps-nss           - Build and install NSS/NSPR from source"
-	@echo "  deps-test          - Install test dependencies (meson/ninja)"
+	@echo "  deps-test-system   - Install system test deps (apt only)"
+	@echo "  deps-test          - Install all test dependencies (apt+pip)"
 	@echo "  deps-build         - Install build dependencies"
 	@echo "  env-setup          - Set up environment variables"
 	@echo "  env-github-actions - Export env vars to GitHub Actions"
@@ -50,13 +51,23 @@ deps-nss:
 	INSTALL_PREFIX=$(INSTALL_PREFIX) \
 	./.github/scripts/install-nss.sh
 
-# Install test dependencies (for test jobs)
-deps-test:
-	@echo "Installing test dependencies..."
+# Install system-level test dependencies only (apt packages)
+# Use this target in CI *before* actions/setup-python so that pip installs
+# are handled by the correct (hostedtoolcache) Python interpreter.
+deps-test-system:
+	@echo "Installing system-level test dependencies..."
 ifeq ($(PLATFORM),linux)
 	sudo apt-get update || true
 	sudo apt-get install -y meson ninja-build || true
 endif
+
+# Install test dependencies (for test jobs)
+# NOTE: This target runs pip install and should only be called *after*
+# actions/setup-python so that packages are installed into the correct
+# Python environment. If called with the system Python when a different
+# Python will run the tests, imports will fail at test time.
+deps-test: deps-test-system
+	@echo "Installing pip test dependencies..."
 	python -m pip install --upgrade pip || true
 	python -m pip install meson-python meson ninja pytest pytest-cov pytest-timeout pytest-xdist hypothesis mypy || true
 
