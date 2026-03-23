@@ -42,7 +42,7 @@ jobs:
     timeout-minutes: 5
     steps:
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: audit
 
@@ -74,7 +74,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -108,7 +108,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -118,7 +118,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8e55c263713b2d2c8347c1d267e75b2a886d570a  # v1.0.3
+        uses: lfreleng-actions/python-build-action@7ff456c72f1dd50ef212ea7222efc12693221af3  # v1.0.4
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -144,7 +144,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -154,7 +154,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8e55c263713b2d2c8347c1d267e75b2a886d570a  # v1.0.3
+        uses: lfreleng-actions/python-build-action@7ff456c72f1dd50ef212ea7222efc12693221af3  # v1.0.4
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -177,16 +177,19 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: audit
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-            make deps-nss deps-test env-github-actions
+            # Only install system-level (apt) deps here; pip deps are
+            # handled later by python-test-action under the correct
+            # actions/setup-python interpreter.
+            make deps-nss deps-test-system env-github-actions
             # Ensure NSS libraries are in ldconfig cache
             sudo ldconfig
             # Export library path for subsequent steps
@@ -222,60 +225,6 @@ jobs:
               echo "NSPR found: $(pkg-config --modversion nspr)" || \
               echo "NSPR not found by pkg-config"
 
-      - name: Verify Python can import nss module
-        run: |
-            echo "=== Python Import Diagnostics ==="
-            python3 -c "import sys; print('Python sys.path:', sys.path)" \
-              || true
-            echo ""
-            echo "=== Attempting to import nss ==="
-            python3 -c "import nss; print('SUCCESS: nss imported')" 2>&1 \
-              || echo "FAILED: Cannot import nss"
-            echo ""
-            echo "=== Checking for ImportError details ==="
-            python3 -c "
-            import sys
-            try:
-                import nss.nss
-                print('SUCCESS: nss.nss imported')
-            except ImportError as e:
-                print(f'ImportError: {e}')
-                import traceback
-                traceback.print_exc()
-            " 2>&1 || true
-            echo ""
-            echo "=== Checking installed nss package ==="
-            python3 -c "import sys; import site; \
-              print('site-packages:', site.getsitepackages())" || true
-            PYVER="${{ matrix.python-version }}"
-            ls -la /home/runner/.local/lib/python${PYVER}/site-packages/nss/ \
-              2>/dev/null || echo "nss package not found"
-
-      - name: Test import with actual Python that will run tests
-        run: |
-            echo "=== Testing import with hostedtoolcache Python ==="
-            PYTHON_PATH="/opt/hostedtoolcache/Python/3.12.12/x64/bin/python3"
-            if [ -f "$PYTHON_PATH" ]; then
-                echo "Using: $PYTHON_PATH"
-                $PYTHON_PATH -c "import sys; print('Python:', sys.executable)"
-                echo "Attempting import..."
-                $PYTHON_PATH -c "import nss; print('SUCCESS: nss imported')" \
-                  || \
-                  echo "FAILED to import nss"
-                echo ""
-                echo "Checking sys.path:"
-                $PYTHON_PATH -c "import sys; print('\n'.join(sys.path))"
-                echo ""
-                echo "Trying to import nss.error:"
-                $PYTHON_PATH -c "import nss.error; print('SUCCESS')" \
-                  2>&1 || true
-            else
-                echo "Python not found at $PYTHON_PATH, trying python3.12"
-                which python3.12 && \
-                  python3.12 -c "import nss; print('SUCCESS')" || \
-                  echo "FAILED with python3.12"
-            fi
-
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
@@ -286,8 +235,6 @@ jobs:
           report_artefact: 'true'
         env:
           LD_LIBRARY_PATH: /usr/lib:/usr/lib/x86_64-linux-gnu
-          # yamllint disable-line rule:line-length
-          PYTHONPATH: /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages
 
       - name: Post-test diagnostics (if test failed)
         if: failure()
@@ -358,16 +305,19 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: audit
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          # Only install system-level (apt) deps here; pip deps are
+          # handled later by python-test-action under the correct
+          # actions/setup-python interpreter.
+          make deps-nss deps-test-system env-github-actions
           # Ensure NSS libraries are in ldconfig cache
           sudo ldconfig
           # Export library path for subsequent steps
@@ -402,60 +352,6 @@ jobs:
               echo "NSPR found: $(pkg-config --modversion nspr)" || \
               echo "NSPR not found by pkg-config"
 
-      - name: Verify Python can import nss module
-        run: |
-            echo "=== Python Import Diagnostics ==="
-            python3 -c "import sys; print('Python sys.path:', sys.path)" \
-              || true
-            echo ""
-            echo "=== Attempting to import nss ==="
-            python3 -c "import nss; print('SUCCESS: nss imported')" 2>&1 \
-              || echo "FAILED: Cannot import nss"
-            echo ""
-            echo "=== Checking for ImportError details ==="
-            python3 -c "
-            import sys
-            try:
-                import nss.nss
-                print('SUCCESS: nss.nss imported')
-            except ImportError as e:
-                print(f'ImportError: {e}')
-                import traceback
-                traceback.print_exc()
-            " 2>&1 || true
-            echo ""
-            echo "=== Checking installed nss package ==="
-            python3 -c "import sys; import site; \
-              print('site-packages:', site.getsitepackages())" || true
-            PYVER="${{ matrix.python-version }}"
-            ls -la /home/runner/.local/lib/python${PYVER}/site-packages/nss/ \
-              2>/dev/null || echo "nss package not found"
-
-      - name: Test import with actual Python that will run tests
-        run: |
-            echo "=== Testing import with hostedtoolcache Python ==="
-            PYTHON_PATH="/opt/hostedtoolcache/Python/3.12.12/arm64/bin/python3"
-            if [ -f "$PYTHON_PATH" ]; then
-                echo "Using: $PYTHON_PATH"
-                $PYTHON_PATH -c "import sys; print('Python:', sys.executable)"
-                echo "Attempting import..."
-                $PYTHON_PATH -c "import nss; print('SUCCESS: nss imported')" \
-                  || \
-                  echo "FAILED to import nss"
-                echo ""
-                echo "Checking sys.path:"
-                $PYTHON_PATH -c "import sys; print('\n'.join(sys.path))"
-                echo ""
-                echo "Trying to import nss.error:"
-                $PYTHON_PATH -c "import nss.error; print('SUCCESS')" \
-                  2>&1 || true
-            else
-                echo "Python not found at $PYTHON_PATH, trying python3.12"
-                which python3.12 && \
-                  python3.12 -c "import nss; print('SUCCESS')" || \
-                  echo "FAILED with python3.12"
-            fi
-
       - name: "Python tests [pytest] (arm64) ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-test-action@92d4110d44ebc18fa4575c6b00203ff67d01a1cb  # v1.0.1
@@ -466,8 +362,6 @@ jobs:
           report_artefact: 'true'
         env:
           LD_LIBRARY_PATH: /usr/lib:/usr/lib/aarch64-linux-gnu
-          # yamllint disable-line rule:line-length
-          PYTHONPATH: /opt/hostedtoolcache/Python/3.12.12/arm64/lib/python3.12/site-packages
 
       - name: Post-test diagnostics (if test failed)
         if: failure()
@@ -538,16 +432,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          make deps-nss deps-test-system env-github-actions
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -570,16 +464,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          make deps-nss deps-test-system env-github-actions
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -599,7 +493,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -679,7 +573,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 

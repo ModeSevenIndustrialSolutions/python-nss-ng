@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 5
     steps:
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: audit
 
@@ -56,7 +56,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -137,7 +137,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -167,7 +167,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -187,7 +187,7 @@ jobs:
       - name: "Build source distribution"
         id: python-build-sdist
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8e55c263713b2d2c8347c1d267e75b2a886d570a  # v1.0.3
+        uses: lfreleng-actions/python-build-action@7ff456c72f1dd50ef212ea7222efc12693221af3  # v1.0.4
         with:
           artefact_name: python-nss-ng-sdist
           build_formats: sdist
@@ -210,7 +210,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -220,7 +220,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8e55c263713b2d2c8347c1d267e75b2a886d570a  # v1.0.3
+        uses: lfreleng-actions/python-build-action@7ff456c72f1dd50ef212ea7222efc12693221af3  # v1.0.4
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -249,7 +249,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -259,7 +259,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@8e55c263713b2d2c8347c1d267e75b2a886d570a  # v1.0.3
+        uses: lfreleng-actions/python-build-action@7ff456c72f1dd50ef212ea7222efc12693221af3  # v1.0.4
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -284,16 +284,19 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: audit
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          # Only install system-level (apt) deps here; pip deps are
+          # handled later by python-test-action under the correct
+          # actions/setup-python interpreter.
+          make deps-nss deps-test-system env-github-actions
           sudo ldconfig
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
@@ -306,8 +309,6 @@ jobs:
           report_artefact: 'true'
         env:
           LD_LIBRARY_PATH: /usr/lib:/usr/lib/x86_64-linux-gnu
-          # yamllint disable-line rule:line-length
-          PYTHONPATH: /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages
 
   python-tests-arm64:
     name: "Python Tests ARM64 ${{ matrix.python-version }}"
@@ -322,16 +323,19 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: audit
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          # Only install system-level (apt) deps here; pip deps are
+          # handled later by python-test-action under the correct
+          # actions/setup-python interpreter.
+          make deps-nss deps-test-system env-github-actions
           sudo ldconfig
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
@@ -344,8 +348,6 @@ jobs:
           report_artefact: 'true'
         env:
           LD_LIBRARY_PATH: /usr/lib:/usr/lib/aarch64-linux-gnu
-          # yamllint disable-line rule:line-length
-          PYTHONPATH: /opt/hostedtoolcache/Python/3.12.12/arm64/lib/python3.12/site-packages
 
   python-audit-x64:
     name: "Python Audit x64 ${{ matrix.python-version }}"
@@ -360,16 +362,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-            make deps-nss deps-test env-github-actions
+            make deps-nss deps-test-system env-github-actions
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -391,16 +393,16 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          make deps-nss deps-test-system env-github-actions
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -419,7 +421,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -499,7 +501,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -588,7 +590,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -617,7 +619,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -651,7 +653,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
@@ -660,7 +662,7 @@ jobs:
 
       - name: '⬇ Download build artefacts (wheels)'
         # yamllint disable-line rule:line-length
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3  # v8.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: 'python-nss-ng-*-py*'
           path: 'dist'
@@ -668,7 +670,7 @@ jobs:
 
       - name: '⬇ Download build artefacts (sdist)'
         # yamllint disable-line rule:line-length
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3  # v8.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: 'python-nss-ng-sdist'
           path: 'dist'
@@ -698,7 +700,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b  # v2.15.0
+      - uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594  # v2.16.0
         with:
           egress-policy: 'audit'
 
