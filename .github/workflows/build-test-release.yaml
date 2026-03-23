@@ -291,9 +291,12 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          # Only install system-level (apt) deps here; pip deps are
+          # handled later by python-test-action under the correct
+          # actions/setup-python interpreter.
+          make deps-nss deps-test-system env-github-actions
           sudo ldconfig
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
@@ -306,8 +309,6 @@ jobs:
           report_artefact: 'true'
         env:
           LD_LIBRARY_PATH: /usr/lib:/usr/lib/x86_64-linux-gnu
-          # yamllint disable-line rule:line-length
-          PYTHONPATH: /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages
 
   python-tests-arm64:
     name: "Python Tests ARM64 ${{ matrix.python-version }}"
@@ -329,9 +330,12 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          # Only install system-level (apt) deps here; pip deps are
+          # handled later by python-test-action under the correct
+          # actions/setup-python interpreter.
+          make deps-nss deps-test-system env-github-actions
           sudo ldconfig
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
@@ -344,8 +348,6 @@ jobs:
           report_artefact: 'true'
         env:
           LD_LIBRARY_PATH: /usr/lib:/usr/lib/aarch64-linux-gnu
-          # yamllint disable-line rule:line-length
-          PYTHONPATH: /opt/hostedtoolcache/Python/3.12.12/arm64/lib/python3.12/site-packages
 
   python-audit-x64:
     name: "Python Audit x64 ${{ matrix.python-version }}"
@@ -367,9 +369,9 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-            make deps-nss deps-test env-github-actions
+            make deps-nss deps-test-system env-github-actions
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
@@ -398,9 +400,9 @@ jobs:
       # yamllint disable-line rule:line-length
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Build NSS/NSPR and install dependencies
+      - name: Build NSS/NSPR and install system dependencies
         run: |
-          make deps-nss deps-test env-github-actions
+          make deps-nss deps-test-system env-github-actions
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
