@@ -187,7 +187,7 @@ jobs:
       - name: "Build source distribution"
         id: python-build-sdist
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@70572c4544ab913643a2ddcb05e8dbdab809a936  # v1.0.5
+        uses: lfreleng-actions/python-build-action@38b9a4e7ee34e56d178f5bd248df52e41f7d496e  # v1.0.6
         with:
           artefact_name: python-nss-ng-sdist
           build_formats: sdist
@@ -220,7 +220,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@70572c4544ab913643a2ddcb05e8dbdab809a936  # v1.0.5
+        uses: lfreleng-actions/python-build-action@38b9a4e7ee34e56d178f5bd248df52e41f7d496e  # v1.0.6
         with:
           artefact_name: python-nss-ng-x64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
@@ -259,7 +259,7 @@ jobs:
       - name: "Build Python project ${{ matrix.python-version }}"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@70572c4544ab913643a2ddcb05e8dbdab809a936  # v1.0.5
+        uses: lfreleng-actions/python-build-action@38b9a4e7ee34e56d178f5bd248df52e41f7d496e  # v1.0.6
         with:
           artefact_name: python-nss-ng-arm64-py${{ matrix.python-version }}
           python_version: ${{ matrix.python-version }}
