@@ -345,10 +345,17 @@ class TestPlatformSupport:
         # The platform check should be in src/__init__.py
         # This test verifies it would raise on Windows
         import importlib.util
+        import pathlib
 
         # We can't actually test Windows rejection without being on Windows,
-        # but we can verify the check exists
-        with open('src/__init__.py', 'r') as f:
+        # but we can verify the check exists. Resolve the path relative to
+        # this test file rather than the current working directory so the
+        # test passes regardless of where pytest is invoked from (e.g. when
+        # python-nss-ng is checked out as a subdirectory of another repo).
+        src_init = (
+            pathlib.Path(__file__).resolve().parent.parent / "src" / "__init__.py"
+        )
+        with open(src_init, "r") as f:
             content = f.read()
             assert 'sys.platform.startswith("win")' in content
             assert 'RuntimeError' in content
