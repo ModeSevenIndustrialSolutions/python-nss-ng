@@ -227,7 +227,7 @@ jobs:
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-test-action@82aa55cf21a6be32d8d5b365716b2b349e8058bd  # v1.0.2
+        uses: modeseven-lfreleng-actions/python-test-action@6bf3e5909c7c752b7ee13639fc41f47bd05c51c0  # feat/uv-tooling (TEMP - revert before merge)
         with:
           python_version: ${{ matrix.python-version }}
           # yamllint disable-line rule:line-length
@@ -354,7 +354,7 @@ jobs:
 
       - name: "Python tests [pytest] (arm64) ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-test-action@82aa55cf21a6be32d8d5b365716b2b349e8058bd  # v1.0.2
+        uses: modeseven-lfreleng-actions/python-test-action@6bf3e5909c7c752b7ee13639fc41f47bd05c51c0  # feat/uv-tooling (TEMP - revert before merge)
         with:
           python_version: ${{ matrix.python-version }}
           # yamllint disable-line rule:line-length

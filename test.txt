@@ -1,0 +1,29 @@
+Temporary file to trigger CI on PR #111.
+
+This file exists only to ensure the build-test workflow runs on the
+test PR that points python-test-action at the feat/uv-tooling branch
+on modeseven-lfreleng-actions/python-test-action. The workflow's path
+filters do not match changes confined to .github/, so a top-level
+file change is required to trigger a run.
+
+Remove this file when the test PR is closed.
+
+CI retrigger: bump for python-test-action SHA 6bf3e59
+(removes actions/setup-python entirely and makes uv the sole Python
+provisioner via UV_PYTHON_PREFERENCE=only-managed). Previous attempt
+with the activated venv still segfaulted on Python 3.12 because
+setup-python and setup-uv resolved 'python-version: 3.12' to
+different patch versions (3.12.13 hostedtoolcache vs 3.12.3 system
+or python-build-standalone), producing a venv whose interpreter
+binary advertised one patch level while loading stdlib from another
+- an unsupported ABI mix that crashed CPython inside the logging
+module. The new approach forces uv to ignore any ambient Python on
+the runner and use exclusively a python-build-standalone build
+matching inputs.python_version, giving a single source of truth for
+the interpreter, the venv, and the activated PATH. A new diagnostic
+step also dumps sys.executable / sys.version / sys.prefix /
+sys.base_prefix and verifies major.minor matches the requested
+version, so any future drift surfaces immediately rather than as a
+segfault hundreds of tests later. Earlier fixes still in place:
+path_prefix-scoped caches, python -m pytest invocation, and
+normalized boolean step conditions.
