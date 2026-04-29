@@ -8,11 +8,10 @@ This module tests that error messages are informative, helpful, and
 provide sufficient context for debugging.
 """
 
-import sys
 import os
-import time
+import sys
+
 import pytest
-import re
 
 # Add test directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,14 +24,13 @@ from nss.error import NSPRError
 pytestmark = pytest.mark.xdist_group("error_messages_serial")
 
 
-
 class TestMessageQuality:
     """Test that error messages are helpful and informative."""
 
     def test_certificate_not_found_error_message(self, nss_clean_state):
         """Test that certificate not found errors are informative."""
         with pytest.raises(NSPRError) as exc_info:
-            nss.find_cert_from_nickname('definitely_nonexistent_cert_xyz123')
+            nss.find_cert_from_nickname("definitely_nonexistent_cert_xyz123")
 
         error = exc_info.value
         error_str = str(error)
@@ -48,10 +46,16 @@ class TestMessageQuality:
         """Test that invalid database path errors are informative."""
         # Test in subprocess to avoid disrupting shared NSS state
         import subprocess
-        result = subprocess.run([
-            sys.executable, '-c',
-            "import nss.nss as nss; nss.nss_init('sql:/completely/invalid/nonexistent/path/to/database')"
-        ], capture_output=True, text=True)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import nss.nss as nss; nss.nss_init('sql:/completely/invalid/nonexistent/path/to/database')",
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         # Should fail with an error
         assert result.returncode != 0
@@ -81,7 +85,7 @@ class TestMessageQuality:
         """Test that type errors have helpful messages."""
         # Try to pass wrong type to function
         with pytest.raises(TypeError) as exc_info:
-            nss.set_ocsp_timeout('not_a_number')
+            nss.set_ocsp_timeout("not_a_number")
 
         error = exc_info.value
         error_str = str(error)
@@ -96,15 +100,15 @@ class TestExceptionTypes:
     def test_nspr_error_for_nss_failures(self, nss_clean_state):
         """Test that NSS failures raise NSPRError."""
         with pytest.raises(NSPRError):
-            nss.find_cert_from_nickname('nonexistent_cert_12345')
+            nss.find_cert_from_nickname("nonexistent_cert_12345")
 
     def test_type_error_for_wrong_types(self):
         """Test that type errors raise TypeError."""
         with pytest.raises(TypeError):
-            nss.set_ocsp_timeout('string_instead_of_int')
+            nss.set_ocsp_timeout("string_instead_of_int")
 
         with pytest.raises(TypeError):
-            nss.set_use_pkix_for_validation('not_a_boolean')
+            nss.set_use_pkix_for_validation("not_a_boolean")
 
     def test_value_error_for_invalid_values(self):
         """Test that invalid values raise appropriate errors."""
@@ -117,7 +121,7 @@ class TestExceptionTypes:
         from util import find_nss_tool
 
         with pytest.raises(RuntimeError):
-            find_nss_tool('completely_nonexistent_tool_xyz')
+            find_nss_tool("completely_nonexistent_tool_xyz")
 
 
 class TestErrorContext:
@@ -127,7 +131,7 @@ class TestErrorContext:
         """Test that errors indicate what operation failed."""
         # Try to find nonexistent certificate
         with pytest.raises(NSPRError) as exc_info:
-            nss.find_cert_from_nickname('nonexistent')
+            nss.find_cert_from_nickname("nonexistent")
 
         # Error occurred and was caught
         assert exc_info.value is not None
@@ -135,27 +139,30 @@ class TestErrorContext:
     def test_error_preserves_traceback(self, nss_clean_state):
         """Test that errors preserve traceback information."""
         try:
-            nss.find_cert_from_nickname('nonexistent')
-        except NSPRError as e:
+            nss.find_cert_from_nickname("nonexistent")
+        except NSPRError:
             import traceback
+
             tb = traceback.format_exc()
 
             # Traceback should include function name
-            assert 'find_cert_from_nickname' in tb or len(tb) > 0
+            assert "find_cert_from_nickname" in tb or len(tb) > 0
 
     def test_nested_exceptions_handled(self, nss_clean_state):
         """Test that nested exceptions are handled properly."""
+
         def inner_function():
-            nss.find_cert_from_nickname('nonexistent')
+            nss.find_cert_from_nickname("nonexistent")
 
         def outer_function():
             inner_function()
 
         try:
             outer_function()
-        except NSPRError as e:
+        except NSPRError:
             # Exception should propagate with full context
             import traceback
+
             tb = traceback.format_exc()
             assert len(tb) > 0
 
@@ -167,13 +174,13 @@ class TestErrorRecovery:
         """Test recovery after certificate operation error."""
         # Cause an error
         try:
-            nss.find_cert_from_nickname('nonexistent')
+            nss.find_cert_from_nickname("nonexistent")
         except NSPRError:
             pass
 
         # System should still work
         try:
-            cert = nss.find_cert_from_nickname('test_ca')
+            cert = nss.find_cert_from_nickname("test_ca")
             # May or may not find cert, but shouldn't crash
         except NSPRError:
             # OK if cert doesn't exist
@@ -223,9 +230,9 @@ class TestDocumentation:
     def test_nss_functions_have_docstrings(self):
         """Test that key NSS functions have docstrings."""
         functions_to_check = [
-            'nss_init',
-            'nss_shutdown',
-            'nss_get_version',
+            "nss_init",
+            "nss_shutdown",
+            "nss_get_version",
         ]
 
         for func_name in functions_to_check:
@@ -239,8 +246,8 @@ class TestDocumentation:
     def test_ssl_functions_have_docstrings(self):
         """Test that key SSL functions have docstrings."""
         functions_to_check = [
-            'set_default_cipher_pref',
-            'get_default_cipher_pref',
+            "set_default_cipher_pref",
+            "get_default_cipher_pref",
         ]
 
         for func_name in functions_to_check:
@@ -268,12 +275,12 @@ class TestErrorConsistency:
         errors = []
 
         try:
-            nss.find_cert_from_nickname('nonexistent1')
+            nss.find_cert_from_nickname("nonexistent1")
         except Exception as e:
             errors.append(type(e).__name__)
 
         try:
-            nss.find_cert_from_nickname('nonexistent2')
+            nss.find_cert_from_nickname("nonexistent2")
         except Exception as e:
             errors.append(type(e).__name__)
 
@@ -286,17 +293,17 @@ class TestErrorConsistency:
         errors = []
 
         try:
-            nss.set_ocsp_timeout('string')
+            nss.set_ocsp_timeout("string")
         except Exception as e:
             errors.append(type(e).__name__)
 
         try:
-            nss.set_use_pkix_for_validation('string')
+            nss.set_use_pkix_for_validation("string")
         except Exception as e:
             errors.append(type(e).__name__)
 
         # Both should raise TypeError
-        assert all(e == 'TypeError' for e in errors)
+        assert all(e == "TypeError" for e in errors)
 
 
 class TestErrorAttributes:
@@ -305,7 +312,7 @@ class TestErrorAttributes:
     def test_nspr_error_has_message(self, nss_clean_state):
         """Test that NSPRError has message attribute."""
         try:
-            nss.find_cert_from_nickname('nonexistent')
+            nss.find_cert_from_nickname("nonexistent")
         except NSPRError as e:
             # Error should have string representation
             error_str = str(e)
@@ -315,10 +322,10 @@ class TestErrorAttributes:
     def test_nspr_error_has_errno(self, nss_clean_state):
         """Test that NSPRError may have errno attribute."""
         try:
-            nss.find_cert_from_nickname('nonexistent')
+            nss.find_cert_from_nickname("nonexistent")
         except NSPRError as e:
             # May have errno attribute
-            if hasattr(e, 'errno'):
+            if hasattr(e, "errno"):
                 errno = e.errno
                 # Should be numeric
                 assert isinstance(errno, int)
@@ -326,7 +333,7 @@ class TestErrorAttributes:
     def test_type_error_has_message(self):
         """Test that TypeError has informative message."""
         try:
-            nss.set_ocsp_timeout('not_an_int')
+            nss.set_ocsp_timeout("not_an_int")
         except TypeError as e:
             error_str = str(e)
             assert len(error_str) > 0
@@ -338,7 +345,7 @@ class TestUserFriendlyErrors:
     def test_errors_use_plain_language(self, nss_clean_state):
         """Test that errors avoid excessive jargon."""
         try:
-            nss.find_cert_from_nickname('nonexistent')
+            nss.find_cert_from_nickname("nonexistent")
         except NSPRError as e:
             error_str = str(e)
 
@@ -362,6 +369,7 @@ class TestDeprecationWarnings:
     def test_deprecation_warnings_informative(self):
         """Test that deprecation warnings are informative."""
         import warnings
+
         from nss.deprecations import warn_deprecated
 
         with warnings.catch_warnings(record=True) as w:
@@ -389,5 +397,5 @@ class TestDeprecationWarnings:
         assert "use" in msg.lower() or "instead" in msg.lower()
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

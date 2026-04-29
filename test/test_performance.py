@@ -8,12 +8,13 @@ This module tests performance characteristics, stress conditions,
 and resource handling under load.
 """
 
-import sys
-import os
-import time
-import pytest
-import threading
 import gc
+import os
+import sys
+import threading
+import time
+
+import pytest
 
 # Add test directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -41,7 +42,9 @@ class TestDigestPerformance:
         operations_per_second = iterations / elapsed
 
         # Should be able to perform many operations per second
-        assert operations_per_second > 100, f"Performance too slow: {operations_per_second:.2f} ops/sec"
+        assert operations_per_second > 100, (
+            f"Performance too slow: {operations_per_second:.2f} ops/sec"
+        )
 
     @pytest.mark.slow
     def test_digest_large_data_performance(self, nss_db_context):
@@ -82,7 +85,9 @@ class TestDigestPerformance:
         operations_per_second = iterations / elapsed
 
         # Should handle incremental digests efficiently
-        assert operations_per_second > 10, f"Incremental digest too slow: {operations_per_second:.2f} ops/sec"
+        assert operations_per_second > 10, (
+            f"Incremental digest too slow: {operations_per_second:.2f} ops/sec"
+        )
 
     @pytest.mark.slow
     def test_multiple_algorithm_performance(self, nss_db_context):
@@ -120,7 +125,7 @@ class TestCertificatePerformance:
         start_time = time.time()
         for _ in range(iterations):
             try:
-                cert = nss.find_cert_from_nickname('test_ca')
+                cert = nss.find_cert_from_nickname("test_ca")
                 if cert is not None:
                     # Access basic properties
                     subject = cert.subject
@@ -133,13 +138,15 @@ class TestCertificatePerformance:
         operations_per_second = iterations / elapsed
 
         # Certificate lookups should be reasonably fast
-        assert operations_per_second > 10, f"Certificate lookup too slow: {operations_per_second:.2f} ops/sec"
+        assert operations_per_second > 10, (
+            f"Certificate lookup too slow: {operations_per_second:.2f} ops/sec"
+        )
 
     @pytest.mark.slow
     def test_certificate_validation_performance(self, nss_db_context):
         """Test certificate validation performance."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -148,7 +155,9 @@ class TestCertificatePerformance:
         start_time = time.time()
         for _ in range(iterations):
             try:
-                approved_usage = cert.verify_now(nss_db_context, True, nss.certificateUsageSSLServer)
+                approved_usage = cert.verify_now(
+                    nss_db_context, True, nss.certificateUsageSSLServer
+                )
             except NSPRError:
                 # Validation might fail, but test performance
                 pass
@@ -193,7 +202,7 @@ class TestMemoryUsage:
 
         for _ in range(iterations):
             try:
-                cert = nss.find_cert_from_nickname('test_ca')
+                cert = nss.find_cert_from_nickname("test_ca")
                 if cert is not None:
                     # Access properties
                     subject = cert.subject
@@ -301,8 +310,8 @@ class TestConcurrentPerformance:
 
     @pytest.mark.slow
     @pytest.mark.skipif(
-        os.environ.get('CI') == 'true' or os.environ.get('GITHUB_ACTIONS') == 'true',
-        reason="NSS has threading race conditions in CI environments"
+        os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true",
+        reason="NSS has threading race conditions in CI environments",
     )
     def test_concurrent_digest_performance(self, nss_db_context):
         """Test performance with concurrent digest operations.
@@ -337,12 +346,14 @@ class TestConcurrentPerformance:
 
         # Concurrent operations should complete reasonably fast
         assert elapsed < 20, f"Concurrent operations too slow: {elapsed:.2f} seconds"
-        assert operations_per_second > 50, f"Throughput too low: {operations_per_second:.2f} ops/sec"
+        assert operations_per_second > 50, (
+            f"Throughput too low: {operations_per_second:.2f} ops/sec"
+        )
 
     @pytest.mark.slow
     @pytest.mark.skipif(
-        os.environ.get('CI') == 'true' or os.environ.get('GITHUB_ACTIONS') == 'true',
-        reason="NSS certificate database operations are not thread-safe in CI"
+        os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true",
+        reason="NSS certificate database operations are not thread-safe in CI",
     )
     def test_thread_contention(self, nss_db_context):
         """Test behavior under thread contention.
@@ -361,7 +372,7 @@ class TestConcurrentPerformance:
                     assert digest is not None
 
                     try:
-                        cert = nss.find_cert_from_nickname('test_ca')
+                        cert = nss.find_cert_from_nickname("test_ca")
                     except NSPRError:
                         pass
             except Exception as e:
@@ -479,5 +490,5 @@ class TestScalability:
         assert ops_per_sec > 200, f"Low throughput: {ops_per_sec:.0f} ops/sec"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

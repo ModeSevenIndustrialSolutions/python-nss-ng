@@ -8,14 +8,11 @@ This module tests the utility functions used throughout the test suite,
 including path finding, build directory detection, and temporary file handling.
 """
 
-import sys
 import os
+import sys
 import tempfile
+
 import pytest
-import shutil
-import stat
-from pathlib import Path
-from typing import Optional
 
 # Add test directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -29,7 +26,7 @@ class TestFindNSSTool:
     def test_find_certutil(self):
         """Test finding certutil in PATH."""
         try:
-            certutil_path = util.find_nss_tool('certutil')
+            certutil_path = util.find_nss_tool("certutil")
             assert certutil_path is not None
             assert os.path.exists(certutil_path)
             assert os.path.isfile(certutil_path)
@@ -39,7 +36,7 @@ class TestFindNSSTool:
     def test_find_pk12util(self):
         """Test finding pk12util in PATH."""
         try:
-            pk12util_path = util.find_nss_tool('pk12util')
+            pk12util_path = util.find_nss_tool("pk12util")
             assert pk12util_path is not None
             assert os.path.exists(pk12util_path)
             assert os.path.isfile(pk12util_path)
@@ -49,12 +46,12 @@ class TestFindNSSTool:
     def test_find_nonexistent_tool(self):
         """Test that finding nonexistent tool raises appropriate error."""
         with pytest.raises((FileNotFoundError, RuntimeError)):
-            util.find_nss_tool('definitely_not_a_real_nss_tool_12345')
+            util.find_nss_tool("definitely_not_a_real_nss_tool_12345")
 
     def test_find_tool_returns_absolute_path(self):
         """Test that returned path is absolute."""
         try:
-            tool_path = util.find_nss_tool('certutil')
+            tool_path = util.find_nss_tool("certutil")
             assert os.path.isabs(tool_path)
         except FileNotFoundError:
             pytest.skip("certutil not in PATH")
@@ -62,7 +59,7 @@ class TestFindNSSTool:
     def test_find_tool_executable(self):
         """Test that found tool is executable."""
         try:
-            tool_path = util.find_nss_tool('certutil')
+            tool_path = util.find_nss_tool("certutil")
             # Check if file has execute permission
             assert os.access(tool_path, os.X_OK)
         except FileNotFoundError:
@@ -91,7 +88,7 @@ class TestGetBuildDir:
         build_dir = util.get_build_dir()
         if build_dir is not None:
             # Build directory should contain 'build' in the name
-            assert 'build' in build_dir.lower() or 'lib' in build_dir.lower()
+            assert "build" in build_dir.lower() or "lib" in build_dir.lower()
 
 
 class TestTempFileWithData:
@@ -107,14 +104,14 @@ class TestTempFileWithData:
             assert os.path.isfile(temp_path)
 
             # File should contain the data
-            with open(temp_path, 'rb') as f:
+            with open(temp_path, "rb") as f:
                 content = f.read()
                 assert content == test_data
 
     def test_temp_file_cleaned_up(self):
         """Test that temporary file is cleaned up after context."""
         test_data = b"Cleanup test data"
-        temp_path_holder: list[Optional[str]] = [None]
+        temp_path_holder: list[str | None] = [None]
 
         with util.temp_file_with_data(test_data) as temp_path:
             temp_path_holder[0] = temp_path
@@ -131,7 +128,7 @@ class TestTempFileWithData:
         with util.temp_file_with_data(empty_data) as temp_path:
             assert os.path.exists(temp_path)
 
-            with open(temp_path, 'rb') as f:
+            with open(temp_path, "rb") as f:
                 content = f.read()
                 assert content == empty_data
                 assert len(content) == 0
@@ -149,7 +146,7 @@ class TestTempFileWithData:
             assert file_size == len(large_data)
 
             # Verify content (sample check to avoid reading all into memory)
-            with open(temp_path, 'rb') as f:
+            with open(temp_path, "rb") as f:
                 # Check first and last bytes
                 first_byte = f.read(1)
                 f.seek(-1, os.SEEK_END)
@@ -164,14 +161,14 @@ class TestTempFileWithData:
         with util.temp_file_with_data(binary_data) as temp_path:
             assert os.path.exists(temp_path)
 
-            with open(temp_path, 'rb') as f:
+            with open(temp_path, "rb") as f:
                 content = f.read()
                 assert content == binary_data
 
     def test_temp_file_cleanup_on_exception(self):
         """Test that temp file is deleted even if exception occurs."""
         test_data = b"Exception test data"
-        temp_path_holder: list[Optional[str]] = [None]
+        temp_path_holder: list[str | None] = [None]
 
         try:
             with util.temp_file_with_data(test_data) as temp_path:
@@ -206,7 +203,7 @@ class TestTempFileWithData:
         with util.temp_file_with_data(test_data) as temp_path:
             # Should be in system temp directory or subdirectory
             temp_dir = tempfile.gettempdir()
-            assert temp_path.startswith(temp_dir) or '/tmp' in temp_path
+            assert temp_path.startswith(temp_dir) or "/tmp" in temp_path
 
 
 class TestTempFilePermissions:
@@ -252,7 +249,7 @@ class TestUtilEdgeCases:
         # This tests that the function handles PATH parsing correctly
         # Actual behavior depends on system configuration
         try:
-            tool_path = util.find_nss_tool('certutil')
+            tool_path = util.find_nss_tool("certutil")
             # Should work regardless of spaces in PATH
             assert tool_path is not None
         except FileNotFoundError:
@@ -285,15 +282,12 @@ class TestUtilIntegration:
     def test_find_tool_and_verify_execution(self):
         """Test finding a tool and verifying it can be executed."""
         try:
-            certutil_path = util.find_nss_tool('certutil')
+            certutil_path = util.find_nss_tool("certutil")
 
             # Verify we can check version (tool is executable)
             import subprocess
-            result = subprocess.run(
-                [certutil_path, '-H'],
-                capture_output=True,
-                timeout=5
-            )
+
+            result = subprocess.run([certutil_path, "-H"], capture_output=True, timeout=5)
 
             # Should execute without error
             # (Though might return non-zero if -H is not a valid option)
@@ -310,18 +304,18 @@ class TestUtilIntegration:
 
         with util.temp_file_with_data(original_data) as temp_path:
             # Read the data back
-            with open(temp_path, 'rb') as f:
+            with open(temp_path, "rb") as f:
                 read_data = f.read()
 
             assert read_data == original_data
 
             # Append more data
             additional_data = b" - Additional content"
-            with open(temp_path, 'ab') as f:
+            with open(temp_path, "ab") as f:
                 f.write(additional_data)
 
             # Read again
-            with open(temp_path, 'rb') as f:
+            with open(temp_path, "rb") as f:
                 final_data = f.read()
 
             assert final_data == original_data + additional_data
@@ -332,17 +326,17 @@ class TestUtilTypeHints:
 
     def test_find_nss_tool_has_annotations(self):
         """Test that find_nss_tool has type annotations."""
-        assert hasattr(util.find_nss_tool, '__annotations__')
+        assert hasattr(util.find_nss_tool, "__annotations__")
         annotations = util.find_nss_tool.__annotations__
-        assert 'tool_name' in annotations or len(annotations) > 0
+        assert "tool_name" in annotations or len(annotations) > 0
 
     def test_get_build_dir_has_annotations(self):
         """Test that get_build_dir has type annotations."""
-        assert hasattr(util.get_build_dir, '__annotations__')
+        assert hasattr(util.get_build_dir, "__annotations__")
 
     def test_temp_file_with_data_has_annotations(self):
         """Test that temp_file_with_data has type annotations."""
-        assert hasattr(util.temp_file_with_data, '__annotations__')
+        assert hasattr(util.temp_file_with_data, "__annotations__")
 
 
 class TestUtilDocumentation:
@@ -364,5 +358,5 @@ class TestUtilDocumentation:
         assert len(util.temp_file_with_data.__doc__) > 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

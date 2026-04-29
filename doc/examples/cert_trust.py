@@ -1,11 +1,12 @@
-from __future__ import absolute_import
-from __future__ import print_function
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
 
 import argparse
 import sys
 from typing import Any
+
 import nss.nss as nss
-import nss.error as nss_error
 
 # Sample program that illustrates how to access certificate trust and/or
 # modify a certificates trust setting.

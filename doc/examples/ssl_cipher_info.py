@@ -1,13 +1,14 @@
-from __future__ import absolute_import
-from __future__ import print_function
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
 
 import argparse
 import sys
 
-from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
 import nss.ssl as ssl
+from nss.error import NSPRError
 
 #-------------------------------------------------------------------------------
 
@@ -105,7 +106,7 @@ def ssl_connect():
         try:
             sock.set_ssl_version_range("tls1.0", "tls1.3")
         except NSPRError as e:
-            print("Cannot enable TLS 1.3, {}".format(e))
+            print(f"Cannot enable TLS 1.3, {e}")
 
         # Provide a callback which notifies us when the SSL handshake is
         # complete

@@ -9,17 +9,15 @@ initialization, shutdown, and error conditions.
 """
 
 import sys
-import os
+
 import pytest
-import tempfile
-import shutil
 
 # Add src to path for importing nss_context module
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
-from nss_context import NSSContext, nss_context
 import nss.nss as nss
 from nss.error import NSPRError
+from nss_context import NSSContext, nss_context
 
 # Mark all tests in this module to run serially - they all manipulate NSS state
 pytestmark = pytest.mark.xdist_group("nss_context_serial")
@@ -114,7 +112,7 @@ class TestNSSContextBasic:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with NSSContext(db_name=db_path):
             # NSS should be initialized
@@ -179,9 +177,8 @@ class TestNSSContextLifecycle:
         class CustomException(Exception):
             pass
 
-        with pytest.raises(CustomException):
-            with NSSContext():
-                raise CustomException("Test exception")
+        with pytest.raises(CustomException), NSSContext():
+            raise CustomException("Test exception")
 
     def test_shutdown_on_exception(self):
         """Test that NSS shuts down even when exception occurs."""
@@ -212,7 +209,7 @@ class TestNSSContextWithDatabase:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with NSSContext(db_name=db_path):
             # Should be able to access certificates
@@ -221,7 +218,7 @@ class TestNSSContextWithDatabase:
 
             # Try to find a certificate
             try:
-                cert = nss.find_cert_from_nickname('test_ca')
+                cert = nss.find_cert_from_nickname("test_ca")
                 assert cert is not None
             except NSPRError:
                 # Certificate might not exist, but database access works
@@ -236,7 +233,7 @@ class TestNSSContextWithDatabase:
             pass
 
         with pytest.raises((NSPRError, Exception)):
-            with NSSContext(db_name='sql:/nonexistent/path/to/db'):
+            with NSSContext(db_name="sql:/nonexistent/path/to/db"):
                 pass
 
     def test_database_vs_nodb(self, test_certs):
@@ -248,7 +245,7 @@ class TestNSSContextWithDatabase:
             pass
 
         # First, test with database
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
         with NSSContext(db_name=db_path):
             certdb_with_db = nss.get_default_certdb()
             assert certdb_with_db is not None
@@ -270,13 +267,13 @@ class TestNSSContextPasswordCallback:
         except:
             pass
 
-        callback_called = {'called': False}
+        callback_called = {"called": False}
 
         def password_cb(slot, retry):
-            callback_called['called'] = True
-            return 'test_password'
+            callback_called["called"] = True
+            return "test_password"
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with NSSContext(db_name=db_path, password_callback=password_cb):
             # Context manager should set the callback
@@ -291,7 +288,7 @@ class TestNSSContextPasswordCallback:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         # Should not raise error with None callback
         with NSSContext(db_name=db_path, password_callback=None):
@@ -321,7 +318,7 @@ class TestNSSContextFlags:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with NSSContext(db_name=db_path, flags=0):
             assert nss.nss_is_initialized()
@@ -349,7 +346,7 @@ class TestFunctionalContextManager:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with nss_context(db_name=db_path):
             assert nss.nss_is_initialized()
@@ -365,9 +362,9 @@ class TestFunctionalContextManager:
             pass
 
         def password_cb(slot, retry):
-            return 'test_password'
+            return "test_password"
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with nss_context(db_name=db_path, password_callback=password_cb):
             assert nss.nss_is_initialized()
@@ -396,9 +393,8 @@ class TestNSSContextErrorHandling:
             pass
 
         # Try to initialize with invalid path
-        with pytest.raises((NSPRError, Exception)):
-            with NSSContext(db_name='sql:/invalid/path'):
-                pass
+        with pytest.raises((NSPRError, Exception)), NSSContext(db_name="sql:/invalid/path"):
+            pass
 
         # Should not be left in partially initialized state
 
@@ -414,9 +410,8 @@ class TestNSSContextErrorHandling:
             pass
 
         # Even if shutdown fails, original exception should propagate
-        with pytest.raises(TestException):
-            with NSSContext():
-                raise TestException("Original error")
+        with pytest.raises(TestException), NSSContext():
+            raise TestException("Original error")
 
     def test_multiple_context_sequential(self):
         """Test that multiple contexts can be used sequentially."""
@@ -447,7 +442,8 @@ class TestNSSContextLogging:
             pass
 
         import logging
-        caplog.set_level(logging.DEBUG, logger='nss_context')
+
+        caplog.set_level(logging.DEBUG, logger="nss_context")
 
         with NSSContext():
             pass
@@ -464,10 +460,11 @@ class TestNSSContextLogging:
             pass
 
         import logging
-        caplog.set_level(logging.ERROR, logger='nss_context')
+
+        caplog.set_level(logging.ERROR, logger="nss_context")
 
         try:
-            with NSSContext(db_name='sql:/invalid/path'):
+            with NSSContext(db_name="sql:/invalid/path"):
                 pass
         except:
             pass
@@ -486,14 +483,14 @@ class TestNSSContextRealWorld:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with NSSContext(db_name=db_path):
             certdb = nss.get_default_certdb()
 
             # Try to list certificates
             try:
-                certs = certdb.find_certs_by_subject('')
+                certs = certdb.find_certs_by_subject("")
             except NSPRError:
                 # May fail depending on database content
                 pass
@@ -522,7 +519,7 @@ class TestNSSContextRealWorld:
         except:
             pass
 
-        db_path = f'sql:{test_certs}'
+        db_path = f"sql:{test_certs}"
 
         with NSSContext(db_name=db_path):
             # Import ssl module
@@ -596,11 +593,11 @@ class TestNSSContextInternalState:
 
     def test_attributes_stored(self):
         """Test that initialization parameters are stored."""
-        db_name = 'sql:test_db'
+        db_name = "sql:test_db"
         flags = 42
 
         def callback(slot, retry):
-            return 'password'
+            return "password"
 
         context = NSSContext(db_name=db_name, password_callback=callback, flags=flags)
 
@@ -609,5 +606,5 @@ class TestNSSContextInternalState:
         assert context.flags == flags
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

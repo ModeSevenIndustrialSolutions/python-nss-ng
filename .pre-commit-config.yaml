@@ -45,22 +45,22 @@ repos:
       - id: gitlint
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: 79a6b2b1392eaf49cdd32ac4f14be1a809bbd8f7  # frozen: v1.37.1
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # frozen: v1.38.0
     hooks:
       - id: yamllint
         types: [yaml]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 5ba58aca0bd5bc7c0e1c0fc45af2e88d6a2bde83  # frozen: v0.14.10
+    rev: d1b833175a5d08a925900115526febd8fe71c98e  # frozen: v0.15.11
     hooks:
       - id: ruff
-        files: ^(src|tests|scripts)/.+\.py$
+        files: ^(src|test|scripts)/.+\.py$
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
-        files: ^(src|tests|scripts)/.+\.py$
+        files: ^(src|test|scripts)/.+\.py$
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: a66e98df7b4aeeb3724184b332785976d062b92e  # frozen: v1.19.1
+    rev: 0f369d245750787ce34997d464ed9605391a5283  # frozen: v1.20.1
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
@@ -78,32 +78,37 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: 76b3d32d3f4b965e1d6425253c59407420ae2c43  # frozen: v0.47.0
+    rev: e72a3ca1632f0b11a07d171449fe447a7ff6795e  # frozen: v0.48.0
     hooks:
       - id: markdownlint
         args: ["--fix"]
 
-  # - repo: https://github.com/fsfe/reuse-tool
-  #  rev: 9fabf9eb815a57aac116b435e8346c200cdb8604  # frozen: v6.2.0
-  #  hooks:
-  #    - id: reuse
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: 9fabf9eb815a57aac116b435e8346c200cdb8604  # frozen: v6.2.0
+    hooks:
+      - id: reuse
 
   # Replaces: https://github.com/rhysd/actionlint
   # Permits actionlint to run both locally and with precommit.ci/GitHub
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: 85c37735ea69e5baf0681530e57e63deee0ce733  # frozen: v1.7.10.24
+    rev: c04ed26e40637cab1aa9879c693832a9c120fb20  # frozen: v1.7.12.24
     hooks:
       - id: actionlint
 
   # Check for misspellings in documentation files
-  #- repo: https://github.com/codespell-project/codespell
-  #  rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
-  #  hooks:
-  #    - id: codespell
-  #      args: ["--ignore-words=.codespell"]
+  - repo: https://github.com/codespell-project/codespell
+    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a  # frozen: v2.4.2
+    hooks:
+      - id: codespell
+
+  # Requires a mirror, primary repo lacks .pre-commit-hooks.yaml
+  - repo: https://github.com/DetachHead/basedpyright-prek-mirror
+    rev: 2de179c8dd041d4caa777c4d97fecdb97a572e8d  # frozen: 1.39.2
+    hooks:
+      - id: basedpyright
 
   - repo: https://github.com/python-jsonschema/check-jsonschema.git
-    rev: b035497fb64e3f9faa91e833331688cc185891e6  # frozen: 0.36.0
+    rev: ed81924a8b1cecdaa570b072528fa80c9c4d6ccd  # frozen: 0.37.1
     hooks:
       - id: check-github-actions
       - id: check-github-workflows
@@ -117,11 +122,10 @@ repos:
           - yaml
       - id: check-readthedocs
 
-  - repo: https://github.com/modeseven-lfit/gha-workflow-linter
-    rev: 100fffb1dffb802767871aae69687b165e4bf782  # frozen: v0.1.13
+  - repo: https://github.com/lfreleng-actions/gha-workflow-linter
+    rev: a7caf8f3a1a05688d1cee46615ff94def617e5a3  # frozen: v1.0.2
     hooks:
       - id: gha-workflow-linter
-        args: [lint]
 
   # Run tests last to ensure all code changes from other hooks are tested
   - repo: local

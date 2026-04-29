@@ -8,10 +8,10 @@ This module tests advanced certificate operations, key management,
 certificate chain validation, and trust management.
 """
 
-import sys
 import os
+import sys
+
 import pytest
-import tempfile
 
 # Add test directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +26,7 @@ class TestCertificateProperties:
     def test_certificate_subject_access(self, nss_db_context):
         """Test accessing certificate subject."""
         try:
-            cert = nss.find_cert_from_nickname('test_ca')
+            cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -38,7 +38,7 @@ class TestCertificateProperties:
     def test_certificate_issuer_access(self, nss_db_context):
         """Test accessing certificate issuer."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -48,7 +48,7 @@ class TestCertificateProperties:
     def test_certificate_validity_period(self, nss_db_context):
         """Test accessing certificate validity period."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -64,7 +64,7 @@ class TestCertificateProperties:
     def test_certificate_serial_number(self, nss_db_context):
         """Test accessing certificate serial number."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -79,7 +79,7 @@ class TestCertificateProperties:
     def test_self_signed_detection(self, nss_db_context):
         """Test detecting self-signed certificates."""
         try:
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -96,7 +96,7 @@ class TestCertificateProperties:
     def test_certificate_fingerprint(self, nss_db_context):
         """Test getting certificate fingerprint."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -118,8 +118,8 @@ class TestCertificateChainValidation:
     def test_validate_server_cert_against_ca(self, nss_db_context):
         """Test validating server certificate against CA."""
         try:
-            server_cert = nss.find_cert_from_nickname('test_server')
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            server_cert = nss.find_cert_from_nickname("test_server")
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("Required certificates not available")
 
@@ -133,7 +133,7 @@ class TestCertificateChainValidation:
     def test_certificate_chain_length(self, nss_db_context):
         """Test determining certificate chain length."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -146,7 +146,7 @@ class TestCertificateChainValidation:
     def test_certificate_verification_usage(self, nss_db_context):
         """Test certificate verification with specific usage."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -160,24 +160,20 @@ class TestCertificateChainValidation:
             try:
                 approved_usage = cert.verify_now(nss_db_context, True, usage)
                 # Verification may succeed or fail depending on certificate
-            except NSPRError as e:
+            except NSPRError:
                 # Some usage types may not be approved
                 pass
 
     def test_certificate_trust_verification(self, nss_db_context):
         """Test verifying certificate trust."""
         try:
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
         # CA certificate should be trusted
         try:
-            approved_usage = ca_cert.verify_now(
-                nss_db_context,
-                True,
-                nss.certificateUsageSSLCA
-            )
+            approved_usage = ca_cert.verify_now(nss_db_context, True, nss.certificateUsageSSLCA)
             assert approved_usage is not None
         except NSPRError:
             # Verification might fail for various reasons
@@ -190,7 +186,7 @@ class TestCertificateSearch:
     def test_find_cert_by_nickname(self, nss_db_context):
         """Test finding certificate by nickname."""
         try:
-            cert = nss.find_cert_from_nickname('test_ca')
+            cert = nss.find_cert_from_nickname("test_ca")
             assert cert is not None
         except NSPRError:
             pytest.skip("test_ca certificate not available")
@@ -199,13 +195,13 @@ class TestCertificateSearch:
         """Test case sensitivity of certificate nicknames."""
         # Test if nickname search is case-sensitive
         try:
-            cert1 = nss.find_cert_from_nickname('test_ca')
+            cert1 = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
         # Try with different case - may or may not work
         try:
-            cert2 = nss.find_cert_from_nickname('TEST_CA')
+            cert2 = nss.find_cert_from_nickname("TEST_CA")
             # Some implementations may be case-insensitive
         except NSPRError:
             # Case-sensitive - this is acceptable
@@ -230,7 +226,7 @@ class TestCertificateExport:
     def test_export_certificate_der(self, nss_db_context):
         """Test exporting certificate as DER."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -249,7 +245,7 @@ class TestCertificateExport:
     def test_export_certificate_pem(self, nss_db_context):
         """Test exporting certificate as PEM."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -262,28 +258,29 @@ class TestCertificateExport:
         assert isinstance(der_data, bytes)
 
         # Convert DER to base64
-        b64_data = base64.b64encode(der_data).decode('ascii')
+        b64_data = base64.b64encode(der_data).decode("ascii")
 
         # Wrap in PEM format with proper headers
-        pem_str = '-----BEGIN CERTIFICATE-----\n'
-        pem_str += '\n'.join(textwrap.wrap(b64_data, 64))
-        pem_str += '\n-----END CERTIFICATE-----'
+        pem_str = "-----BEGIN CERTIFICATE-----\n"
+        pem_str += "\n".join(textwrap.wrap(b64_data, 64))
+        pem_str += "\n-----END CERTIFICATE-----"
 
         # Verify PEM format
-        assert 'BEGIN CERTIFICATE' in pem_str
-        assert 'END CERTIFICATE' in pem_str
+        assert "BEGIN CERTIFICATE" in pem_str
+        assert "END CERTIFICATE" in pem_str
         assert len(b64_data) > 0
 
     def test_export_certificate_base64(self, nss_db_context):
         """Test getting certificate as base64."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
         # Get DER and convert to base64
         try:
             import base64
+
             der_data = cert.der_data
             base64_data = base64.b64encode(der_data)
 
@@ -299,8 +296,8 @@ class TestCertificateComparison:
     def test_same_certificate_equality(self, nss_db_context):
         """Test that same certificate found twice is equal."""
         try:
-            cert1 = nss.find_cert_from_nickname('test_ca')
-            cert2 = nss.find_cert_from_nickname('test_ca')
+            cert1 = nss.find_cert_from_nickname("test_ca")
+            cert2 = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -312,8 +309,8 @@ class TestCertificateComparison:
     def test_different_certificates_inequality(self, nss_db_context):
         """Test that different certificates are not equal."""
         try:
-            cert1 = nss.find_cert_from_nickname('test_ca')
-            cert2 = nss.find_cert_from_nickname('test_server')
+            cert1 = nss.find_cert_from_nickname("test_ca")
+            cert2 = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("Required certificates not available")
 
@@ -337,7 +334,7 @@ class TestCertificateExtensions:
     def test_basic_constraints_extension(self, nss_db_context):
         """Test accessing basic constraints extension."""
         try:
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -353,7 +350,7 @@ class TestCertificateExtensions:
     def test_key_usage_extension(self, nss_db_context):
         """Test accessing key usage extension."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -364,7 +361,7 @@ class TestCertificateExtensions:
     def test_subject_alternative_name(self, nss_db_context):
         """Test accessing subject alternative name."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -419,14 +416,12 @@ class TestCertificateRevocation:
         nss.enable_ocsp_checking(nss_db_context)
 
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
 
             # Validate with OCSP enabled
             try:
                 approved_usage = cert.verify_now(
-                    nss_db_context,
-                    True,
-                    nss.certificateUsageSSLServer
+                    nss_db_context, True, nss.certificateUsageSSLServer
                 )
             except NSPRError:
                 # Validation may fail (no OCSP responder)
@@ -444,17 +439,13 @@ class TestCertificateTrust:
     def test_ca_certificate_trusted(self, nss_db_context):
         """Test that CA certificate is trusted."""
         try:
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
         # CA should be trusted for issuing server certs
         try:
-            approved_usage = ca_cert.verify_now(
-                nss_db_context,
-                True,
-                nss.certificateUsageSSLCA
-            )
+            approved_usage = ca_cert.verify_now(nss_db_context, True, nss.certificateUsageSSLCA)
             assert approved_usage is not None
         except NSPRError:
             # Trust validation might fail
@@ -463,7 +454,7 @@ class TestCertificateTrust:
     def test_trust_flags(self, nss_db_context):
         """Test certificate trust flags."""
         try:
-            cert = nss.find_cert_from_nickname('test_ca')
+            cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -478,7 +469,7 @@ class TestCertificateFormatting:
     def test_certificate_string_representation(self, nss_db_context):
         """Test string representation of certificate."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -490,7 +481,7 @@ class TestCertificateFormatting:
     def test_certificate_subject_formatting(self, nss_db_context):
         """Test formatting certificate subject."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -503,7 +494,7 @@ class TestCertificateFormatting:
     def test_certificate_issuer_formatting(self, nss_db_context):
         """Test formatting certificate issuer."""
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -520,15 +511,15 @@ class TestCertificateEdgeCases:
     def test_null_nickname_search(self, nss_db_context):
         """Test searching with null/empty nickname."""
         with pytest.raises((NSPRError, ValueError, TypeError)):
-            nss.find_cert_from_nickname('')
+            nss.find_cert_from_nickname("")
 
     def test_special_characters_in_nickname(self, nss_db_context):
         """Test searching with special characters."""
         special_nicknames = [
-            'test-cert',
-            'test_cert',
-            'test.cert',
-            'test cert',
+            "test-cert",
+            "test_cert",
+            "test.cert",
+            "test cert",
         ]
 
         for nickname in special_nicknames:
@@ -541,7 +532,7 @@ class TestCertificateEdgeCases:
 
     def test_very_long_nickname(self, nss_db_context):
         """Test searching with very long nickname."""
-        long_nickname = 'a' * 1000
+        long_nickname = "a" * 1000
 
         with pytest.raises(NSPRError):
             nss.find_cert_from_nickname(long_nickname)
@@ -549,9 +540,9 @@ class TestCertificateEdgeCases:
     def test_unicode_nickname(self, nss_db_context):
         """Test searching with Unicode nickname."""
         unicode_nicknames = [
-            'test_café',
-            'test_日本',
-            'test_😀',
+            "test_café",
+            "test_日本",
+            "test_😀",
         ]
 
         for nickname in unicode_nicknames:
@@ -563,5 +554,5 @@ class TestCertificateEdgeCases:
                 pass
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

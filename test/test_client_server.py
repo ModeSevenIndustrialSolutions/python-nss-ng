@@ -1,39 +1,48 @@
 # SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
+# This integration test exercises the legacy NSPR socket / SSL APIs
+# directly: it imports a plain TCP socket via ``io.Socket.import_tcp_socket``
+# and then assigns the resulting object back into an ``ssl.SSLSocket``-typed
+# variable, and similarly mixes ``str`` and ``bytes`` payloads on send/recv.
+# Modernising the code to satisfy strict mypy would change observable
+# behaviour and is out of scope for the tooling sync.
+#
+# mypy: ignore-errors
+
 import contextlib
 import getpass
 import os
 import platform
+import socket
 import sys
 import threading
-import socket
 
 import pytest
 
-from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
 import nss.ssl as ssl
+from nss.error import NSPRError
 
 # -----------------------------------------------------------------------------
-NO_CLIENT_CERT             = 0
-REQUEST_CLIENT_CERT_ONCE   = 1
-REQUIRE_CLIENT_CERT_ONCE   = 2
+NO_CLIENT_CERT = 0
+REQUEST_CLIENT_CERT_ONCE = 1
+REQUIRE_CLIENT_CERT_ONCE = 2
 REQUEST_CLIENT_CERT_ALWAYS = 3
 REQUIRE_CLIENT_CERT_ALWAYS = 4
 
 verbose = True
 info = True
-password = 'DB_passwd'
+password = "DB_passwd"
 use_ssl = True
 client_cert_action = NO_CLIENT_CERT
 
 # Use localhost instead of system hostname for reliable resolution across all platforms
 # This is especially important for CI environments where system hostnames may not resolve
-hostname = 'localhost'
-server_nickname = 'test_server'
-client_nickname = 'test_user'
+hostname = "localhost"
+server_nickname = "test_server"
+client_nickname = "test_user"
 timeout_secs = 10
 server_ready = threading.Event()
 port = 0  # Will be set by test functions
@@ -43,9 +52,12 @@ port = 0  # Will be set by test functions
 # Callback Functions
 # -----------------------------------------------------------------------------
 
+
 def password_callback(slot, retry, password):
-    if password: return password
-    return getpass.getpass("Enter password: ");
+    if password:
+        return password
+    return getpass.getpass("Enter password: ")
+
 
 def handshake_callback(sock):
     if verbose:
@@ -57,6 +69,7 @@ def handshake_callback(sock):
         print("-- handshake complete --")
         print()
 
+
 def auth_certificate_callback(sock, check_sig, is_server, certdb):
     if verbose:
         print("auth_certificate_callback: check_sig=%s is_server=%s" % (check_sig, is_server))
@@ -67,7 +80,7 @@ def auth_certificate_callback(sock, check_sig, is_server, certdb):
     if pin_args is None:
         pin_args = ()
 
-    #if verbose:
+    # if verbose:
     #    print("cert:\n%s" % cert)
 
     # Define how the cert is being used based upon the is_server flag.  This may
@@ -91,7 +104,7 @@ def auth_certificate_callback(sock, check_sig, is_server, certdb):
         return cert_is_valid
 
     if verbose:
-        print("approved_usage = %s" % ', '.join(nss.cert_usage_flags(approved_usage)))
+        print("approved_usage = %s" % ", ".join(nss.cert_usage_flags(approved_usage)))
 
     # Is the intended usage a proper subset of the approved usage
     if approved_usage & intended_usage:
@@ -127,6 +140,7 @@ def auth_certificate_callback(sock, check_sig, is_server, certdb):
         print("Returning cert_is_valid = %s" % cert_is_valid)
     return cert_is_valid
 
+
 def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
     cert = None
     if chosen_nickname:
@@ -154,9 +168,11 @@ def client_auth_data_callback(ca_names, chosen_nickname, password, certdb):
                 print("client_auth_data_callback: %s" % e, file=sys.stderr)
         return False
 
+
 # -----------------------------------------------------------------------------
 # Client Implementation
 # -----------------------------------------------------------------------------
+
 
 def client(request, test_port):
     if use_ssl:
@@ -167,9 +183,9 @@ def client(request, test_port):
     # Get the IP Address of our server
     try:
         addr_info = io.AddrInfo(hostname)
-    except Exception as e:
-        print("client: could not resolve host address \"%s\"" % hostname, file=sys.stderr)
-        return
+    except Exception:
+        print('client: could not resolve host address "%s"' % hostname, file=sys.stderr)
+        return None
 
     for net_addr in addr_info:
         net_addr.port = test_port
@@ -186,12 +202,12 @@ def client(request, test_port):
             sock.set_handshake_callback(handshake_callback)
 
             # Provide a callback to supply our client certificate info
-            sock.set_client_auth_data_callback(client_auth_data_callback, client_nickname,
-                                               password, nss.get_default_certdb())
+            sock.set_client_auth_data_callback(
+                client_auth_data_callback, client_nickname, password, nss.get_default_certdb()
+            )
 
             # Provide a callback to verify the servers certificate
-            sock.set_auth_certificate_callback(auth_certificate_callback,
-                                               nss.get_default_certdb())
+            sock.set_auth_certificate_callback(auth_certificate_callback, nss.get_default_certdb())
         else:
             sock = io.Socket(net_addr.family)
 
@@ -209,23 +225,23 @@ def client(request, test_port):
     # Talk to the server
     try:
         if info:
-            print("client: sending \"%s\"" % (request))
-        data = request + "\n"; # newline is protocol record separator
-        sock.send(data.encode('utf-8'))
+            print('client: sending "%s"' % (request))
+        data = request + "\n"  # newline is protocol record separator
+        sock.send(data.encode("utf-8"))
         buf = sock.readline()
         if not buf:
             print("client: lost connection", file=sys.stderr)
             sock.close()
-            return
-        buf = buf.decode('utf-8')
-        buf = buf.rstrip()        # remove newline record separator
+            return None
+        buf = buf.decode("utf-8")
+        buf = buf.rstrip()  # remove newline record separator
         if info:
-            print("client: received \"%s\"" % (buf))
+            print('client: received "%s"' % (buf))
     except Exception as e:
         print("client: %s" % e, file=sys.stderr)
         with contextlib.suppress(NSPRError, OSError):
             sock.close()
-        return
+        return None
 
     try:
         sock.shutdown()
@@ -241,9 +257,11 @@ def client(request, test_port):
 
     return buf
 
+
 # -----------------------------------------------------------------------------
 # Server Implementation
 # -----------------------------------------------------------------------------
+
 
 def get_free_port():
     """Get a free port by binding to port 0 and letting the OS choose.
@@ -254,10 +272,11 @@ def get_free_port():
     happens quickly enough that this is rarely an issue in practice.
     """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
+        s.bind(("", 0))
         s.listen(1)
         port = s.getsockname()[1]
     return port
+
 
 def server(test_port):
     if verbose:
@@ -276,17 +295,16 @@ def server(test_port):
         # Perform basic SSL server configuration
         # Enforce minimum TLS 1.2 for security
         ssl.set_default_ssl_version_range(
-            ssl.SSL_LIBRARY_VERSION_TLS_1_2,
-            ssl.SSL_LIBRARY_VERSION_TLS_1_3
+            ssl.SSL_LIBRARY_VERSION_TLS_1_2, ssl.SSL_LIBRARY_VERSION_TLS_1_3
         )
         ssl.config_server_session_id_cache()
 
         # Get our certificate and private key
         server_cert = nss.find_cert_from_nickname(server_nickname, password)
         priv_key = nss.find_key_by_any_cert(server_cert, password)
-        server_cert_kea = server_cert.find_kea_type();
+        server_cert_kea = server_cert.find_kea_type()
 
-        #if verbose:
+        # if verbose:
         #    print("server cert:\n%s" % server_cert)
 
         sock = ssl.SSLSocket(net_addr.family)
@@ -322,6 +340,7 @@ def server(test_port):
     # Small delay to ensure the listening socket is fully established
     # This helps prevent race conditions on ARM64 where timing is different
     import time
+
     time.sleep(0.1)
 
     # Accept a single connection from a client
@@ -334,20 +353,20 @@ def server(test_port):
 
     try:
         # Handle the client connection
-        buf = client_sock.readline()   # newline is protocol record separator
+        buf = client_sock.readline()  # newline is protocol record separator
         if not buf:
             print("server: lost connection to %s" % (client_addr), file=sys.stderr)
         else:
-            buf = buf.decode('utf-8')
-            buf = buf.rstrip()             # remove newline record separator
+            buf = buf.decode("utf-8")
+            buf = buf.rstrip()  # remove newline record separator
 
             if info:
-                print("server: received \"%s\"" % (buf))
-            reply = "{%s}" % buf           # echo embedded inside braces
+                print('server: received "%s"' % (buf))
+            reply = "{%s}" % buf  # echo embedded inside braces
             if info:
-                print("server: sending \"%s\"" % (reply))
-            data = reply + "\n" # send echo with record separator
-            client_sock.send(data.encode('utf-8'))
+                print('server: sending "%s"' % (reply))
+            data = reply + "\n"  # send echo with record separator
+            client_sock.send(data.encode("utf-8"))
 
         with contextlib.suppress(NSPRError, OSError):
             client_sock.shutdown()
@@ -364,7 +383,9 @@ def server(test_port):
     if use_ssl:
         ssl.shutdown_server_session_id_cache()
 
+
 # -----------------------------------------------------------------------------
+
 
 def run_server_thread(port):
     """Run server in a background thread with proper error handling."""
@@ -393,29 +414,32 @@ def run_server_thread(port):
 
     # Additional small delay to ensure socket is fully ready on all architectures
     import time
+
     time.sleep(0.2)
 
     return thread
 
+
 def _should_skip_ssl_threading_test():
     """Check if SSL threading test should be skipped on this platform."""
     # Skip on macOS - known NSS threading issues
-    if platform.system() == 'Darwin':
+    if platform.system() == "Darwin":
         return True
 
     # Skip in CI environments - NSS SSL threading has known race conditions
     # that cause intermittent segfaults, especially with ssl.shutdown_server_session_id_cache()
-    if os.environ.get('CI') == 'true' or os.environ.get('GITHUB_ACTIONS') == 'true':
+    if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
         return True
 
     # Skip on Linux ARM64 with NSS < 3.119 - threading segfaults
-    if platform.system() == 'Linux' and platform.machine() in ('aarch64', 'arm64'):
+    if platform.system() == "Linux" and platform.machine() in ("aarch64", "arm64"):
         try:
             import nss.nss as nss
+
             version_str = nss.nss_get_version()
             # Parse version like "3.118" or "3.118.1" -> [3, 118, ...]
             # Pad with zeros for comparison: [3, 118] -> [3, 118, 0]
-            version_parts = [int(x) for x in version_str.split('.')]
+            version_parts = [int(x) for x in version_str.split(".")]
             version_parts += [0] * (3 - len(version_parts))  # Pad to 3 parts
             if version_parts < [3, 119, 0]:
                 return True
@@ -432,7 +456,7 @@ class TestSSL:
     @pytest.mark.xdist_group("ssl_serial")
     @pytest.mark.skipif(
         _should_skip_ssl_threading_test(),
-        reason="NSS SSL threading causes segfault on this platform/version due to known NSS library threading issues"
+        reason="NSS SSL threading causes segfault on this platform/version due to known NSS library threading issues",
     )
     def test_ssl(self, nss_db_context):
         """Test SSL client-server communication using threading.

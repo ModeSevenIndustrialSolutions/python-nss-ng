@@ -8,18 +8,17 @@ This module tests end-to-end workflows, multi-component interactions,
 and real-world usage scenarios.
 """
 
-import sys
 import os
+import sys
 import threading
-import time
+
 import pytest
 
 # Add src to path for importing modules
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 import nss.nss as nss
 import nss.ssl as ssl
-import nss.io as io
 from nss.error import NSPRError
 
 
@@ -31,7 +30,7 @@ class TestCertificateLifecycle:
         """Test loading and verifying a certificate end-to-end."""
         # Find a certificate
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -50,7 +49,7 @@ class TestCertificateLifecycle:
         try:
             approved_usage = cert.verify_now(nss_clean_state, True, nss.certificateUsageSSLServer)
             assert approved_usage is not None
-        except NSPRError as e:
+        except NSPRError:
             # Verification might fail for various reasons
             # This is acceptable for integration testing
             pass
@@ -59,13 +58,13 @@ class TestCertificateLifecycle:
         """Test validating a certificate chain."""
         # Find server certificate
         try:
-            server_cert = nss.find_cert_from_nickname('test_server')
+            server_cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
         # Find CA certificate
         try:
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -83,7 +82,7 @@ class TestCertificateLifecycle:
         """Test exporting and working with certificate data."""
         # Find a certificate
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -135,7 +134,7 @@ class TestDigestWorkflows:
 
         offset = 0
         while offset < len(test_data):
-            chunk = test_data[offset:offset + chunk_size]
+            chunk = test_data[offset : offset + chunk_size]
             context.digest_op(chunk)
             offset += chunk_size
 
@@ -177,8 +176,7 @@ class TestSSLConfiguration:
             # Try to set a range (TLS 1.2 to TLS 1.3)
             try:
                 ssl.set_default_ssl_version_range(
-                    ssl.SSL_LIBRARY_VERSION_TLS_1_2,
-                    ssl.SSL_LIBRARY_VERSION_TLS_1_3
+                    ssl.SSL_LIBRARY_VERSION_TLS_1_2, ssl.SSL_LIBRARY_VERSION_TLS_1_3
                 )
 
                 # Verify it was set
@@ -239,9 +237,7 @@ class TestOCSPIntegrationWorkflow:
         # Configure default responder
         try:
             nss.set_ocsp_default_responder(
-                nss_clean_state,
-                "http://ocsp.example.com:80/",
-                'test_ca'
+                nss_clean_state, "http://ocsp.example.com:80/", "test_ca"
             )
             nss.enable_ocsp_default_responder(nss_clean_state)
         except NSPRError:
@@ -267,16 +263,14 @@ class TestOCSPIntegrationWorkflow:
 
         try:
             # Find and validate a certificate
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
 
             # Validate with OCSP enabled
             # Note: This will not actually contact an OCSP responder in tests
             # but exercises the code path
             try:
                 approved_usage = cert.verify_now(
-                    nss_clean_state,
-                    True,
-                    nss.certificateUsageSSLServer
+                    nss_clean_state, True, nss.certificateUsageSSLServer
                 )
             except NSPRError:
                 # Validation may fail for various reasons
@@ -290,8 +284,8 @@ class TestOCSPIntegrationWorkflow:
 
 @pytest.mark.xdist_group("integration_serial")
 @pytest.mark.skipif(
-    os.environ.get('CI') == 'true' or os.environ.get('GITHUB_ACTIONS') == 'true',
-    reason="NSS threading operations have race conditions in CI"
+    os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="NSS threading operations have race conditions in CI",
 )
 class TestMultiThreadedAccess:
     """Test thread-safe operations.
@@ -349,7 +343,7 @@ class TestMultiThreadedAccess:
             """Worker function for certificate access."""
             try:
                 # Try to find certificate
-                cert = nss.find_cert_from_nickname('test_ca')
+                cert = nss.find_cert_from_nickname("test_ca")
                 results.append((thread_id, cert is not None))
             except NSPRError:
                 # Certificate not found is acceptable
@@ -383,12 +377,12 @@ class TestErrorRecovery:
         """Test that system recovers from invalid certificate operations."""
         # Try to find non-existent certificate
         with pytest.raises(NSPRError):
-            nss.find_cert_from_nickname('nonexistent_cert_12345')
+            nss.find_cert_from_nickname("nonexistent_cert_12345")
 
         # System should still work after error
         # Try valid operation
         try:
-            cert = nss.find_cert_from_nickname('test_ca')
+            cert = nss.find_cert_from_nickname("test_ca")
             assert cert is not None
         except NSPRError:
             # test_ca might not exist, but no crash
@@ -466,7 +460,7 @@ class TestResourceCleanup:
 
         for i in range(50):
             try:
-                cert = nss.find_cert_from_nickname('test_ca')
+                cert = nss.find_cert_from_nickname("test_ca")
                 certificates.append(cert)
             except NSPRError:
                 # Certificate might not exist
@@ -490,7 +484,7 @@ class TestDataConversion:
 
     def test_hex_conversion_workflow(self, nss_clean_state):
         """Test converting binary data to hex."""
-        test_data = b"\x00\x01\x02\x03\xAB\xCD\xEF\xFF"
+        test_data = b"\x00\x01\x02\x03\xab\xcd\xef\xff"
 
         # Convert to hex
         hex_str = nss.data_to_hex(test_data, separator=None)
@@ -498,11 +492,11 @@ class TestDataConversion:
         assert isinstance(hex_str, str)
 
         # Verify format (should be lowercase hex)
-        assert all(c in '0123456789abcdef' for c in hex_str.lower())
+        assert all(c in "0123456789abcdef" for c in hex_str.lower())
 
         # Test with separator
-        hex_with_sep = nss.data_to_hex(test_data, separator=':')
-        assert ':' in hex_with_sep
+        hex_with_sep = nss.data_to_hex(test_data, separator=":")
+        assert ":" in hex_with_sep
 
     def test_digest_to_hex_workflow(self, nss_clean_state):
         """Test complete workflow: digest -> binary -> hex."""
@@ -517,7 +511,7 @@ class TestDataConversion:
         # Verify format
         assert isinstance(digest_hex, str)
         assert len(digest_hex) == 64  # 32 bytes * 2 hex chars
-        assert all(c in '0123456789abcdef' for c in digest_hex.lower())
+        assert all(c in "0123456789abcdef" for c in digest_hex.lower())
 
 
 @pytest.mark.xdist_group("integration_serial")
@@ -530,16 +524,14 @@ class TestCompleteWorkflow:
 
         # 1. Find server certificate
         try:
-            server_cert = nss.find_cert_from_nickname('test_server')
+            server_cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
         # 2. Verify certificate is valid
         try:
             approved_usage = server_cert.verify_now(
-                nss_clean_state,
-                True,
-                nss.certificateUsageSSLServer
+                nss_clean_state, True, nss.certificateUsageSSLServer
             )
         except NSPRError:
             # Validation might fail, but we're testing the workflow
@@ -549,8 +541,7 @@ class TestCompleteWorkflow:
         try:
             # Set minimum TLS version
             ssl.set_default_ssl_version_range(
-                ssl.SSL_LIBRARY_VERSION_TLS_1_2,
-                ssl.SSL_LIBRARY_VERSION_TLS_1_3
+                ssl.SSL_LIBRARY_VERSION_TLS_1_2, ssl.SSL_LIBRARY_VERSION_TLS_1_3
             )
         except (AttributeError, NSPRError):
             # API might not be available
@@ -586,5 +577,5 @@ class TestCompleteWorkflow:
         assert original_hash != modified_hash, "Modified data detected"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

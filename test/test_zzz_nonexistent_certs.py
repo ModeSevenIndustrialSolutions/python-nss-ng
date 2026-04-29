@@ -10,6 +10,7 @@ they run at the end of the test suite.
 """
 
 import pytest
+
 import nss.nss as nss
 from nss.error import NSPRError
 
@@ -23,15 +24,15 @@ class TestNonexistentCertificateLookup:
     def test_find_nonexistent_cert(self, nss_clean_state):
         """Test that finding nonexistent cert raises error."""
         with pytest.raises(NSPRError):
-            nss.find_cert_from_nickname('definitely_does_not_exist_12345')
+            nss.find_cert_from_nickname("definitely_does_not_exist_12345")
 
     def test_find_nonexistent_cert_various_names(self, nss_clean_state):
         """Test various nonexistent certificate names."""
         nonexistent_names = [
-            'nonexistent_cert_12345',
-            'invalid_nickname_xyz',
-            'does_not_exist',
-            'missing_certificate',
+            "nonexistent_cert_12345",
+            "invalid_nickname_xyz",
+            "does_not_exist",
+            "missing_certificate",
         ]
 
         for name in nonexistent_names:
@@ -39,5 +40,5 @@ class TestNonexistentCertificateLookup:
                 nss.find_cert_from_nickname(name)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

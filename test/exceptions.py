@@ -3,11 +3,12 @@
 
 """Common exceptions for python-nss-ng test utilities."""
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 
 class PythonNSSError(Exception):
     """Base exception for python-nss-ng related errors."""
+
     pass
 
 
@@ -18,9 +19,9 @@ class CommandExecutionError(PythonNSSError):
         self,
         cmd_args: Sequence[str],
         returncode: int,
-        message: Optional[str] = None,
-        stdout: Optional[str] = None,
-        stderr: Optional[str] = None
+        message: str | None = None,
+        stdout: str | None = None,
+        stderr: str | None = None,
     ):
         """Initialize CommandExecutionError.
 
@@ -37,10 +38,10 @@ class CommandExecutionError(PythonNSSError):
         self.stderr = stderr
 
         if message is None:
-            self.message = f'Command failed with error code {returncode}'
+            self.message = f"Command failed with error code {returncode}"
             if stderr:
-                self.message += f': {stderr.strip()}'
-            self.message += f'\nCommand: {" ".join(str(arg) for arg in cmd_args)}'
+                self.message += f": {stderr.strip()}"
+            self.message += f"\nCommand: {' '.join(str(arg) for arg in cmd_args)}"
         else:
             self.message = message
 
@@ -52,16 +53,19 @@ class CommandExecutionError(PythonNSSError):
 
 class CertificateError(PythonNSSError):
     """Exception raised for certificate-related errors."""
+
     pass
 
 
 class DatabaseError(PythonNSSError):
     """Exception raised for NSS database-related errors."""
+
     pass
 
 
 class ConfigurationError(PythonNSSError):
     """Exception raised for configuration-related errors."""
+
     pass
 
 

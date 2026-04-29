@@ -7,12 +7,11 @@ Tests for documentation accuracy.
 This module validates that documentation matches actual code.
 """
 
-import sys
-import os
 import re
-import ast
-import pytest
+import sys
 from pathlib import Path
+
+import pytest
 
 
 class TestReadmeAccuracy:
@@ -22,7 +21,7 @@ class TestReadmeAccuracy:
     def readme_path(self):
         """Get README.md path."""
         repo_root = Path(__file__).parent.parent
-        return repo_root / 'README.md'
+        return repo_root / "README.md"
 
     @pytest.fixture
     def readme_content(self, readme_path):
@@ -41,12 +40,12 @@ class TestReadmeAccuracy:
 
     def test_readme_has_title(self, readme_content):
         """Test that README has a title."""
-        lines = readme_content.split('\n')
+        lines = readme_content.split("\n")
 
         # First non-empty line should be title or has # heading
         has_title = False
         for line in lines[:10]:
-            if line.strip().startswith('#'):
+            if line.strip().startswith("#"):
                 has_title = True
                 break
 
@@ -55,7 +54,7 @@ class TestReadmeAccuracy:
     def test_readme_mentions_key_features(self, readme_content):
         """Test that README documents key features."""
         # Core project terms
-        key_terms = ['NSS', 'NSPR', 'certificate', 'Python']
+        key_terms = ["NSS", "NSPR", "certificate", "Python"]
 
         found_terms = []
         for term in key_terms:
@@ -63,22 +62,14 @@ class TestReadmeAccuracy:
                 found_terms.append(term)
 
         # At least 3 out of 4 key terms should be present
-        assert len(found_terms) >= 3, \
-            f"README should mention key terms. Found: {found_terms}"
+        assert len(found_terms) >= 3, f"README should mention key terms. Found: {found_terms}"
 
     def test_readme_has_installation_info(self, readme_content):
         """Test that README has installation information."""
-        installation_indicators = [
-            'install',
-            'pip',
-            'setup.py',
-            'requirements',
-            'dependencies'
-        ]
+        installation_indicators = ["install", "pip", "setup.py", "requirements", "dependencies"]
 
         has_installation = any(
-            indicator in readme_content.lower()
-            for indicator in installation_indicators
+            indicator in readme_content.lower() for indicator in installation_indicators
         )
 
         assert has_installation, "README should have installation information"
@@ -86,27 +77,18 @@ class TestReadmeAccuracy:
     def test_readme_has_usage_examples(self, readme_content):
         """Test that README has usage examples."""
         # Check for code blocks or import statements
-        has_code_blocks = '```' in readme_content
-        has_imports = 'import' in readme_content
+        has_code_blocks = "```" in readme_content
+        has_imports = "import" in readme_content
 
-        assert has_code_blocks or has_imports, \
-            "README should have usage examples"
+        assert has_code_blocks or has_imports, "README should have usage examples"
 
     def test_readme_code_blocks_extractable(self, readme_content):
         """Test that code blocks can be extracted from README."""
         # Extract Python code blocks
-        python_blocks = re.findall(
-            r'```python\n(.*?)\n```',
-            readme_content,
-            re.DOTALL
-        )
+        python_blocks = re.findall(r"```python\n(.*?)\n```", readme_content, re.DOTALL)
 
         # Extract generic code blocks
-        generic_blocks = re.findall(
-            r'```\n(.*?)\n```',
-            readme_content,
-            re.DOTALL
-        )
+        generic_blocks = re.findall(r"```\n(.*?)\n```", readme_content, re.DOTALL)
 
         total_blocks = len(python_blocks) + len(generic_blocks)
 
@@ -117,7 +99,7 @@ class TestReadmeAccuracy:
     def test_readme_links_valid_format(self, readme_content):
         """Test that README links have valid Markdown format."""
         # Find Markdown links: [text](url)
-        links = re.findall(r'\[([^\]]+)\]\(([^\)]+)\)', readme_content)
+        links = re.findall(r"\[([^\]]+)\]\(([^\)]+)\)", readme_content)
 
         for link_text, link_url in links:
             # Link text should not be empty
@@ -127,9 +109,9 @@ class TestReadmeAccuracy:
             assert len(link_url) > 0, "Link URL should not be empty"
 
             # URL should not have spaces (unless properly encoded)
-            if ' ' in link_url and '%20' not in link_url:
+            if " " in link_url and "%20" not in link_url:
                 # Allow relative paths with spaces in some cases
-                if not link_url.startswith('#'):
+                if not link_url.startswith("#"):
                     pytest.fail(f"Link URL has unencoded spaces: {link_url}")
 
 
@@ -138,51 +120,50 @@ class TestAPIDocumentation:
 
     def test_public_functions_documented(self):
         """Test that public functions have docstrings."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
-            from deprecations import warn_deprecated, is_deprecated
+            from deprecations import is_deprecated, warn_deprecated
 
             functions = [warn_deprecated, is_deprecated]
 
             for func in functions:
-                assert func.__doc__ is not None, \
-                    f"{func.__name__} should have docstring"
-                assert len(func.__doc__.strip()) > 10, \
+                assert func.__doc__ is not None, f"{func.__name__} should have docstring"
+                assert len(func.__doc__.strip()) > 10, (
                     f"{func.__name__} docstring should be substantial"
+                )
         except ImportError:
             pytest.skip("deprecations module not available")
 
     def test_secure_logging_functions_documented(self):
         """Test that secure_logging functions have docstrings."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
-            from secure_logging import secure_log, redact_message
+            from secure_logging import redact_message, secure_log
 
             functions = [secure_log, redact_message]
 
             for func in functions:
-                assert func.__doc__ is not None, \
-                    f"{func.__name__} should have docstring"
-                assert len(func.__doc__.strip()) > 10, \
+                assert func.__doc__ is not None, f"{func.__name__} should have docstring"
+                assert len(func.__doc__.strip()) > 10, (
                     f"{func.__name__} docstring should be substantial"
+                )
         except ImportError:
             pytest.skip("secure_logging module not available")
 
     def test_nss_context_class_documented(self):
         """Test that NSSContext class is documented."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from nss_context import NSSContext
 
             # Class should have docstring
-            assert NSSContext.__doc__ is not None, \
-                "NSSContext class should have docstring"
+            assert NSSContext.__doc__ is not None, "NSSContext class should have docstring"
 
             # Key methods should have docstrings
-            key_methods = ['__init__', '__enter__', '__exit__']
+            key_methods = ["__init__", "__enter__", "__exit__"]
 
             for method_name in key_methods:
                 if hasattr(NSSContext, method_name):
@@ -195,9 +176,9 @@ class TestAPIDocumentation:
 
     def test_module_level_docstrings(self):
         """Test that modules have module-level docstrings."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
-        modules_to_check = ['deprecations', 'secure_logging', 'nss_context']
+        modules_to_check = ["deprecations", "secure_logging", "nss_context"]
 
         documented_modules = 0
 
@@ -210,8 +191,7 @@ class TestAPIDocumentation:
                 pass
 
         # At least one module should have documentation
-        assert documented_modules > 0, \
-            "At least one module should have module-level docstring"
+        assert documented_modules > 0, "At least one module should have module-level docstring"
 
 
 class TestDocumentationConsistency:
@@ -220,7 +200,7 @@ class TestDocumentationConsistency:
     @pytest.fixture
     def doc_dir(self):
         """Get documentation directory."""
-        return Path(__file__).parent.parent / 'doc'
+        return Path(__file__).parent.parent / "doc"
 
     def test_doc_directory_exists(self, doc_dir):
         """Test that doc directory exists."""
@@ -231,7 +211,7 @@ class TestDocumentationConsistency:
         if not doc_dir.exists():
             pytest.skip("doc directory not found")
 
-        md_files = list(doc_dir.glob('*.md'))
+        md_files = list(doc_dir.glob("*.md"))
 
         # Should have at least some documentation
         assert len(md_files) > 0, "doc directory should contain .md files"
@@ -241,51 +221,48 @@ class TestDocumentationConsistency:
         if not doc_dir.exists():
             pytest.skip("doc directory not found")
 
-        md_files = list(doc_dir.glob('*.md'))
+        md_files = list(doc_dir.glob("*.md"))
 
         for md_file in md_files:
             content = md_file.read_text()
 
             # Should have SPDX license identifier or copyright
             has_license = (
-                'SPDX-License-Identifier' in content or
-                'SPDX-FileCopyrightText' in content or
-                'License:' in content or
-                'Copyright' in content
+                "SPDX-License-Identifier" in content
+                or "SPDX-FileCopyrightText" in content
+                or "License:" in content
+                or "Copyright" in content
             )
 
-            assert has_license, \
-                f"{md_file.name} should have license information"
+            assert has_license, f"{md_file.name} should have license information"
 
     def test_doc_files_not_empty(self, doc_dir):
         """Test that documentation files are not empty."""
         if not doc_dir.exists():
             pytest.skip("doc directory not found")
 
-        md_files = list(doc_dir.glob('*.md'))
+        md_files = list(doc_dir.glob("*.md"))
 
         for md_file in md_files:
             content = md_file.read_text()
 
             # Should have substantial content (more than just license)
-            assert len(content) > 200, \
-                f"{md_file.name} should have substantial content"
+            assert len(content) > 200, f"{md_file.name} should have substantial content"
 
     def test_doc_files_have_headings(self, doc_dir):
         """Test that documentation files have proper structure."""
         if not doc_dir.exists():
             pytest.skip("doc directory not found")
 
-        md_files = list(doc_dir.glob('*.md'))
+        md_files = list(doc_dir.glob("*.md"))
 
         for md_file in md_files:
             content = md_file.read_text()
 
             # Should have at least one heading
-            has_heading = re.search(r'^#+\s+.+', content, re.MULTILINE)
+            has_heading = re.search(r"^#+\s+.+", content, re.MULTILINE)
 
-            assert has_heading, \
-                f"{md_file.name} should have at least one heading"
+            assert has_heading, f"{md_file.name} should have at least one heading"
 
 
 class TestCodeExampleValidity:
@@ -293,7 +270,7 @@ class TestCodeExampleValidity:
 
     def test_readme_python_examples_syntax(self):
         """Test that Python examples in README have valid syntax."""
-        readme_path = Path(__file__).parent.parent / 'README.md'
+        readme_path = Path(__file__).parent.parent / "README.md"
 
         if not readme_path.exists():
             pytest.skip("README.md not found")
@@ -301,46 +278,38 @@ class TestCodeExampleValidity:
         content = readme_path.read_text()
 
         # Extract Python code blocks
-        python_blocks = re.findall(
-            r'```python\n(.*?)\n```',
-            content,
-            re.DOTALL
-        )
+        python_blocks = re.findall(r"```python\n(.*?)\n```", content, re.DOTALL)
 
         for i, code_block in enumerate(python_blocks):
             # Try to parse as Python
             try:
-                compile(code_block, f'<readme-example-{i}>', 'exec')
+                compile(code_block, f"<readme-example-{i}>", "exec")
             except SyntaxError as e:
                 # Some examples might be incomplete snippets, be lenient
                 # Just check for obvious errors
-                if 'invalid syntax' in str(e):
+                if "invalid syntax" in str(e):
                     # Allow incomplete snippets, just flag truly broken ones
                     pass
 
     def test_doc_python_examples_syntax(self):
         """Test that Python examples in doc files have valid syntax."""
-        doc_dir = Path(__file__).parent.parent / 'doc'
+        doc_dir = Path(__file__).parent.parent / "doc"
 
         if not doc_dir.exists():
             pytest.skip("doc directory not found")
 
-        md_files = list(doc_dir.glob('*.md'))
+        md_files = list(doc_dir.glob("*.md"))
 
         for md_file in md_files:
             content = md_file.read_text()
 
             # Extract Python code blocks
-            python_blocks = re.findall(
-                r'```python\n(.*?)\n```',
-                content,
-                re.DOTALL
-            )
+            python_blocks = re.findall(r"```python\n(.*?)\n```", content, re.DOTALL)
 
             for i, code_block in enumerate(python_blocks):
                 # Try to parse as Python
                 try:
-                    compile(code_block, f'<{md_file.name}-example-{i}>', 'exec')
+                    compile(code_block, f"<{md_file.name}-example-{i}>", "exec")
                 except SyntaxError:
                     # Some examples might be incomplete, that's okay
                     pass
@@ -354,26 +323,24 @@ class TestDocumentationCompleteness:
         repo_root = Path(__file__).parent.parent
 
         # Critical files
-        readme = repo_root / 'README.md'
+        readme = repo_root / "README.md"
 
         assert readme.exists(), "README.md must exist"
 
     def test_test_documentation_exists(self):
         """Test that test documentation exists."""
         repo_root = Path(__file__).parent.parent
-        doc_dir = repo_root / 'doc'
+        doc_dir = repo_root / "doc"
 
         if not doc_dir.exists():
             pytest.skip("doc directory not found")
 
         # Look for testing-related docs
-        md_files = list(doc_dir.glob('*.md'))
+        md_files = list(doc_dir.glob("*.md"))
         filenames = [f.name.lower() for f in md_files]
 
         # Should have some testing documentation
-        has_test_docs = any(
-            'test' in name for name in filenames
-        )
+        has_test_docs = any("test" in name for name in filenames)
 
         # This is a soft requirement
         if has_test_docs:
@@ -384,14 +351,13 @@ class TestDocumentationCompleteness:
 
     def test_api_reference_or_stubs_exist(self):
         """Test that API reference or type stubs exist."""
-        src_dir = Path(__file__).parent.parent / 'src'
+        src_dir = Path(__file__).parent.parent / "src"
 
         # Check for .pyi stub files (type hints serve as API docs)
-        stub_files = list(src_dir.glob('*.pyi'))
+        stub_files = list(src_dir.glob("*.pyi"))
 
         # Should have type stubs for API documentation
-        assert len(stub_files) > 0, \
-            "Should have .pyi stub files for API documentation"
+        assert len(stub_files) > 0, "Should have .pyi stub files for API documentation"
 
 
 class TestDocumentationVersioning:
@@ -400,7 +366,7 @@ class TestDocumentationVersioning:
     def test_readme_or_docs_mention_version(self):
         """Test that documentation mentions version information."""
         repo_root = Path(__file__).parent.parent
-        readme_path = repo_root / 'README.md'
+        readme_path = repo_root / "README.md"
 
         if not readme_path.exists():
             pytest.skip("README.md not found")
@@ -408,25 +374,14 @@ class TestDocumentationVersioning:
         content = readme_path.read_text()
 
         # Look for version-related keywords
-        version_indicators = [
-            'version',
-            'release',
-            'v0.',
-            'v1.',
-            'v2.',
-            'pypi',
-            'pip install'
-        ]
+        version_indicators = ["version", "release", "v0.", "v1.", "v2.", "pypi", "pip install"]
 
-        has_version_info = any(
-            indicator in content.lower()
-            for indicator in version_indicators
-        )
+        has_version_info = any(indicator in content.lower() for indicator in version_indicators)
 
         # This is informational, not a hard requirement
         # Just check for presence
         assert isinstance(has_version_info, bool)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

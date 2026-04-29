@@ -365,7 +365,7 @@
     password file and writes hardcoded responses to the stdin of
     certuil and modutil.
 
-  * setup_certs now creates a new sql sytle NSS database (sql:pki)
+  * setup_certs now creates a new sql style NSS database (sql:pki)
 
   * All tests and examples now load the sql:pki database. Command line
     arg and variable changed from dbdir to db_name to reflect the
@@ -380,11 +380,11 @@
   External Changes
   ----------------
 
-  The primary enhancements in this version is support of certifcate
+  The primary enhancements in this version is support of certificate
   validation, OCSP support, and support for the certificate "Authority
   Information Access" extension.
 
-  Enhanced certifcate validation including CA certs can be done via
+  Enhanced certificate validation including CA certs can be done via
   Certificate.verify() or Certificate.is_ca_cert(). When cert
   validation fails you can now obtain diagnostic information as to why
   the cert failed to validate. This is encapsulated in the
@@ -575,7 +575,7 @@
   * For NSS >= 3.13 support CERTDB_TERMINAL_RECORD
 
   * You can now query for a specific certificate extension
-    Certficate.get_extension()
+    Certificate.get_extension()
 
   * The following classes were added:
     - RSAGenParams
@@ -594,14 +594,14 @@
     - SecItem_new_alloc()
 
   * The following class constructors were modified to accept
-    intialization parameters
+    initialization parameters
 
     - KEYPQGParams (DSA generation parameters)
 
   * The PublicKey formatting (i.e. format_lines) was augmented
     to format DSA keys (formerly it only recognized RSA keys).
 
-  * Allow lables and values to be justified when printing objects
+  * Allow labels and values to be justified when printing objects
 
   * The following were deprecated:
     - nss.nss.make_line_pairs (replaced by nss.nss.make_line_fmt_tuples)
@@ -609,12 +609,12 @@
     Deprecated Functionality:
     -------------------------
     - make_line_pairs() has been replaced by make_line_fmt_tuples()
-      because 2-valued tuples were not sufficently general. It is
+      because 2-valued tuples were not sufficiently general. It is
       expected very few programs will have used this function, it's mostly
       used internally but provided as a support utility.
 
 2011-04-22  John Dennis  <jdennis@redhat.com> 0.12
-  * Major new enhancement is additon of PKCS12 support and
+  * Major new enhancement is addition of PKCS12 support and
     AlgorithmID's.
 
   * setup.py build enhancements
@@ -757,7 +757,7 @@
     optional family parameter. This is necessary for utilizing
     PR_GetAddrInfoByName().
 
-  * NetworkAddress initialized via a string paramter are now initalized via
+  * NetworkAddress initialized via a string parameter are now initialized via
     PR_GetAddrInfoByName using family.
 
   * Add NetworkAddress.address property to return the address sans the
@@ -785,7 +785,7 @@
     Deprecated Functionality:
     -------------------------
 
-  * NetworkAddress initialized via a string paramter is now
+  * NetworkAddress initialized via a string parameter is now
     deprecated. AddrInfo should be used instead.
 
   * NetworkAddress.set_from_string is now deprecated. AddrInfo should be
@@ -793,7 +793,7 @@
 
   * NetworkAddress.hostentry is deprecated. It was a bad idea,
     NetworkAddress objects can support both IPv4 and IPv6, but a HostEntry
-    object can only support IPv4. Plus the implementation depdended on
+    object can only support IPv4. Plus the implementation depended on
     being able to perform a reverse DNS lookup which is not always
     possible.
 
@@ -806,7 +806,7 @@
     Internal Changes:
     -----------------
 
-  * Utilize PR_NetAddrFamily() access macro instead of explict access.
+  * Utilize PR_NetAddrFamily() access macro instead of explicit access.
 
   * Add PRNetAddr_port() utility to hide host vs. network byte order
     requirements when accessing the port inside a PRNetAddr and simplify
@@ -925,7 +925,7 @@
       nss.nss.x509_key_usage()
 
   * The following class methods and properties were added:
-    Note: it's a method if the name is suffixed with (), a propety otherwise
+    Note: it's a method if the name is suffixed with (), a property otherwise
       Socket.next()
       Socket.readlines()
       Socket.sendall()

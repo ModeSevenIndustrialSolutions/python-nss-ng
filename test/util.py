@@ -5,10 +5,10 @@ import contextlib
 import os
 import sys
 import sysconfig
-from typing import Any, Optional
+from typing import Any
 
 
-def get_build_dir() -> Optional[str]:
+def get_build_dir() -> str | None:
     """
     Walk from the current directory up until a directory is found
     which contains a regular file called "meson.build" and a directory
@@ -21,13 +21,21 @@ def get_build_dir() -> Optional[str]:
     cwd = os.getcwd()
     path_components = cwd.split(os.sep)
     while len(path_components):
-        path = os.path.join(os.sep, *path_components) if path_components[0] else os.path.join(*path_components)
-        meson_path = os.path.join(path, 'meson.build')
-        build_path = os.path.join(path, 'build')
+        path = (
+            os.path.join(os.sep, *path_components)
+            if path_components[0]
+            else os.path.join(*path_components)
+        )
+        meson_path = os.path.join(path, "meson.build")
+        build_path = os.path.join(path, "build")
 
         # Does this directory contain the file "meson.build" and the directory "build"?
-        if (os.path.exists(meson_path) and os.path.exists(build_path) and
-                os.path.isfile(meson_path) and os.path.isdir(build_path)):
+        if (
+            os.path.exists(meson_path)
+            and os.path.exists(build_path)
+            and os.path.isfile(meson_path)
+            and os.path.isdir(build_path)
+        ):
             # Found, return the path concatenated with the architecture
             # specific build directory
 
@@ -42,7 +50,7 @@ def get_build_dir() -> Optional[str]:
             if not os.path.exists(build_lib_dir):
                 try:
                     for entry in os.listdir(build_path):
-                        if entry.startswith('lib.'):
+                        if entry.startswith("lib."):
                             candidate = os.path.join(build_path, entry)
                             if os.path.isdir(candidate):
                                 return candidate
@@ -88,9 +96,9 @@ def find_nss_tool(tool_name: str) -> str:
 
     # List of directories to check in order
     search_paths = [
-        '/usr/bin',
-        '/opt/homebrew/bin',  # macOS Apple Silicon Homebrew
-        '/usr/local/bin',     # macOS Intel Homebrew
+        "/usr/bin",
+        "/opt/homebrew/bin",  # macOS Apple Silicon Homebrew
+        "/usr/local/bin",  # macOS Intel Homebrew
     ]
 
     # First, try common locations

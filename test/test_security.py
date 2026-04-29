@@ -9,10 +9,11 @@ negative tests to verify proper failure modes.
 """
 
 import sys
+
 import pytest
 
 # Add src to path for importing modules
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 import nss.nss as nss
 import nss.ssl as ssl
@@ -56,8 +57,7 @@ class TestCryptographicDefaults:
         for null_cipher in null_ciphers:
             try:
                 is_enabled = ssl.get_default_cipher_pref(null_cipher)
-                assert not is_enabled, \
-                    f"NULL cipher {null_cipher} should not be enabled by default"
+                assert not is_enabled, f"NULL cipher {null_cipher} should not be enabled by default"
             except NSPRError:
                 # Cipher may not be available in this NSS build, which is fine
                 pass
@@ -69,9 +69,10 @@ class TestCryptographicDefaults:
             min_version, max_version = ssl.get_default_ssl_version_range()
             # Minimum should be at least TLS 1.2 in secure configurations
             # Note: Actual enforcement may vary, this documents intent
-            assert min_version >= ssl.SSL_LIBRARY_VERSION_TLS_1_2 or \
-                   min_version == ssl.SSL_LIBRARY_VERSION_3_0, \
-                   "Default minimum TLS version should be secure"
+            assert (
+                min_version >= ssl.SSL_LIBRARY_VERSION_TLS_1_2
+                or min_version == ssl.SSL_LIBRARY_VERSION_3_0
+            ), "Default minimum TLS version should be secure"
         except AttributeError:
             # If the API doesn't exist, skip this test
             pytest.skip("TLS version range API not available")
@@ -84,14 +85,14 @@ class TestCertificateValidation:
         """Verify hostname verification is required for SSL connections."""
         # Find a certificate to test with
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
         # Verify certificate with wrong hostname should fail
         # The certificate is for 'localhost' or 'test_server'
         # Testing with a different hostname should fail
-        wrong_hostname = 'definitely-not-the-right-hostname.com'
+        wrong_hostname = "definitely-not-the-right-hostname.com"
 
         try:
             # Try to verify with wrong hostname - should fail
@@ -106,7 +107,7 @@ class TestCertificateValidation:
         """Verify expired certificates are rejected."""
         # Try to find test certificates
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -126,7 +127,7 @@ class TestCertificateValidation:
         except NSPRError as e:
             # If we get an expiration error, that's what we're testing for
             # Error code for expired certificate
-            if 'expired' in str(e).lower() or 'not valid' in str(e).lower():
+            if "expired" in str(e).lower() or "not valid" in str(e).lower():
                 # This is the expected behavior for an expired cert
                 pass
             else:
@@ -137,7 +138,7 @@ class TestCertificateValidation:
         """Verify certificates from untrusted CAs are rejected."""
         # Load a certificate from our test database
         try:
-            cert = nss.find_cert_from_nickname('test_server')
+            cert = nss.find_cert_from_nickname("test_server")
         except NSPRError:
             pytest.skip("test_server certificate not available")
 
@@ -157,7 +158,7 @@ class TestCertificateValidation:
             assert approved_usage is not None
         except NSPRError as e:
             # If CA were untrusted, we'd get an error here
-            if 'untrusted' in str(e).lower() or 'issuer' in str(e).lower():
+            if "untrusted" in str(e).lower() or "issuer" in str(e).lower():
                 # This is the behavior we want for untrusted CAs
                 pass
             else:
@@ -167,7 +168,7 @@ class TestCertificateValidation:
         """Verify self-signed certificates are rejected without explicit trust."""
         # Find the CA certificate (which is self-signed)
         try:
-            ca_cert = nss.find_cert_from_nickname('test_ca')
+            ca_cert = nss.find_cert_from_nickname("test_ca")
         except NSPRError:
             pytest.skip("test_ca certificate not available")
 
@@ -191,7 +192,7 @@ class TestCertificateValidation:
             assert approved_usage is not None
         except NSPRError as e:
             # Without explicit trust, self-signed certs should fail
-            if 'untrusted' in str(e).lower() or 'self-signed' in str(e).lower():
+            if "untrusted" in str(e).lower() or "self-signed" in str(e).lower():
                 # This is expected behavior for untrusted self-signed certs
                 pass
             else:
@@ -288,7 +289,7 @@ class TestSecureLogging:
 
     def test_sensitive_data_not_logged(self):
         """Verify sensitive data is not logged."""
-        from secure_logging import SecureLogger, LogSensitivity, check_message_safety
+        from secure_logging import LogSensitivity, check_message_safety
 
         # Test sensitive keyword detection
         sensitive_messages = [
@@ -299,8 +300,9 @@ class TestSecureLogging:
 
         for msg in sensitive_messages:
             sensitivity = check_message_safety(msg)
-            assert sensitivity == LogSensitivity.SENSITIVE, \
+            assert sensitivity == LogSensitivity.SENSITIVE, (
                 f"Message should be classified as sensitive: {msg}"
+            )
 
     def test_hex_keys_redacted(self):
         """Verify hex-encoded keys are redacted."""
@@ -327,6 +329,7 @@ class TestDeprecationWarnings:
     def test_deprecated_functions_emit_warnings(self):
         """Verify deprecated functions emit DeprecationWarning."""
         import warnings
+
         from deprecations import warn_deprecated
 
         with warnings.catch_warnings(record=True) as w:
@@ -344,7 +347,6 @@ class TestPlatformSupport:
         """Verify platform check exists in module init."""
         # The platform check should be in src/__init__.py
         # This test verifies it would raise on Windows
-        import importlib.util
         import pathlib
 
         # We can't actually test Windows rejection without being on Windows,
@@ -352,13 +354,11 @@ class TestPlatformSupport:
         # this test file rather than the current working directory so the
         # test passes regardless of where pytest is invoked from (e.g. when
         # python-nss-ng is checked out as a subdirectory of another repo).
-        src_init = (
-            pathlib.Path(__file__).resolve().parent.parent / "src" / "__init__.py"
-        )
-        with open(src_init, "r") as f:
+        src_init = pathlib.Path(__file__).resolve().parent.parent / "src" / "__init__.py"
+        with open(src_init) as f:
             content = f.read()
             assert 'sys.platform.startswith("win")' in content
-            assert 'RuntimeError' in content
+            assert "RuntimeError" in content
 
 
 class TestResourceCleanup:
@@ -366,7 +366,6 @@ class TestResourceCleanup:
 
     def test_context_manager_cleanup(self):
         """Verify NSS context manager properly cleans up."""
-        from nss_context import NSSContext
 
         # This is a conceptual test - actual behavior depends on NSS state
         # The context manager should properly initialize and shutdown NSS
@@ -374,8 +373,9 @@ class TestResourceCleanup:
 
     def test_temp_file_cleanup(self):
         """Verify temporary files are cleaned up."""
-        import util
         import os
+
+        import util
 
         file_path = None
         with util.temp_file_with_data(b"test data") as path:
@@ -394,27 +394,26 @@ class TestExceptionHandling:
         import re
 
         # Check Python files for bare except blocks
-        bare_except_pattern = re.compile(r'^\s*except\s*:\s*$', re.MULTILINE)
+        bare_except_pattern = re.compile(r"^\s*except\s*:\s*$", re.MULTILINE)
 
         files_to_check = [
-            'doc/examples/ssl_example.py',
-            'doc/examples/verify_server.py',
-            'doc/examples/ssl_cipher_info.py',
-            'test/test_client_server.py',
-            'test/conftest.py',
+            "doc/examples/ssl_example.py",
+            "doc/examples/verify_server.py",
+            "doc/examples/ssl_cipher_info.py",
+            "test/test_client_server.py",
+            "test/conftest.py",
         ]
 
         for file_path in files_to_check:
             if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     content = f.read()
                     matches = bare_except_pattern.findall(content)
-                    assert len(matches) == 0, \
-                        f"Found bare except block in {file_path}"
+                    assert len(matches) == 0, f"Found bare except block in {file_path}"
 
     def test_exceptions_have_base_class(self):
         """Verify custom exceptions inherit from base exception."""
-        from exceptions import PythonNSSError, CommandExecutionError
+        from exceptions import CommandExecutionError, PythonNSSError
 
         assert issubclass(CommandExecutionError, PythonNSSError)
         assert issubclass(PythonNSSError, Exception)
@@ -428,9 +427,9 @@ class TestTypeHints:
         import util
 
         # Check that functions have annotations
-        assert hasattr(util.get_build_dir, '__annotations__')
-        assert hasattr(util.find_nss_tool, '__annotations__')
-        assert hasattr(util.temp_file_with_data, '__annotations__')
+        assert hasattr(util.get_build_dir, "__annotations__")
+        assert hasattr(util.find_nss_tool, "__annotations__")
+        assert hasattr(util.temp_file_with_data, "__annotations__")
 
 
 @pytest.mark.allow_insecure
@@ -440,7 +439,7 @@ class TestInsecureMode:
     def test_insecure_mode_requires_explicit_flag(self, tls_config):
         """Verify insecure mode requires explicit opt-in."""
         # This test is marked with allow_insecure, so tls_config should reflect that
-        assert tls_config['allow_insecure'] is True
+        assert tls_config["allow_insecure"] is True
 
     def test_warning_emitted_in_insecure_mode(self):
         """Verify warning is emitted when using insecure mode."""
@@ -465,5 +464,5 @@ class TestBuildConfiguration:
         pass
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
