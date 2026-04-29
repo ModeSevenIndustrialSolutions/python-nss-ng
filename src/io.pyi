@@ -7,8 +7,8 @@ Type stubs for nss.io module.
 This file provides type hints for the C extension module nss.io (NSPR I/O).
 """
 
-from typing import Any, Optional, List, Tuple, Union
 import socket
+from typing import Any, List, Tuple, Union
 
 # Time conversion utilities
 def seconds_to_interval(seconds: float) -> int:
@@ -126,15 +126,20 @@ class NetworkAddress:
 
     def __init__(
         self,
-        addr: Optional[Union[str, Tuple[str, int]]] = None,
-        family: int = PR_AF_INET
+        addr: Union[str, int, Tuple[str, int], None] = None,
+        port: int = 0,
+        family: int = PR_AF_INET,
     ) -> None:
         """
         Create a network address.
 
         Args:
-            addr: IP address string or (host, port) tuple
-            family: Address family (PR_AF_INET or PR_AF_INET6)
+            addr: IP address. May be an integer wildcard sentinel
+                such as ``PR_IpAddrAny`` / ``PR_IpAddrLoopback``, an
+                IP address string, or a ``(host, port)`` tuple.
+            port: TCP/UDP port number.
+            family: Address family (``PR_AF_INET`` or
+                ``PR_AF_INET6``).
         """
         ...
 
@@ -205,12 +210,7 @@ class HostEntry:
 class AddrInfo:
     """Address information for host name resolution."""
 
-    def __init__(
-        self,
-        hostname: str,
-        family: int = PR_AF_INET,
-        flags: int = 0
-    ) -> None:
+    def __init__(self, hostname: str, family: int = PR_AF_INET, flags: int = 0) -> None:
         """
         Resolve hostname to network addresses.
 
@@ -221,7 +221,7 @@ class AddrInfo:
         """
         ...
 
-    def __iter__(self) -> 'AddrInfo':
+    def __iter__(self) -> AddrInfo:
         """Iterate over resolved addresses."""
         ...
 
@@ -265,7 +265,15 @@ def get_host_by_addr(addr: str) -> HostEntry:
     ...
 
 class Socket:
-    """NSPR socket (non-SSL)."""
+    """NSPR socket (non-SSL).
+
+    The C extension exposes additional methods on the socket object
+    that are not enumerated in this stub (e.g. SSL-layer callbacks
+    such as ``set_handshake_callback`` are reachable on plain
+    ``Socket`` instances once the socket has been imported into the
+    SSL layer). A permissive ``__getattr__`` is provided to keep
+    static type checkers from flagging those access patterns.
+    """
 
     def __init__(self, family: int = PR_AF_INET) -> None:
         """
@@ -276,11 +284,18 @@ class Socket:
         """
         ...
 
-    def connect(
-        self,
-        addr: NetworkAddress,
-        timeout: Optional[int] = None
-    ) -> None:
+    def set_handshake_callback(self, callback: Any) -> None:
+        """Set the SSL handshake-completion callback.
+
+        Although logically an SSL-layer concern, the C extension
+        exposes this method on the plain socket type as well, so it
+        is declared here to keep callers using the base ``Socket``
+        type passing static type checks.
+        """
+        ...
+
+    def __getattr__(self, name: str) -> Any: ...
+    def connect(self, addr: NetworkAddress, timeout: int | None = None) -> None:
         """
         Connect to remote address.
 
@@ -308,10 +323,7 @@ class Socket:
         """
         ...
 
-    def accept(
-        self,
-        timeout: Optional[int] = None
-    ) -> Tuple['Socket', NetworkAddress]:
+    def accept(self, timeout: int | None = None) -> Tuple[Socket, NetworkAddress]:
         """
         Accept an incoming connection.
 
@@ -323,12 +335,7 @@ class Socket:
         """
         ...
 
-    def send(
-        self,
-        data: bytes,
-        flags: int = 0,
-        timeout: Optional[int] = None
-    ) -> int:
+    def send(self, data: bytes, flags: int = 0, timeout: int | None = None) -> int:
         """
         Send data over the socket.
 
@@ -342,12 +349,7 @@ class Socket:
         """
         ...
 
-    def recv(
-        self,
-        bufsize: int,
-        flags: int = 0,
-        timeout: Optional[int] = None
-    ) -> bytes:
+    def recv(self, bufsize: int, flags: int = 0, timeout: int | None = None) -> bytes:
         """
         Receive data from socket.
 
@@ -362,20 +364,13 @@ class Socket:
         ...
 
     def sendto(
-        self,
-        data: bytes,
-        flags: int,
-        addr: NetworkAddress,
-        timeout: Optional[int] = None
+        self, data: bytes, flags: int, addr: NetworkAddress, timeout: int | None = None
     ) -> int:
         """Send data to specific address (UDP)."""
         ...
 
     def recvfrom(
-        self,
-        bufsize: int,
-        flags: int = 0,
-        timeout: Optional[int] = None
+        self, bufsize: int, flags: int = 0, timeout: int | None = None
     ) -> Tuple[bytes, NetworkAddress]:
         """
         Receive data and sender address (UDP).
@@ -432,49 +427,46 @@ class Socket:
         """Get the file descriptor number."""
         ...
 
-    def read(self, size: int = -1, timeout: Optional[int] = None) -> bytes:
+    def read(self, size: int = -1, timeout: int | None = None) -> bytes:
         """Read data from socket."""
         ...
 
-    def readline(self, size: int = -1, timeout: Optional[int] = None) -> bytes:
+    def readline(self, size: int = -1, timeout: int | None = None) -> bytes:
         """Read a line from socket."""
         ...
 
-    def readlines(self, sizehint: int = -1, timeout: Optional[int] = None) -> List[bytes]:
+    def readlines(self, sizehint: int = -1, timeout: int | None = None) -> List[bytes]:
         """Read lines from socket."""
         ...
 
-    def sendall(self, data: bytes, flags: int = 0, timeout: Optional[int] = None) -> None:
+    def sendall(self, data: bytes, flags: int = 0, timeout: int | None = None) -> None:
         """Send all data over socket."""
         ...
 
     def accept_read(
-        self,
-        buf_size: int = 4096,
-        timeout: Optional[int] = None
-    ) -> Tuple['Socket', NetworkAddress, bytes]:
+        self, buf_size: int = 4096, timeout: int | None = None
+    ) -> Tuple[Socket, NetworkAddress, bytes]:
         """Accept connection and read data in one operation."""
         ...
 
-    def makefile(self, mode: str = 'r', buffering: int = -1) -> Any:
+    def makefile(self, mode: str = "r", buffering: int = -1) -> Any:
         """Create file-like object from socket."""
         ...
 
     @staticmethod
-    def new_tcp_pair() -> Tuple['Socket', 'Socket']:
+    def new_tcp_pair() -> Tuple[Socket, Socket]:
         """Create a pair of connected TCP sockets."""
         ...
 
     @staticmethod
     def poll(
-        poll_desc_list: List[Tuple['Socket', int, int]],
-        timeout: Optional[int] = None
-    ) -> List[Tuple['Socket', int, int]]:
+        poll_desc_list: List[Tuple[Socket, int, int]], timeout: int | None = None
+    ) -> List[Tuple[Socket, int, int]]:
         """Poll multiple sockets for I/O events."""
         ...
 
     @staticmethod
-    def import_tcp_socket(sock: socket.socket) -> 'Socket':
+    def import_tcp_socket(sock: socket.socket) -> Socket:
         """Import a Python TCP socket as an NSPR socket."""
         ...
 
@@ -530,7 +522,7 @@ def get_error() -> int:
     """Get the current NSPR error code."""
     ...
 
-def get_error_text(errno: Optional[int] = None) -> str:
+def get_error_text(errno: int | None = None) -> str:
     """
     Get error text description.
 
@@ -541,3 +533,19 @@ def get_error_text(errno: Optional[int] = None) -> str:
         Error description string
     """
     ...
+
+# ---------------------------------------------------------------------------
+# Dynamic module attributes
+# ---------------------------------------------------------------------------
+#
+# The C extension registers many integer constants at module init
+# time -- address-family flags (``PR_AF_INET``, ``PR_AF_UNSPEC``,
+# ...), wildcard address sentinels (``PR_IpAddrAny``, ``PR_IpAddrLoopback``,
+# ...), shutdown modes, socket-option identifiers, and assorted error
+# codes. Enumerating every one of them here would be both tedious
+# and brittle, so a module-level ``__getattr__`` returning ``Any``
+# is provided to satisfy static type checkers for any such attribute
+# access. Symbols that are explicitly typed above retain their
+# precise types; this fallback only kicks in for names not already
+# declared.
+def __getattr__(name: str) -> Any: ...

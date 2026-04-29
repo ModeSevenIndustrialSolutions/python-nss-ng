@@ -8,19 +8,18 @@ This module tests platform-specific behaviors on macOS and Linux,
 including path handling, library loading, and system integration.
 """
 
-import sys
 import os
 import platform
-import pytest
 import subprocess
+import sys
 import tempfile
-from pathlib import Path
+
+import pytest
 
 # Add test directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import nss.nss as nss
-from nss.error import NSPRError
 
 
 class TestPlatformDetection:
@@ -31,22 +30,21 @@ class TestPlatformDetection:
         current_platform = sys.platform
 
         # Only Linux and macOS are supported
-        assert current_platform.startswith('linux') or \
-               current_platform.startswith('darwin'), \
-               f"Unsupported platform: {current_platform}"
+        assert current_platform.startswith("linux") or current_platform.startswith("darwin"), (
+            f"Unsupported platform: {current_platform}"
+        )
 
     def test_windows_not_supported(self):
         """Test that Windows is correctly identified as unsupported."""
         # This test documents the requirement
         # Actual Windows check is in src/__init__.py
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith("win"):
             pytest.fail("Tests should not run on Windows")
 
     def test_platform_module_available(self):
         """Test that platform information is available."""
         system = platform.system()
-        assert system in ['Linux', 'Darwin'], \
-               f"Expected Linux or Darwin, got {system}"
+        assert system in ["Linux", "Darwin"], f"Expected Linux or Darwin, got {system}"
 
     def test_python_version_supported(self):
         """Test that Python version is supported."""
@@ -71,10 +69,10 @@ class TestMacOSSpecific:
         """Test that Homebrew paths are accessible on macOS."""
         # Common Homebrew paths
         homebrew_paths = [
-            '/usr/local/opt/nss',
-            '/usr/local/opt/nspr',
-            '/opt/homebrew/opt/nss',
-            '/opt/homebrew/opt/nspr',
+            "/usr/local/opt/nss",
+            "/usr/local/opt/nspr",
+            "/opt/homebrew/opt/nss",
+            "/opt/homebrew/opt/nspr",
         ]
 
         # At least one should exist if installed via Homebrew
@@ -99,7 +97,8 @@ class TestMacOSSpecific:
         """Test that NSS tools are available on macOS."""
         try:
             from util import find_nss_tool
-            certutil = find_nss_tool('certutil')
+
+            certutil = find_nss_tool("certutil")
             assert certutil is not None
             assert os.path.exists(certutil)
         except (FileNotFoundError, ImportError):
@@ -119,7 +118,7 @@ class TestMacOSSpecific:
         temp_dir = tempfile.gettempdir()
 
         # macOS temp is typically /var/folders/... or /tmp
-        assert temp_dir.startswith('/var/') or temp_dir.startswith('/tmp')
+        assert temp_dir.startswith("/var/") or temp_dir.startswith("/tmp")
         assert os.path.exists(temp_dir)
 
     @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
@@ -127,7 +126,7 @@ class TestMacOSSpecific:
         """Test file system case sensitivity behavior on macOS."""
         # macOS is typically case-insensitive but case-preserving
         # This is a documentation test
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             temp_path = f.name
             f.write("test")
 
@@ -157,9 +156,10 @@ class TestLinuxSpecific:
         # Get distribution info (Python 3.10+ has platform.freedesktop_os_release)
         try:
             import platform
-            if hasattr(platform, 'freedesktop_os_release'):
+
+            if hasattr(platform, "freedesktop_os_release"):
                 os_release = platform.freedesktop_os_release()
-                assert 'NAME' in os_release or 'ID' in os_release
+                assert "NAME" in os_release or "ID" in os_release
         except (AttributeError, OSError):
             # May not be available on all systems
             pass
@@ -169,11 +169,11 @@ class TestLinuxSpecific:
         """Test common Linux library paths."""
         # Common library paths
         lib_paths = [
-            '/usr/lib',
-            '/usr/lib64',
-            '/usr/local/lib',
-            '/lib',
-            '/lib64',
+            "/usr/lib",
+            "/usr/lib64",
+            "/usr/local/lib",
+            "/lib",
+            "/lib64",
         ]
 
         # At least some should exist
@@ -196,7 +196,8 @@ class TestLinuxSpecific:
         """Test that NSS tools are available on Linux."""
         try:
             from util import find_nss_tool
-            certutil = find_nss_tool('certutil')
+
+            certutil = find_nss_tool("certutil")
             assert certutil is not None
             assert os.path.exists(certutil)
         except (FileNotFoundError, ImportError):
@@ -206,13 +207,13 @@ class TestLinuxSpecific:
     def test_linux_fips_mode_detection(self):
         """Test FIPS mode detection on Linux."""
         # FIPS mode is Linux-specific
-        fips_file = '/proc/sys/crypto/fips_enabled'
+        fips_file = "/proc/sys/crypto/fips_enabled"
 
         if os.path.exists(fips_file):
-            with open(fips_file, 'r') as f:
+            with open(fips_file) as f:
                 fips_enabled = f.read().strip()
                 # Should be '0' or '1'
-                assert fips_enabled in ['0', '1']
+                assert fips_enabled in ["0", "1"]
         else:
             pytest.skip("FIPS indicator file not found")
 
@@ -230,14 +231,14 @@ class TestLinuxSpecific:
         temp_dir = tempfile.gettempdir()
 
         # Linux temp is typically /tmp
-        assert temp_dir in ['/tmp', '/var/tmp'] or temp_dir.startswith('/tmp/')
+        assert temp_dir in ["/tmp", "/var/tmp"] or temp_dir.startswith("/tmp/")
         assert os.path.exists(temp_dir)
 
     @pytest.mark.skipif(sys.platform != "linux", reason="Linux only")
     def test_linux_case_sensitivity(self):
         """Test file system case sensitivity on Linux."""
         # Linux is typically case-sensitive
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             temp_path = f.name
             f.write("test")
 
@@ -246,8 +247,8 @@ class TestLinuxSpecific:
             assert os.path.exists(temp_path)
 
             # Create path with different case
-            if temp_path.endswith('.txt'):
-                different_case = temp_path[:-4] + '.TXT'
+            if temp_path.endswith(".txt"):
+                different_case = temp_path[:-4] + ".TXT"
 
                 # On case-sensitive systems, these are different files
                 # Just verify original exists
@@ -272,25 +273,25 @@ class TestPathHandling:
     def test_absolute_path_detection(self):
         """Test absolute path detection."""
         # Absolute paths start with / on Unix, drive letter on Windows
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith("win"):
             pytest.skip("Windows not supported")
 
-        assert os.path.isabs('/tmp/test')
-        assert not os.path.isabs('tmp/test')
-        assert not os.path.isabs('./tmp/test')
+        assert os.path.isabs("/tmp/test")
+        assert not os.path.isabs("tmp/test")
+        assert not os.path.isabs("./tmp/test")
 
     def test_path_joining(self):
         """Test path joining works correctly."""
-        joined = os.path.join('tmp', 'test', 'file.txt')
+        joined = os.path.join("tmp", "test", "file.txt")
 
         # Should use platform-appropriate separator
-        assert 'tmp' in joined
-        assert 'test' in joined
-        assert 'file.txt' in joined
+        assert "tmp" in joined
+        assert "test" in joined
+        assert "file.txt" in joined
 
     def test_home_directory(self):
         """Test home directory detection."""
-        home = os.path.expanduser('~')
+        home = os.path.expanduser("~")
 
         assert home is not None
         assert len(home) > 0
@@ -318,16 +319,13 @@ class TestLibraryPaths:
         """Test if pkg-config can find NSS."""
         try:
             result = subprocess.run(
-                ['pkg-config', '--modversion', 'nss'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["pkg-config", "--modversion", "nss"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
                 version = result.stdout.strip()
                 assert len(version) > 0
-                assert '.' in version  # Version should have dots
+                assert "." in version  # Version should have dots
         except FileNotFoundError:
             pytest.skip("pkg-config not available")
         except subprocess.TimeoutExpired:
@@ -347,7 +345,7 @@ class TestSystemIntegration:
     def test_environment_variables_respected(self):
         """Test that environment variables are accessible."""
         # Get PATH
-        path = os.environ.get('PATH')
+        path = os.environ.get("PATH")
         assert path is not None
         assert len(path) > 0
 
@@ -356,10 +354,10 @@ class TestSystemIntegration:
         # Should be able to write to temp directory
         temp_dir = tempfile.gettempdir()
 
-        test_file = os.path.join(temp_dir, 'python_nss_test_permissions.tmp')
+        test_file = os.path.join(temp_dir, "python_nss_test_permissions.tmp")
         try:
-            with open(test_file, 'w') as f:
-                f.write('test')
+            with open(test_file, "w") as f:
+                f.write("test")
 
             assert os.path.exists(test_file)
         finally:
@@ -388,7 +386,7 @@ class TestArchitectureSpecific:
         assert machine is not None
 
         # Common architectures
-        common_archs = ['x86_64', 'amd64', 'arm64', 'aarch64', 'i386', 'i686']
+        common_archs = ["x86_64", "amd64", "arm64", "aarch64", "i386", "i686"]
         assert machine in common_archs or len(machine) > 0
 
     def test_64bit_platform(self):
@@ -406,7 +404,7 @@ class TestArchitectureSpecific:
     def test_byte_order(self):
         """Test system byte order."""
         byte_order = sys.byteorder
-        assert byte_order in ['little', 'big']
+        assert byte_order in ["little", "big"]
 
         # Most modern systems are little-endian
         # This is just documentation
@@ -418,12 +416,12 @@ class TestCrossPlatformCompatibility:
     def test_newline_handling(self):
         """Test that newline handling is platform-aware."""
         # Python handles this automatically
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             temp_path = f.name
-            f.write('line1\nline2\n')
+            f.write("line1\nline2\n")
 
         try:
-            with open(temp_path, 'r') as f:
+            with open(temp_path) as f:
                 lines = f.readlines()
                 assert len(lines) == 2
         finally:
@@ -432,19 +430,19 @@ class TestCrossPlatformCompatibility:
 
     def test_file_separators(self):
         """Test file path separator."""
-        assert os.sep in ['/', '\\']
-        assert os.pathsep in [':', ';']
+        assert os.sep in ["/", "\\"]
+        assert os.pathsep in [":", ";"]
 
     def test_executable_extension(self):
         """Test executable file extension."""
         # Unix systems: no extension
         # Windows: .exe
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith("win"):
             pytest.skip("Windows not supported")
         else:
             # Unix systems don't require extension
             assert True
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

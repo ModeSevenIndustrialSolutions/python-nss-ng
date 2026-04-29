@@ -7,8 +7,8 @@ Type stubs for nss.ssl module.
 This file provides type hints for the C extension module nss.ssl.
 """
 
-from typing import Any, Callable, Optional, Tuple, Union
 import socket
+from typing import Any, Callable, Tuple, Union
 
 # SSL Policy
 def set_domestic_policy() -> None:
@@ -50,30 +50,34 @@ def get_cipher_policy(cipher: int) -> int:
     ...
 
 # SSL Version Range
-def get_default_ssl_version_range(variant: int = 0) -> Tuple[int, int]:
+#
+# Functions returning a version range accept the optional ``repr_kind``
+# keyword argument (one of the ``nss.As*`` constants) to control how
+# the returned tuple members are represented.
+def get_default_ssl_version_range(repr_kind: int = ...) -> Tuple[Any, Any]:
     """Get the default SSL/TLS version range."""
     ...
 
 def set_default_ssl_version_range(
-    min_version: int,
-    max_version: int,
-    variant: int = 0
+    min_version: Union[int, str], max_version: Union[int, str], variant: int = 0
 ) -> None:
-    """Set the default SSL/TLS version range."""
+    """Set the default SSL/TLS version range.
+
+    Each version argument may be either a
+    ``SSL_LIBRARY_VERSION_*`` enumerated constant (int) or its
+    string equivalent (e.g. ``'tls1.2'``).
+    """
     ...
 
-def get_supported_ssl_version_range(variant: int = 0) -> Tuple[int, int]:
+def get_supported_ssl_version_range(repr_kind: int = ...) -> Tuple[Any, Any]:
     """Get the supported SSL/TLS version range."""
     ...
 
-def get_ssl_version_from_major_minor(
-    major: int,
-    minor: int
-) -> int:
+def get_ssl_version_from_major_minor(major: int, minor: int) -> int:
     """Get SSL version from major and minor version numbers."""
     ...
 
-def ssl_library_version_name(version: int = 0) -> str:
+def ssl_library_version_name(version: int = 0, repr_kind: int = ...) -> str:
     """Get the name of an SSL library version."""
     ...
 
@@ -82,7 +86,7 @@ def ssl_library_version_from_name(name: str) -> int:
     ...
 
 # Cipher suite info
-def get_cipher_suite_info(cipher: int) -> 'SSLCipherSuiteInfo':
+def get_cipher_suite_info(cipher: int) -> SSLCipherSuiteInfo:
     """Get information about a cipher suite."""
     ...
 
@@ -99,7 +103,7 @@ def config_server_session_id_cache(
     max_cache_entries: int = 0,
     timeout: int = 0,
     ssl3_timeout: int = 0,
-    directory: Optional[str] = None
+    directory: str | None = None,
 ) -> None:
     """Configure the server session ID cache."""
     ...
@@ -108,7 +112,7 @@ def config_mp_server_sid_cache(
     max_cache_entries: int = 0,
     timeout: int = 0,
     ssl3_timeout: int = 0,
-    directory: Optional[str] = None
+    directory: str | None = None,
 ) -> None:
     """Configure multi-process server session ID cache."""
     ...
@@ -116,10 +120,10 @@ def config_mp_server_sid_cache(
 def config_server_session_id_cache_with_opt(
     timeout: int = 0,
     ssl3_timeout: int = 0,
-    directory: Optional[str] = None,
+    directory: str | None = None,
     max_cache_entries: int = 0,
     max_cert_cache_entries: int = 0,
-    max_srv_name_cache_entries: int = 0
+    max_srv_name_cache_entries: int = 0,
 ) -> None:
     """Configure server session ID cache with additional options."""
     ...
@@ -252,10 +256,7 @@ class SSLSocket:
         """Get the expected hostname."""
         ...
 
-    def set_handshake_callback(
-        self,
-        callback: Optional[Callable[..., None]]
-    ) -> None:
+    def set_handshake_callback(self, callback: Callable[..., None] | None) -> None:
         """
         Set callback function called when SSL handshake completes.
 
@@ -265,9 +266,7 @@ class SSLSocket:
         ...
 
     def set_auth_certificate_callback(
-        self,
-        callback: Optional[Callable[..., bool]],
-        *args: Any
+        self, callback: Callable[..., bool] | None, *args: Any
     ) -> None:
         """
         Set callback function for certificate authentication.
@@ -279,12 +278,16 @@ class SSLSocket:
         ...
 
     def set_client_auth_data_callback(
-        self,
-        callback: Optional[Callable[..., Tuple[Any, Any]]],
-        *args: Any
+        self, callback: Callable[..., Any] | None, *args: Any
     ) -> None:
         """
         Set callback function for client authentication.
+
+        The C extension accepts a callback returning a
+        ``(certificate, private_key)`` tuple on success or any
+        falsey value (``None``, ``False``) to decline; the static
+        signature is intentionally permissive (``Callable[..., Any]``)
+        to accommodate both forms.
 
         Args:
             callback: Function to provide client certificate
@@ -300,19 +303,32 @@ class SSLSocket:
         """Get PKCS#11 PIN argument."""
         ...
 
-    def set_ssl_version_range(self, min_version: int, max_version: int) -> None:
+    def set_ssl_version_range(
+        self,
+        min_version: Union[int, str],
+        max_version: Union[int, str],
+    ) -> None:
         """
         Set the SSL/TLS version range for this socket.
 
         Args:
-            min_version: Minimum protocol version
-            max_version: Maximum protocol version
+            min_version: Minimum protocol version. Either a
+                ``SSL_LIBRARY_VERSION_*`` enumerated constant (int) or
+                its string equivalent (e.g. ``'tls1.1'``).
+            max_version: Maximum protocol version. Either a
+                ``SSL_LIBRARY_VERSION_*`` enumerated constant (int) or
+                its string equivalent (e.g. ``'tls1.2'``).
         """
         ...
 
-    def get_ssl_version_range(self) -> Tuple[int, int]:
+    def get_ssl_version_range(self, repr_kind: int = ...) -> Tuple[Any, Any]:
         """
         Get the SSL/TLS version range.
+
+        Args:
+            repr_kind: One of the ``nss.As*`` constants controlling
+                the representation of the returned tuple members
+                (defaults to ``nss.AsEnum`` in the C extension).
 
         Returns:
             Tuple of (min_version, max_version)
@@ -332,12 +348,7 @@ class SSLSocket:
         """Force the SSL handshake to complete."""
         ...
 
-    def config_secure_server(
-        self,
-        cert: Any,
-        private_key: Any,
-        kea_type: int
-    ) -> None:
+    def config_secure_server(self, cert: Any, private_key: Any, kea_type: int) -> None:
         """Configure socket as a secure server."""
         ...
 
@@ -386,11 +397,11 @@ class SSLSocket:
         ...
 
     @staticmethod
-    def import_tcp_socket(sock: socket.socket) -> 'SSLSocket':
+    def import_tcp_socket(sock: socket.socket) -> SSLSocket:
         """Import a Python TCP socket as an SSL socket."""
         ...
 
-    def get_ssl_channel_info(self) -> 'SSLChannelInformation':
+    def get_ssl_channel_info(self) -> SSLChannelInformation:
         """Get SSL channel information."""
         ...
 
@@ -425,7 +436,7 @@ class SSLSocket:
         ...
 
     # Socket operations (NSPR socket interface)
-    def connect(self, addr: Any, timeout: Optional[int] = None) -> None:
+    def connect(self, addr: Any, timeout: int | None = None) -> None:
         """
         Connect to a remote address.
 
@@ -443,7 +454,7 @@ class SSLSocket:
         """Listen for connections."""
         ...
 
-    def accept(self, timeout: Optional[int] = None) -> Tuple['SSLSocket', Any]:
+    def accept(self, timeout: int | None = None) -> Tuple[SSLSocket, Any]:
         """
         Accept an incoming connection.
 
@@ -490,11 +501,14 @@ class SSLSocket:
         """Get the file descriptor number."""
         ...
 
-    def makefile(
-        self,
-        mode: str = 'r',
-        buffering: int = -1
-    ) -> Any:
+    def readline(self, size: int = -1) -> bytes:
+        """Read a single line from the SSL socket.
+
+        Returns the line including the trailing newline byte (if any).
+        """
+        ...
+
+    def makefile(self, mode: str = "r", buffering: int = -1) -> Any:
         """Create a file-like object from the socket."""
         ...
 
@@ -650,3 +664,18 @@ TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: int
 TLS_AES_128_GCM_SHA256: int
 TLS_AES_256_GCM_SHA384: int
 TLS_CHACHA20_POLY1305_SHA256: int
+
+# ---------------------------------------------------------------------------
+# Dynamic module attributes
+# ---------------------------------------------------------------------------
+#
+# The C extension registers many further integer constants at module
+# init time -- the full set of ``SSL_*`` cipher-suite identifiers,
+# ``SSL_LIBRARY_VERSION_*`` enumerators, ``SSL_*`` option flags, and
+# legacy aliases such as ``ssl_implemented_ciphers``. Enumerating every
+# one of them here would be both tedious and brittle, so a
+# module-level ``__getattr__`` returning ``Any`` is provided to
+# satisfy static type checkers for any such attribute access. Symbols
+# that are explicitly typed above retain their precise types; this
+# fallback only kicks in for names not already declared.
+def __getattr__(name: str) -> Any: ...

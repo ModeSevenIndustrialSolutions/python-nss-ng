@@ -8,22 +8,22 @@ This test module verifies that the secure logging system properly
 prevents logging of sensitive cryptographic material.
 """
 
-import sys
 import logging
-import pytest
+import sys
 from io import StringIO
 
+import pytest
+
 # Add src to path for importing secure_logging module
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 from secure_logging import (
     LogSensitivity,
-    secure_log,
-    redact_message,
-    check_message_safety,
     SecureLogger,
+    check_message_safety,
     get_secure_logger,
-    FORBIDDEN_LOG_PATTERNS,
+    redact_message,
+    secure_log,
 )
 
 
@@ -48,7 +48,7 @@ class TestMessageSafetyChecking:
 
     def test_sensitive_keyword_detection(self):
         """Test detection of forbidden keywords."""
-        for pattern in ['private key', 'password', 'secret', 'pin']:
+        for pattern in ["private key", "password", "secret", "pin"]:
             message = f"Processing {pattern} data"
             assert check_message_safety(message) == LogSensitivity.SENSITIVE
 
@@ -127,7 +127,7 @@ class TestSecureLogFunction:
     def setup_method(self):
         """Set up test logger."""
         self.log_stream = StringIO()
-        self.logger = logging.getLogger('test_secure_log')
+        self.logger = logging.getLogger("test_secure_log")
         self.logger.handlers.clear()
         handler = logging.StreamHandler(self.log_stream)
         handler.setLevel(logging.DEBUG)
@@ -166,7 +166,7 @@ class TestSecureLogger:
     def setup_method(self):
         """Set up test logger."""
         self.log_stream = StringIO()
-        base_logger = logging.getLogger('test_secure_logger')
+        base_logger = logging.getLogger("test_secure_logger")
         base_logger.handlers.clear()
         handler = logging.StreamHandler(self.log_stream)
         handler.setLevel(logging.DEBUG)
@@ -215,9 +215,7 @@ class TestSecureLogger:
     def test_strict_mode_raises(self):
         """Test strict mode raises exceptions."""
         strict_logger = SecureLogger(
-            logging.getLogger('strict_test'),
-            auto_redact=True,
-            strict=True
+            logging.getLogger("strict_test"), auto_redact=True, strict=True
         )
 
         # Attempting to log sensitive data should raise
@@ -227,9 +225,7 @@ class TestSecureLogger:
     def test_strict_mode_detects_patterns(self):
         """Test strict mode detects forbidden patterns."""
         strict_logger = SecureLogger(
-            logging.getLogger('strict_test2'),
-            auto_redact=True,
-            strict=True
+            logging.getLogger("strict_test2"), auto_redact=True, strict=True
         )
 
         # Should raise when detecting forbidden pattern
@@ -242,12 +238,12 @@ class TestGetSecureLogger:
 
     def test_creates_secure_logger(self):
         """Test that factory creates SecureLogger instance."""
-        logger = get_secure_logger('test_factory')
+        logger = get_secure_logger("test_factory")
         assert isinstance(logger, SecureLogger)
 
     def test_factory_parameters(self):
         """Test factory respects parameters."""
-        logger = get_secure_logger('test_params', auto_redact=False, strict=True)
+        logger = get_secure_logger("test_params", auto_redact=False, strict=True)
         assert isinstance(logger, SecureLogger)
         assert logger.auto_redact is False
         assert logger.strict is True
@@ -259,7 +255,7 @@ class TestRealWorldScenarios:
     def setup_method(self):
         """Set up test logger."""
         self.log_stream = StringIO()
-        base_logger = logging.getLogger('test_scenarios')
+        base_logger = logging.getLogger("test_scenarios")
         base_logger.handlers.clear()
         handler = logging.StreamHandler(self.log_stream)
         handler.setLevel(logging.DEBUG)
@@ -310,5 +306,5 @@ class TestRealWorldScenarios:
         assert "Cipher suite" in output
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

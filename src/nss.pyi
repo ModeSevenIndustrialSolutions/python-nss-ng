@@ -7,7 +7,7 @@ Type stubs for nss.nss module.
 This file provides type hints for the C extension module nss.nss.
 """
 
-from typing import Any, Callable, Optional, Union, Tuple, List, overload
+from typing import Any, Callable, List, Tuple, Union
 
 # Version information
 def nss_get_version() -> str:
@@ -39,15 +39,12 @@ def nss_is_initialized() -> bool:
     """Check if NSS has been initialized."""
     ...
 
-def set_shutdown_callback(
-    callback: Optional[Callable[..., bool]],
-    *args: Any
-) -> None:
+def set_shutdown_callback(callback: Callable[..., bool] | None, *args: Any) -> None:
     """Set a callback function to be called when NSS shuts down."""
     ...
 
 # Password callback
-def set_password_callback(callback: Optional[Callable[..., str]]) -> None:
+def set_password_callback(callback: Callable[..., str] | None) -> None:
     """Set a callback function for password requests."""
     ...
 
@@ -116,12 +113,17 @@ def hash_buf(algorithm: int, data: bytes) -> bytes:
     ...
 
 # Utility functions
-def read_hex(hex_string: str, separator: Optional[str] = None) -> bytes:
+def read_hex(hex_string: str, separator: str | None = None) -> bytes:
     """Convert hex string to bytes."""
     ...
 
-def oid_str(oid: Union[int, SecItem]) -> str:
-    """Get string representation of an OID."""
+def oid_str(oid: Union[int, str, SecItem]) -> str:
+    """Get the string representation of an OID.
+
+    ``oid`` may be an integer tag, a string (tag name, AVA
+    short-name, or dotted-decimal form), or a ``SecItem`` holding
+    the encoded OID.
+    """
     ...
 
 # OCSP and validation settings
@@ -129,22 +131,32 @@ def get_use_pkix_for_validation() -> bool:
     """Get whether PKIX validation is enabled."""
     ...
 
-def set_use_pkix_for_validation(enable: bool) -> None:
-    """Enable or disable PKIX validation."""
+def set_use_pkix_for_validation(enable: Any) -> bool:
+    """Enable or disable PKIX validation.
+
+    The C extension performs its own runtime coercion of the
+    ``enable`` argument (accepting bools, ints, and even strings in
+    some legacy code paths), so the signature is intentionally
+    permissive here to match observed behaviour.
+
+    Returns the previous value of the PKIX-validation flag (the
+    underlying C function is documented as
+    ``set_use_pkix_for_validation(flag) -> prev_flag``).
+    """
     ...
 
-def enable_ocsp_checking(certdb: Optional[Any] = None) -> None:
+def enable_ocsp_checking(certdb: Any | None = None) -> None:
     """Enable OCSP checking."""
     ...
 
-def disable_ocsp_checking(certdb: Optional[Any] = None) -> None:
+def disable_ocsp_checking(certdb: Any | None = None) -> None:
     """Disable OCSP checking."""
     ...
 
 def set_ocsp_cache_settings(
     max_cache_entries: int,
     minimum_seconds_to_next_fetch: int,
-    maximum_seconds_before_cached_response_reused: int
+    maximum_seconds_before_cached_response_reused: int,
 ) -> None:
     """Set OCSP cache parameters."""
     ...
@@ -153,23 +165,38 @@ def set_ocsp_failure_mode(mode: int) -> None:
     """Set the OCSP failure mode."""
     ...
 
-def set_ocsp_timeout(seconds: int) -> None:
-    """Set the OCSP timeout in seconds."""
+def set_ocsp_timeout(seconds: Any) -> None:
+    """Set the OCSP timeout in seconds.
+
+    Accepts any value the C extension can coerce to an integer
+    timeout. Tests intentionally pass non-integer values to exercise
+    the runtime type-checking paths, so the static type is left as
+    ``Any``.
+    """
     ...
 
 def clear_ocsp_cache() -> None:
     """Remove all items currently stored in the OCSP cache."""
     ...
 
-def set_ocsp_default_responder(url: str) -> None:
-    """Set the default OCSP responder URL."""
+def set_ocsp_default_responder(
+    certdb: Any,
+    url: str,
+    nickname: str,
+) -> None:
+    """Set the default OCSP responder for ``certdb``.
+
+    ``url`` is the responder location (e.g.
+    ``"http://foo.com:80/ocsp"``) and ``nickname`` identifies the
+    certificate that is trusted to sign OCSP responses.
+    """
     ...
 
-def enable_ocsp_default_responder(certdb: Optional[Any] = None) -> None:
+def enable_ocsp_default_responder(certdb: Any | None = None) -> None:
     """Enable the default OCSP responder."""
     ...
 
-def disable_ocsp_default_responder(certdb: Optional[Any] = None) -> None:
+def disable_ocsp_default_responder(certdb: Any | None = None) -> None:
     """Disable the default OCSP responder."""
     ...
 
@@ -179,10 +206,7 @@ def create_digest_context(algorithm: int) -> Any:
     ...
 
 def create_context_by_sym_key(
-    mechanism: int,
-    operation: int,
-    key: Any,
-    params: Optional[Any] = None
+    mechanism: int, operation: int, key: Any, params: Any | None = None
 ) -> Any:
     """Create a cryptographic context using a symmetric key."""
     ...
@@ -193,7 +217,7 @@ def create_pbev2_algorithm_id(
     prf_alg: int,
     key_length: int,
     iterations: int,
-    salt: Optional[bytes] = None
+    salt: bytes | None = None,
 ) -> AlgorithmID:
     """Create a PBKDF2 algorithm ID."""
     ...
@@ -204,6 +228,25 @@ SEC_OID_SHA1: int
 SEC_OID_SHA256: int
 SEC_OID_SHA384: int
 SEC_OID_SHA512: int
+
+# RepresentationKind constants
+#
+# These integer constants are exported by the C extension (see
+# AddIntConstant calls in src/py_nss.c) and are used as the
+# ``repr_kind=`` keyword argument on many functions/methods that can
+# return a value in multiple representations (an enumerated integer,
+# the symbolic name of that enumerator, a human-readable description,
+# a SecItem object, etc.).
+AsObject: int
+AsString: int
+AsTypeString: int
+AsTypeEnum: int
+AsLabeledString: int
+AsEnum: int
+AsEnumName: int
+AsEnumDescription: int
+AsIndex: int
+AsDottedDecimal: int
 
 # PK11 slot and token operations
 def get_best_slot(mechanism: int) -> PK11Slot:
@@ -219,10 +262,7 @@ def get_internal_key_slot() -> PK11Slot:
     ...
 
 def get_all_tokens(
-    mechanism: int = 0,
-    need_rw: bool = False,
-    load_certs: bool = False,
-    *pin_args: Any
+    mechanism: int = 0, need_rw: bool = False, load_certs: bool = False, *pin_args: Any
 ) -> List[PK11Slot]:
     """Get all available tokens."""
     ...
@@ -249,32 +289,35 @@ def is_fips() -> bool:
 
 # Key and parameter operations
 def import_sym_key(
-    slot: PK11Slot,
-    mechanism: int,
-    origin: int,
-    operation: int,
-    key_data: bytes
+    slot: PK11Slot, mechanism: int, origin: int, operation: int, key_data: Union[bytes, SecItem]
 ) -> Any:
-    """Import a symmetric key."""
+    """Import a symmetric key.
+
+    ``key_data`` accepts either raw ``bytes`` or a ``SecItem``
+    wrapping the key material.
+    """
     ...
 
-def pub_wrap_sym_key(
-    mechanism: int,
-    pub_key: Any,
-    sym_key: Any
-) -> bytes:
+def pub_wrap_sym_key(mechanism: int, pub_key: Any, sym_key: Any) -> bytes:
     """Wrap a symmetric key with a public key."""
     ...
 
-def param_from_iv(mechanism: int, iv: Optional[bytes] = None) -> SecItem:
-    """Create parameters from an initialization vector."""
+def param_from_iv(
+    mechanism: int,
+    iv: Union[bytes, SecItem, None] = None,
+) -> SecItem:
+    """Create parameters from an initialization vector.
+
+    ``iv`` may be ``None``, raw ``bytes``, or a ``SecItem`` wrapping
+    the IV bytes.
+    """
     ...
 
 def param_from_algid(alg_id: AlgorithmID) -> SecItem:
     """Create parameters from an algorithm ID."""
     ...
 
-def generate_new_param(mechanism: int, sym_key: Optional[Any] = None) -> SecItem:
+def generate_new_param(mechanism: int, sym_key: Any | None = None) -> SecItem:
     """Generate new parameters for a mechanism."""
     ...
 
@@ -290,7 +333,7 @@ def get_iv_length(mechanism: int) -> int:
     """Get the IV length for a mechanism."""
     ...
 
-def get_block_size(mechanism: int, params: Optional[SecItem] = None) -> int:
+def get_block_size(mechanism: int, params: SecItem | None = None) -> int:
     """Get the block size for a mechanism."""
     ...
 
@@ -299,15 +342,29 @@ def get_pad_mechanism(mechanism: int) -> int:
     ...
 
 # Data conversion utilities
-def data_to_hex(data: bytes, octets_per_line: int = 16) -> str:
-    """Convert binary data to hexadecimal string."""
+def data_to_hex(
+    data: bytes,
+    octets_per_line: int = 16,
+    separator: Union[str, None] = ":",
+) -> str:
+    """Convert binary data to hexadecimal string.
+
+    ``separator`` controls the inter-octet delimiter (default ``":"``).
+    Passing ``None`` disables the separator and produces an
+    unbroken hex string.
+    """
     ...
 
 def make_line_fmt_tuples(
     level: int,
-    *lines: str
+    *lines: Union[str, List[str], Tuple[str, ...]],
 ) -> List[Tuple[int, str]]:
-    """Create formatted line tuples for indented output."""
+    """Create formatted line tuples for indented output.
+
+    Each positional ``lines`` argument may be a single string or a
+    sequence (list/tuple) of strings; in the latter case each element
+    becomes its own line at the given indent ``level``.
+    """
     ...
 
 def indented_format(tuples: List[Tuple[int, str]]) -> str:
@@ -322,10 +379,7 @@ def base64_to_binary(data: str) -> bytes:
     """Convert base64 string to binary data."""
     ...
 
-def fingerprint_format_lines(
-    fingerprint: bytes,
-    level: int = 0
-) -> List[Tuple[int, str]]:
+def fingerprint_format_lines(fingerprint: bytes, level: int = 0) -> List[Tuple[int, str]]:
     """Format fingerprint as indented lines."""
     ...
 
@@ -354,16 +408,27 @@ def pk11_disabled_reason_name(reason: int) -> str:
     """Get the name of a disabled reason."""
     ...
 
-def oid_tag_name(tag: int) -> str:
-    """Get the name of an OID tag."""
+def oid_tag_name(tag: Union[int, str, SecItem]) -> str:
+    """Get the name of an OID tag.
+
+    ``tag`` may be an integer tag value, a string (tag name, AVA
+    short-name, or dotted-decimal form), or a ``SecItem`` holding
+    the encoded OID.
+    """
     ...
 
 def oid_tag(oid: Union[str, SecItem]) -> int:
     """Get the tag for an OID."""
     ...
 
-def oid_dotted_decimal(oid: Union[int, SecItem]) -> str:
-    """Get the dotted decimal representation of an OID."""
+def oid_dotted_decimal(oid: Union[int, str, SecItem]) -> str:
+    """Get the dotted decimal representation of an OID.
+
+    ``oid`` may be an integer tag, a string (a tag name like
+    ``"SEC_OID_AVA_COMMON_NAME"``, an AVA short-name like ``"cn"``,
+    or a dotted-decimal string like ``"2.5.4.3"``), or a ``SecItem``
+    holding the encoded OID.
+    """
     ...
 
 def list_certs(certdb: Any, *user_data: Any) -> List[Certificate]:
@@ -420,12 +485,7 @@ def x509_alt_name(gen_names: Any, repr_kind: int = 0) -> Union[str, List[str]]:
     ...
 
 # CRL operations
-def import_crl(
-    certdb: Any,
-    der_crl: bytes,
-    url: Optional[str] = None,
-    crl_type: int = 0
-) -> Any:
+def import_crl(certdb: Any, der_crl: bytes, url: str | None = None, crl_type: int = 0) -> Any:
     """Import a CRL into the certificate database."""
     ...
 
@@ -458,17 +518,31 @@ def pkcs12_map_cipher(old_cipher: int, prefer_des: bool = False) -> int:
     """Map a PKCS#12 cipher to a new cipher."""
     ...
 
-def pkcs12_set_nickname_collision_callback(callback: Callable[..., str]) -> None:
-    """Set a callback for handling nickname collisions during PKCS#12 import."""
+def pkcs12_set_nickname_collision_callback(callback: Callable[..., Any]) -> None:
+    """Set a callback for handling nickname collisions during PKCS#12 import.
+
+    The callback's return value is interpreted by the C extension and
+    may be either a replacement nickname (``str``) or a tuple of
+    ``(nickname, cancel)`` where ``cancel`` is a truthy/falsey value;
+    the static type is therefore left as ``Any``.
+    """
     ...
 
 def pkcs12_export(
     nickname: str,
-    output_file: str,
-    pk12_passwd: str,
-    cert_db_passwd: Optional[str] = None
-) -> None:
-    """Export a certificate and its private key to a PKCS#12 file."""
+    output_file: Union[str, None] = None,
+    pk12_passwd: Union[str, None] = None,
+    cert_db_passwd: Union[str, None] = None,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Export a certificate and its private key to a PKCS#12 file.
+
+    The C extension supports several overloaded calling conventions
+    for this function (returning either ``None`` or a ``bytes``
+    blob, depending on whether ``output_file`` is supplied), so the
+    signature is intentionally permissive.
+    """
     ...
 
 # Constants
@@ -508,11 +582,7 @@ SEC_OID_HMAC_SHA1: int
 class SecItem:
     """Represents a security item (binary data)."""
 
-    def __init__(
-        self,
-        data: Optional[Union[bytes, str]] = None,
-        ascii: bool = False
-    ) -> None:
+    def __init__(self, data: Union[bytes, str] | None = None, ascii: bool = False) -> None:
         """
         Create a SecItem.
 
@@ -532,15 +602,32 @@ class SecItem:
         ...
 
 class Certificate:
-    """Represents an X.509 certificate."""
+    """Represents an X.509 certificate.
 
-    def __init__(self, data: bytes) -> None:
-        """Create a certificate from DER-encoded data."""
+    Certificates expose a large number of attributes and helper
+    methods that are populated dynamically by the C extension. The
+    most commonly used ones are typed below; less common attributes
+    are accepted via ``__getattr__`` to keep the stub permissive.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @classmethod
+    def new_from_der(cls, der: bytes) -> Certificate:
+        """Create a Certificate from DER-encoded data."""
         ...
 
-    @staticmethod
-    def new_from_der(data: bytes) -> Certificate:
-        """Create a certificate from DER-encoded data."""
+    @classmethod
+    def trust_flags(
+        cls,
+        flags: int,
+        repr_kind: int = ...,
+    ) -> Union[str, List[str], List[int]]:
+        """Decode an integer trust-flag bitmask into a list of
+        flag names / enums / descriptions.
+
+        ``repr_kind`` selects the representation (one of the
+        ``As*`` constants); defaults to ``AsEnumDescription``.
+        """
         ...
 
     @property
@@ -558,23 +645,133 @@ class Certificate:
         """Get the certificate serial number."""
         ...
 
+    @property
+    def version(self) -> int:
+        """X.509 certificate version (typically 1, 2 or 3)."""
+        ...
+
+    @property
+    def signature_algorithm(self) -> AlgorithmID:
+        """Algorithm identifier for the certificate signature."""
+        ...
+
+    @property
+    def valid_not_before(self) -> int:
+        """Validity start time as a NSPR ``PRTime`` value."""
+        ...
+
+    @property
+    def valid_not_after(self) -> int:
+        """Validity end time as a NSPR ``PRTime`` value."""
+        ...
+
+    @property
+    def valid_not_before_str(self) -> str:
+        """Validity start time as a human-readable string."""
+        ...
+
+    @property
+    def valid_not_after_str(self) -> str:
+        """Validity end time as a human-readable string."""
+        ...
+
+    @property
+    def subject_public_key_info(self) -> SubjectPublicKeyInfo:
+        """The certificate's ``SubjectPublicKeyInfo`` structure."""
+        ...
+
+    @property
+    def signed_data(self) -> SignedData:
+        """The certificate's ``SignedData`` structure (TBS plus
+        signature algorithm and signature value)."""
+        ...
+
+    @property
+    def der_data(self) -> bytes:
+        """Full DER encoding of the certificate."""
+        ...
+
+    @property
+    def extensions(self) -> List[CertificateExtension]:
+        """List of X.509 extensions on the certificate."""
+        ...
+
+    @property
+    def cert_type(self) -> int:
+        """Bitmask of ``NS_CERT_TYPE_*`` flags for the certificate."""
+        ...
+
+    def is_ca_cert(self, return_type: bool = False) -> Any:
+        """Return whether the certificate is a CA certificate.
+
+        When called with no arguments (or ``return_type=False``)
+        returns a plain boolean. When called with ``return_type=True``
+        the C extension instead returns a ``(is_ca, cert_type)``
+        tuple where ``cert_type`` is the bitmask of
+        ``NS_CERT_TYPE_*`` flags. The static type is therefore
+        declared as ``Any`` to cover both forms.
+        """
+        ...
+
     def verify_now(
-        self,
-        certdb: Any,
-        check_sig: bool,
-        usage: int,
-        *pin_args: Any
+        self, certdb: Any, check_sig: bool = True, required_usages: int = 0, *pin_args: Any
     ) -> int:
         """Verify the certificate."""
         ...
 
+    def verify(self, *args: Any, **kwargs: Any) -> int:
+        """Verify the certificate (older convenience API)."""
+        ...
+
+    def verify_with_log(self, *args: Any, **kwargs: Any) -> Any:
+        """Verify the certificate, returning a verification log."""
+        ...
+
     def verify_hostname(self, hostname: str) -> bool:
-        """Verify that the certificate matches the hostname."""
+        """Verify the certificate hostname."""
+        ...
+
+    def check_valid_times(self, time: Union[int, None] = None, allow_override: bool = False) -> int:
+        """Check whether the certificate is currently within its
+        validity period."""
+        ...
+
+    def has_signer_in_ca_names(self, ca_names: Any) -> bool:
+        """Return ``True`` if the certificate's issuer appears in
+        the supplied list of acceptable CA names."""
+        ...
+
+    def find_kea_type(self) -> int:
+        """Return the key-exchange algorithm type for the
+        certificate's public key."""
+        ...
+
+    def set_trust_attributes(
+        self,
+        trust: str,
+        certdb: Any,
+        slot: Any,
+        *user_data: Any,
+    ) -> None:
+        """Set the certificate's trust attributes from a NSS-style
+        trust string (e.g. ``"CT,C,C"``).
+
+        The C-level signature is
+        ``set_trust_attributes(trust, certdb, slot, [user_data1, ...])``;
+        ``certdb`` and ``slot`` are required positional arguments
+        and any further arguments are passed through to the
+        password / pin callback as ``user_data`` items.
+        """
         ...
 
     def format_lines(self, level: int = 0) -> List[Tuple[int, str]]:
-        """Format certificate information as indented lines."""
+        """Format certificate as indented lines."""
         ...
+
+    # The C extension exposes additional attributes and methods that
+    # are not enumerated above (e.g. fingerprint helpers, key-usage
+    # bitstrings, extension-specific accessors). Allow them through.
+    def __getattr__(self, name: str) -> Any: ...
 
 class SymKey:
     """Represents a symmetric cryptographic key."""
@@ -700,18 +897,11 @@ class PK11Slot:
         """Check the user password."""
         ...
 
-    def change_passwd(
-        self,
-        old_passwd: Optional[str] = None,
-        new_passwd: Optional[str] = None
-    ) -> None:
+    def change_passwd(self, old_passwd: str | None = None, new_passwd: str | None = None) -> None:
         """Change the slot password."""
         ...
 
-    def init_pin(
-        self,
-        passwd: Optional[str] = None
-    ) -> None:
+    def init_pin(self, passwd: str | None = None) -> None:
         """Initialize the PIN."""
         ...
 
@@ -728,20 +918,13 @@ class PK11Slot:
         ...
 
     def key_gen(
-        self,
-        mechanism: int,
-        params: Optional[SecItem] = None,
-        key_size: int = 0,
-        *pin_args: Any
+        self, mechanism: int, params: SecItem | None = None, key_size: int = 0, *pin_args: Any
     ) -> Any:
         """Generate a key."""
         ...
 
     def generate_key_pair(
-        self,
-        mechanism: int,
-        params: Optional[Any] = None,
-        *pin_args: Any
+        self, mechanism: int, params: Any | None = None, *pin_args: Any
     ) -> Tuple[Any, Any]:
         """Generate a key pair."""
         ...
@@ -750,11 +933,7 @@ class PK11Slot:
         """List all certificates in the slot."""
         ...
 
-    def pbe_key_gen(
-        self,
-        alg_id: AlgorithmID,
-        password: str
-    ) -> Any:
+    def pbe_key_gen(self, alg_id: AlgorithmID, password: str) -> Any:
         """Generate a password-based encryption key."""
         ...
 
@@ -787,19 +966,16 @@ class PK11SymKey:
     def derive(
         self,
         mechanism: int,
-        params: Optional[SecItem] = None,
+        params: SecItem | None = None,
         target: int = 0,
         operation: int = 0,
-        key_size: int = 0
+        key_size: int = 0,
     ) -> PK11SymKey:
         """Derive a new key from this key."""
         ...
 
     def wrap_sym_key(
-        self,
-        mechanism: int,
-        params: Optional[SecItem],
-        wrapping_key: PK11SymKey
+        self, mechanism: int, params: SecItem | None, wrapping_key: PK11SymKey
     ) -> bytes:
         """Wrap this symmetric key with another key."""
         ...
@@ -807,11 +983,11 @@ class PK11SymKey:
     def unwrap_sym_key(
         self,
         mechanism: int,
-        params: Optional[SecItem],
+        params: SecItem | None,
         wrapped_key: bytes,
         target: int,
         operation: int,
-        key_size: int
+        key_size: int,
     ) -> PK11SymKey:
         """Unwrap a symmetric key."""
         ...
@@ -867,12 +1043,24 @@ class CertDB:
         ...
 
 class DN:
-    """Represents a Distinguished Name."""
+    """Represents a Distinguished Name.
 
+    A ``DN`` behaves both as a sequence of ``RDN`` objects and as a
+    mapping keyed by attribute name (e.g. ``"cn"``, ``"ou"``) or
+    OID. It supports ``len()``, iteration, indexed access, ``in``
+    membership tests, and convenience attribute accessors for the
+    common RDN types (``common_name``, ``email_address``, ...).
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def __str__(self) -> str:
         """Get string representation."""
         ...
 
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Any: ...
+    def __getitem__(self, key: Union[int, slice, str]) -> Any: ...
+    def __contains__(self, key: object) -> bool: ...
     def has_key(self, key: str) -> bool:
         """Check if the DN has a specific key."""
         ...
@@ -881,12 +1069,80 @@ class DN:
         """Add an RDN to the DN."""
         ...
 
-class RDN:
-    """Represents a Relative Distinguished Name."""
+    # Convenience attribute accessors for common RDN component types
+    # exposed by the C extension. Not every DN will have every one
+    # of these populated; access may raise or return an empty value.
+    @property
+    def common_name(self) -> Any: ...
+    @property
+    def email_address(self) -> Any: ...
+    @property
+    def country_name(self) -> Any: ...
+    @property
+    def locality_name(self) -> Any: ...
+    @property
+    def state_name(self) -> Any: ...
+    @property
+    def org_name(self) -> Any: ...
+    @property
+    def org_unit_name(self) -> Any: ...
+    @property
+    def dc_name(self) -> Any: ...
+    @property
+    def cert_uid(self) -> Any: ...
+    def __getattr__(self, name: str) -> Any: ...
 
+class RDN:
+    """Represents a Relative Distinguished Name.
+
+    An ``RDN`` behaves as a sequence of ``AVA`` objects and supports
+    ``len()``, iteration, indexed access, and ``in`` membership
+    tests by attribute short-name or OID.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Any: ...
+    def __getitem__(self, key: Union[int, slice, str]) -> Any: ...
+    def __contains__(self, key: object) -> bool: ...
+    def __lt__(self, other: RDN) -> bool: ...
+    def __le__(self, other: RDN) -> bool: ...
+    def __gt__(self, other: RDN) -> bool: ...
+    def __ge__(self, other: RDN) -> bool: ...
     def has_key(self, key: str) -> bool:
         """Check if the RDN has a specific key."""
         ...
+
+    def __getattr__(self, name: str) -> Any: ...
+
+class AVA:
+    """An Attribute / Value Assertion within an :class:`RDN`.
+
+    The C extension exposes ``AVA`` as a constructible class with
+    several overloaded signatures (``AVA()``, ``AVA(oid)``,
+    ``AVA(oid, value)``, etc.). Only the most permissive form is
+    typed here.
+
+    ``AVA`` instances are comparable (the C extension defines a
+    rich-comparison slot that orders them by OID and value), so the
+    standard ordering dunders are declared here to keep static type
+    checkers happy when AVAs are sorted or compared directly.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @property
+    def oid(self) -> Any: ...
+    @property
+    def oid_tag(self) -> int: ...
+    @property
+    def value(self) -> Any: ...
+    @property
+    def value_str(self) -> str: ...
+    def __lt__(self, other: AVA) -> bool: ...
+    def __le__(self, other: AVA) -> bool: ...
+    def __gt__(self, other: AVA) -> bool: ...
+    def __ge__(self, other: AVA) -> bool: ...
+    def __getattr__(self, name: str) -> Any: ...
 
 class GeneralName:
     """Represents a general name in a certificate."""
@@ -1045,3 +1301,123 @@ class KEYPQGParams:
     def format(self, level: int = 0, indent: str = "    ") -> str:
         """Format as a string."""
         ...
+
+# ---------------------------------------------------------------------------
+# Additional C-extension classes
+# ---------------------------------------------------------------------------
+#
+# The C extension exposes a number of further classes (X.509 extension
+# wrappers, PKCS#12 helpers, certificate request types, ...). These
+# are stubbed permissively so that examples and tests which reference
+# them type-check cleanly. Each class accepts arbitrary constructor
+# arguments and any attribute access via ``__getattr__``.
+
+class AuthKeyID:
+    """X.509 Authority Key Identifier extension wrapper."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def format_lines(self, level: int = 0) -> List[Tuple[int, str]]:
+        """Format as indented lines."""
+        ...
+
+    def format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format as a string."""
+        ...
+
+    def __getattr__(self, name: str) -> Any: ...
+
+class BasicConstraints:
+    """X.509 Basic Constraints extension wrapper."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def format_lines(self, level: int = 0) -> List[Tuple[int, str]]:
+        """Format as indented lines."""
+        ...
+
+    def format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format as a string."""
+        ...
+
+    def __getattr__(self, name: str) -> Any: ...
+
+class CRLDistributionPts:
+    """Container for X.509 CRL Distribution Points."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Any: ...
+    def __getitem__(self, key: Union[int, slice]) -> Any: ...
+    def format_lines(self, level: int = 0) -> List[Tuple[int, str]]:
+        """Format as indented lines."""
+        ...
+
+    def format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format as a string."""
+        ...
+
+    def __getattr__(self, name: str) -> Any: ...
+
+class AuthorityInfoAccesses:
+    """Container for X.509 Authority Information Access entries."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Any: ...
+    def __getitem__(self, key: Union[int, slice]) -> Any: ...
+    def format_lines(self, level: int = 0) -> List[Tuple[int, str]]:
+        """Format as indented lines."""
+        ...
+
+    def format(self, level: int = 0, indent: str = "    ") -> str:
+        """Format as a string."""
+        ...
+
+    def __getattr__(self, name: str) -> Any: ...
+
+class CertificateRequest:
+    """PKCS#10 certificate request wrapper."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __getattr__(self, name: str) -> Any: ...
+
+class CertAttribute:
+    """A PKCS#10 certificate request attribute."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __getattr__(self, name: str) -> Any: ...
+
+class PKCS12Decoder:
+    """PKCS#12 decoder for importing key/certificate bundles."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __iter__(self) -> Any: ...
+    def __len__(self) -> int: ...
+    def __getitem__(self, key: Union[int, slice]) -> Any: ...
+    def __getattr__(self, name: str) -> Any: ...
+
+# ---------------------------------------------------------------------------
+# Default octets-per-line for hex-dump style helpers
+# ---------------------------------------------------------------------------
+
+#: Default value used by helpers like :func:`data_to_hex` when no
+#: ``octets_per_line`` argument is supplied.
+OCTETS_PER_LINE_DEFAULT: int
+
+# ---------------------------------------------------------------------------
+# Dynamic module attributes
+# ---------------------------------------------------------------------------
+#
+# The C extension registers a very large number of integer constants
+# at module init time -- algorithm OIDs (``SEC_OID_*``), PKCS#11
+# mechanism identifiers (``CKM_*``, ``CKA_*``), certificate database
+# trust flags (``CERTDB_*``), key origins (``PK11_OriginUnwrap``
+# etc.), and many more. Enumerating every one of them here would be
+# both tedious and brittle.
+#
+# A module-level ``__getattr__`` returning ``Any`` is provided so
+# that static type checkers accept any such attribute access on the
+# module without having to mirror every C-level constant in this
+# stub file. Symbols that are explicitly typed above retain their
+# precise types; this fallback only kicks in for names that are not
+# already declared.
+def __getattr__(name: str) -> Any: ...

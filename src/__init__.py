@@ -32,16 +32,16 @@ General documentation on NSPR can be found here:
 http://developer.mozilla.org/en/docs/NSPR_API_Reference
 
 Please note, the documentation included with this package already
-encapsultes most of the information at the above two URL's, but is
+encapsulates most of the information at the above two URL's, but is
 specific to the python binding of NSS/NSPR. It is suggested you refer
 to the python-nss documentation.
 
 Most of the names and symbols in the NSS/NSPR C API have been kept in
-the nss-python binding and should be instantly familar or
+the nss-python binding and should be instantly familiar or
 recognizable. Python has different naming conventions and the
-nss-python binding has adhered to the python naming convensions,
+nss-python binding has adhered to the python naming conventions,
 Classes are camel case, otherwise symbols are all lower case with
-words seperated by underscores. The constants used by NSS/NSPR in C
+words separated by underscores. The constants used by NSS/NSPR in C
 API have been imported literally to add the programmer who might be
 referring to the Mozilla NSS/NSPR documentation and/or header files or
 who is porting an existing C application to python. Minor other
@@ -160,7 +160,7 @@ Things All NSS programs must do
   In the interest of code brevity we drop the leading "nss." from the
   module namespace.
 
-- Initialize NSS and indicate the certficate database (CertDB)::
+- Initialize NSS and indicate the certificate database (CertDB)::
 
     db_name = 'sql:pki'
     ssl.nssinit(db_name)

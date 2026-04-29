@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
 """
 Safe file importer: Copies files from source to destination only if they don't exist.
 This script is a legacy utility from the repository migration.

@@ -8,10 +8,11 @@ This module tests OCSP configuration, cache management, and validation settings.
 """
 
 import pytest
+
 import nss.nss as nss
 from nss.error import NSPRError
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 
 @pytest.mark.xdist_group("ocsp_serial")
@@ -71,10 +72,10 @@ class TestOCSPTimeout:
     def test_ocsp_timeout_rejects_string(self, nss_clean_state):
         """Test that timeout rejects non-integer values."""
         with pytest.raises(TypeError):
-            nss.set_ocsp_timeout('ten')
+            nss.set_ocsp_timeout("ten")
 
         with pytest.raises(TypeError):
-            nss.set_ocsp_timeout('30')
+            nss.set_ocsp_timeout("30")
 
     def test_ocsp_timeout_rejects_float(self, nss_clean_state):
         """Test that timeout rejects float values."""
@@ -143,12 +144,14 @@ class TestOCSPDefaultResponder:
         """Test that invalid certificate nickname is rejected."""
         # Should raise error if cert is not known
         with pytest.raises(NSPRError):
-            nss.set_ocsp_default_responder(nss_clean_state, "http://foo.com:80/ocsp", 'invalid_cert_nickname')
+            nss.set_ocsp_default_responder(
+                nss_clean_state, "http://foo.com:80/ocsp", "invalid_cert_nickname"
+            )
 
     def test_ocsp_default_responder_valid_cert(self, nss_clean_state):
         """Test setting default responder with valid certificate."""
         # Set default responder with test_ca certificate
-        nss.set_ocsp_default_responder(nss_clean_state, "http://foo.com:80/ocsp", 'test_ca')
+        nss.set_ocsp_default_responder(nss_clean_state, "http://foo.com:80/ocsp", "test_ca")
 
         # Enable default responder
         nss.enable_ocsp_default_responder()
@@ -158,7 +161,7 @@ class TestOCSPDefaultResponder:
 
     def test_ocsp_default_responder_with_context(self, nss_clean_state):
         """Test default responder with explicit context."""
-        nss.set_ocsp_default_responder(nss_clean_state, "http://ocsp.example.com:80/", 'test_ca')
+        nss.set_ocsp_default_responder(nss_clean_state, "http://ocsp.example.com:80/", "test_ca")
 
         # Enable with context
         nss.enable_ocsp_default_responder(nss_clean_state)
@@ -177,7 +180,7 @@ class TestOCSPDefaultResponder:
 
         for url in urls:
             try:
-                nss.set_ocsp_default_responder(nss_clean_state, url, 'test_ca')
+                nss.set_ocsp_default_responder(nss_clean_state, url, "test_ca")
                 nss.disable_ocsp_default_responder(nss_clean_state)
             except NSPRError:
                 # Some URL formats may not be supported
@@ -185,7 +188,7 @@ class TestOCSPDefaultResponder:
 
     def test_ocsp_responder_enable_disable_sequence(self, nss_clean_state):
         """Test enable/disable sequence."""
-        nss.set_ocsp_default_responder(nss_clean_state, "http://ocsp.test.com/", 'test_ca')
+        nss.set_ocsp_default_responder(nss_clean_state, "http://ocsp.test.com/", "test_ca")
 
         # Multiple enable/disable cycles
         nss.enable_ocsp_default_responder()
@@ -291,7 +294,7 @@ class TestPKIXValidation:
         """Test that non-boolean values are rejected."""
         # Must be boolean
         with pytest.raises(TypeError):
-            nss.set_use_pkix_for_validation('true')
+            nss.set_use_pkix_for_validation("true")
 
         with pytest.raises(TypeError):
             nss.set_use_pkix_for_validation(1)
@@ -353,7 +356,7 @@ class TestOCSPIntegration:
         nss.set_ocsp_failure_mode(nss.ocspMode_FailureIsVerificationFailure)
 
         # Configure default responder
-        nss.set_ocsp_default_responder(nss_clean_state, "http://ocsp.example.com/", 'test_ca')
+        nss.set_ocsp_default_responder(nss_clean_state, "http://ocsp.example.com/", "test_ca")
 
         # Enable OCSP checking
         nss.enable_ocsp_checking(nss_clean_state)
@@ -387,5 +390,5 @@ class TestOCSPIntegration:
         nss.clear_ocsp_cache()
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

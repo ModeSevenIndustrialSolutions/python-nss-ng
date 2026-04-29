@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import print_function
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
 
 import argparse
 import sys
 from typing import Any
 
-import nss.nss as nss
 import nss.error as nss_error
+import nss.nss as nss
 
 # Global variable for command-line options
 options: Any = None
@@ -279,9 +280,8 @@ def main():
     if valid:
         print(indented_output('SUCCESS: cert is approved for', nss.cert_usage_flags(intended_usage)))
         return 0
-    else:
-        print(indented_output('FAIL: cert not approved for', nss.cert_usage_flags(intended_usage ^ approved_usage)))
-        return 1
+    print(indented_output('FAIL: cert not approved for', nss.cert_usage_flags(intended_usage ^ approved_usage)))
+    return 1
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":

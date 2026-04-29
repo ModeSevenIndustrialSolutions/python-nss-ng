@@ -10,18 +10,18 @@ DeprecationWarning messages to help users migrate to newer APIs.
 
 import sys
 import warnings
+
 import pytest
 
-
 # Add src to path for importing deprecations module
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 from deprecations import (
     DEPRECATED_REGISTRY,
-    warn_deprecated,
-    is_deprecated,
     get_deprecation_message,
+    is_deprecated,
     list_deprecated,
+    warn_deprecated,
 )
 
 
@@ -99,6 +99,7 @@ class TestDeprecationWarnings:
 
     def test_warn_deprecated_stacklevel(self):
         """Test stacklevel parameter for proper warning location."""
+
         def inner_function():
             warn_deprecated("test.symbol", stacklevel=3)
 
@@ -148,8 +149,7 @@ class TestDeprecationGuidance:
             msg_lower = message.lower()
             # Messages should contain guidance words
             has_guidance = any(
-                word in msg_lower
-                for word in ['use', 'instead', 'recommend', 'prefer', 'replace']
+                word in msg_lower for word in ["use", "instead", "recommend", "prefer", "replace"]
             )
             assert has_guidance, f"Message for {symbol} lacks guidance: {message}"
 
@@ -203,5 +203,5 @@ class TestWarningBehavior:
             assert all(issubclass(warning.category, DeprecationWarning) for warning in w)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 '''
 This example will pretty print the contents of a certificate loaded from a
@@ -15,17 +17,11 @@ print "Certificate is %s" % cert
 What this example really aims to do is illustrate how to access the various
 components of a cert.
 '''
-from __future__ import absolute_import
-from __future__ import print_function
 
 import argparse
-import getpass
-import os
-import sys
 
-from nss.error import NSPRError
-import nss.io as io
 import nss.nss as nss
+
 
 # -----------------------------------------------------------------------------
 def print_extension(level, extension):

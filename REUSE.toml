@@ -16,3 +16,24 @@ path = [
 ]
 SPDX-License-Identifier = "MPL-2.0"
 SPDX-FileCopyrightText = "2025 The Linux Foundation"
+
+# Project configuration files and ancillary documentation that
+# cannot easily carry inline SPDX headers.
+[[annotations]]
+path = [
+         "pyrightconfig.json",
+         "scripts/README.md",
+         "doc/ChangeLog",
+]
+SPDX-License-Identifier = "MPL-2.0"
+SPDX-FileCopyrightText = "Copyright (c) 2010-2025 python-nss-ng contributors"
+
+# Mutation testing artifacts produced by mutmut. These are generated
+# files (mutated source copies and metadata) and inherit the license
+# of the source they were produced from.
+[[annotations]]
+path = [
+         "mutants/**",
+]
+SPDX-License-Identifier = "MPL-2.0"
+SPDX-FileCopyrightText = "Copyright (c) 2010-2025 python-nss-ng contributors"

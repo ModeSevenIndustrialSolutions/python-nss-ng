@@ -9,11 +9,11 @@ invariants that should hold for all inputs.
 """
 
 import sys
-import os
-import pytest
-from hypothesis import given, strategies as st, settings, assume, example
-from hypothesis import HealthCheck
 from pathlib import Path
+
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 
 class TestDigestProperties:
@@ -63,8 +63,8 @@ class TestDataEncodingProperties:
     def test_utf8_roundtrip(self, text):
         """Property: UTF-8 encode then decode should return original."""
         # Round-trip property for UTF-8
-        encoded = text.encode('utf-8')
-        decoded = encoded.decode('utf-8')
+        encoded = text.encode("utf-8")
+        decoded = encoded.decode("utf-8")
         assert decoded == text
 
 
@@ -115,10 +115,10 @@ class TestStringValidationProperties:
     @settings(max_examples=100)
     def test_password_detection_properties(self, text):
         """Property: Password detection should be consistent."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
-            from secure_logging import is_sensitive
+            from secure_logging import is_sensitive  # pyright: ignore[reportAttributeAccessIssue]
 
             # Property: Detection should be case-insensitive for keywords
             lower_result = is_sensitive(text.lower())
@@ -126,12 +126,14 @@ class TestStringValidationProperties:
 
             # If one is sensitive, related versions might be too
             # (This is a weak property but worth checking)
-            if 'password' in text.lower():
+            if "password" in text.lower():
                 assert lower_result or upper_result
         except ImportError:
             pytest.skip("secure_logging not available")
 
-    @given(st.text(alphabet=st.characters(whitelist_categories=('Lu', 'Ll')), min_size=1, max_size=100))
+    @given(
+        st.text(alphabet=st.characters(whitelist_categories=("Lu", "Ll")), min_size=1, max_size=100)
+    )
     @settings(max_examples=50)
     def test_alphanumeric_handling(self, text):
         """Property: Alphanumeric text should be handled consistently."""
@@ -143,20 +145,21 @@ class TestStringValidationProperties:
 class TestPathHandlingProperties:
     """Property-based tests for path handling."""
 
-    @given(st.text(alphabet=st.characters(blacklist_characters='/\\:*?"<>|'), min_size=1, max_size=100))
+    @given(
+        st.text(alphabet=st.characters(blacklist_characters='/\\:*?"<>|'), min_size=1, max_size=100)
+    )
     @settings(max_examples=50)
     def test_safe_filename_properties(self, filename):
         """Property: Safe filenames should not contain path separators."""
         # Valid filenames should not contain path separators
-        assert '/' not in filename
-        assert '\\' not in filename
-        assert ':' not in filename
+        assert "/" not in filename
+        assert "\\" not in filename
+        assert ":" not in filename
 
     @given(st.lists(st.text(min_size=1, max_size=20), min_size=1, max_size=5))
     @settings(max_examples=50)
     def test_path_joining_properties(self, path_parts):
         """Property: Joining paths should be idempotent in structure."""
-        from pathlib import Path
 
         # Joining path components should work
         try:
@@ -176,7 +179,7 @@ class TestNSSContextProperties:
     @settings(max_examples=50)
     def test_database_path_properties(self, db_path):
         """Property: Database paths should be handled safely."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from nss_context import NSSContext
@@ -205,7 +208,7 @@ class TestDeprecationProperties:
     @settings(max_examples=50)
     def test_deprecation_message_properties(self, symbol_name):
         """Property: Deprecation messages should be informative."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from deprecations import warn_deprecated
@@ -354,5 +357,5 @@ class TestInvariantProperties:
         assert len(text) >= 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -13,7 +13,7 @@
     "*.egg-info",
     "mutants"
   ],
-  "stubPath": "src",
+  "stubPath": "typings",
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.10",
@@ -21,7 +21,9 @@
   "typeCheckingMode": "basic",
   "useLibraryCodeForTypes": true,
   "reportMissingImports": "warning",
+  "reportMissingModuleSource": "none",
   "reportMissingTypeStubs": "none",
+  "reportPrivateUsage": "none",
   "reportUnknownMemberType": "none",
   "reportUnknownArgumentType": "none",
   "reportUnknownVariableType": "none",
@@ -32,7 +34,7 @@
   "reportGeneralTypeIssues": "warning",
   "reportOptionalMemberAccess": "warning",
   "reportOptionalSubscript": "warning",
-  "reportPrivateUsage": "warning",
+
   "executionEnvironments": [
     {
       "root": "src",

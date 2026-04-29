@@ -1,21 +1,31 @@
-from __future__ import absolute_import
-from __future__ import print_function
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# This example predates Python 3 and demonstrates NSS HTTPS usage by
+# subclassing the long-removed ``httplib.HTTP`` class via ``six``. It
+# also performs ``int()`` / host-string coercions that the static
+# type system cannot prove safe. Static type checking of this file
+# is intentionally relaxed so the example can remain available as
+# historical documentation without requiring a full Py3 rewrite.
+#
+# pyright: reportAttributeAccessIssue=false, reportArgumentType=false, reportMissingImports=false
+
 import argparse
 import errno
 import getpass
-import six.moves.http_client  # type: ignore[import-untyped]
 import logging
 import sys
+
+import six.moves.http_client  # type: ignore[import-untyped,unused-ignore]
+
 try:
     import urlparse
 except ImportError:
     import urllib.parse as urlparse
-from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
 import nss.ssl as ssl
@@ -91,7 +101,7 @@ def auth_certificate_callback(sock, check_sig, is_server, certdb):
 
 def password_callback(slot, retry, password):
     if not retry and password: return password
-    return getpass.getpass("Enter password for %s: " % slot.token_name);
+    return getpass.getpass("Enter password for %s: " % slot.token_name)
 
 def handshake_callback(sock):
     """
@@ -133,7 +143,7 @@ class NSSConnection(six.moves.http_client.HTTPConnection):
         logging.debug("connect: host=%s port=%s", self.host, self.port)
         try:
             addr_info = io.AddrInfo(self.host)
-        except Exception as e:
+        except Exception:
             logging.error("could not resolve host address \"%s\"", self.host)
             raise
 
@@ -148,7 +158,7 @@ class NSSConnection(six.moves.http_client.HTTPConnection):
             except Exception as e:
                 logging.debug("connect failed: %s (%s)", net_addr, e)
 
-        raise IOError(errno.ENOTCONN, "could not connect to %s at port %d" % (self.host, self.port))
+        raise OSError(errno.ENOTCONN, "could not connect to %s at port %d" % (self.host, self.port))
 
 class NSPRConnection(six.moves.http_client.HTTPConnection):
     default_port = six.moves.http_client.HTTPConnection.default_port
@@ -164,7 +174,7 @@ class NSPRConnection(six.moves.http_client.HTTPConnection):
         logging.debug("connect: host=%s port=%s", self.host, self.port)
         try:
             addr_info = io.AddrInfo(self.host)
-        except Exception as e:
+        except Exception:
             logging.error("could not resolve host address \"%s\"", self.host)
             raise
 
@@ -179,7 +189,7 @@ class NSPRConnection(six.moves.http_client.HTTPConnection):
             except Exception as e:
                 logging.debug("connect failed: %s (%s)", net_addr, e)
 
-        raise IOError(errno.ENOTCONN, "could not connect to %s at port %d" % (self.host, self.port))
+        raise OSError(errno.ENOTCONN, "could not connect to %s at port %d" % (self.host, self.port))
 
 class NSSHTTPS(six.moves.http_client.HTTP):
     _http_vsn = 11

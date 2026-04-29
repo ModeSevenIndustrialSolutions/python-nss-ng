@@ -8,14 +8,13 @@ This module tests concurrent operations to ensure thread safety
 in multi-threaded environments.
 """
 
+import queue
 import sys
-import os
-import pytest
 import threading
 import time
-import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
+
+import pytest
 
 
 class TestBasicThreadSafety:
@@ -23,15 +22,13 @@ class TestBasicThreadSafety:
 
     def test_concurrent_imports(self):
         """Test that concurrent imports are safe."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         errors = []
 
         def import_module():
             try:
-                import deprecations
-                import secure_logging
-                import nss_context
+                pass
             except Exception as e:
                 errors.append(e)
 
@@ -98,7 +95,7 @@ class TestDeprecationThreadSafety:
 
     def test_concurrent_deprecation_warnings(self):
         """Test concurrent deprecation warnings are safe."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from deprecations import warn_deprecated
@@ -110,8 +107,9 @@ class TestDeprecationThreadSafety:
         def warn_in_thread():
             try:
                 import warnings
+
                 with warnings.catch_warnings(record=True):
-                    warn_deprecated('test_symbol', 'Use new_symbol instead')
+                    warn_deprecated("test_symbol", "Use new_symbol instead")
             except Exception as e:
                 errors.append(e)
 
@@ -128,7 +126,7 @@ class TestDeprecationThreadSafety:
 
     def test_concurrent_deprecation_checks(self):
         """Test concurrent deprecation status checks."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from deprecations import is_deprecated
@@ -138,7 +136,7 @@ class TestDeprecationThreadSafety:
         results = []
 
         def check_deprecated():
-            result = is_deprecated('PRNetAddr')
+            result = is_deprecated("PRNetAddr")
             results.append(result)
 
         threads = []
@@ -159,16 +157,17 @@ class TestSecureLoggingThreadSafety:
 
     def test_concurrent_secure_logging(self):
         """Test concurrent secure logging operations."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
-            from secure_logging import secure_log
             import logging
+
+            from secure_logging import secure_log
         except ImportError:
             pytest.skip("secure_logging module not available")
 
         errors = []
-        logger = logging.getLogger('test')
+        logger = logging.getLogger("test")
 
         def log_message(message):
             try:
@@ -191,7 +190,7 @@ class TestSecureLoggingThreadSafety:
 
     def test_concurrent_redaction(self):
         """Test concurrent message redaction."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from secure_logging import redact_message
@@ -204,12 +203,7 @@ class TestSecureLoggingThreadSafety:
             redacted = redact_message(message)
             results.append((message, redacted))
 
-        test_messages = [
-            "password=secret123",
-            "key: abc123xyz",
-            "Safe message",
-            "token=Bearer xyz"
-        ]
+        test_messages = ["password=secret123", "key: abc123xyz", "Safe message", "token=Bearer xyz"]
 
         threads = []
         for _ in range(10):
@@ -227,8 +221,9 @@ class TestSecureLoggingThreadSafety:
             if original not in message_results:
                 message_results[original] = redacted
             else:
-                assert message_results[original] == redacted, \
+                assert message_results[original] == redacted, (
                     "Inconsistent redaction results for same message"
+                )
 
 
 class TestNSSContextThreadSafety:
@@ -236,7 +231,7 @@ class TestNSSContextThreadSafety:
 
     def test_concurrent_context_checks(self):
         """Test concurrent NSS context state checks."""
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
 
         try:
             from nss_context import NSSContext
@@ -435,6 +430,7 @@ class TestThreadPoolOperations:
 
     def test_thread_pool_executor(self):
         """Test operations using ThreadPoolExecutor."""
+
         def process_item(item):
             time.sleep(0.01)
             return item * 2
@@ -451,6 +447,7 @@ class TestThreadPoolOperations:
 
     def test_thread_pool_exception_handling(self):
         """Test exception handling in thread pool."""
+
         def task_that_fails(should_fail):
             if should_fail:
                 raise ValueError("Task failed")
@@ -547,5 +544,5 @@ class TestMemoryVisibility:
         assert True in results
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

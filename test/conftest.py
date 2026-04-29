@@ -9,13 +9,12 @@ Tests are run in separate processes using pytest-xdist to provide clean
 NSS initialization for each test file.
 """
 
-import contextlib
 import logging
 import os
 import stat
 import sys
-import pytest
 
+import pytest
 
 # Module-level logger for test infrastructure
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ def cleanup_p12_files_session():
 
     # Clean up from test directory
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    for p12_file in glob.glob(os.path.join(test_dir, '*.p12')):
+    for p12_file in glob.glob(os.path.join(test_dir, "*.p12")):
         try:
             os.remove(p12_file)
             logger.debug(f"Removed {p12_file}")
@@ -47,7 +46,7 @@ def cleanup_p12_files_session():
     # Also clean up from current working directory (repo root)
     cwd = os.getcwd()
     if cwd != test_dir:
-        for p12_file in glob.glob(os.path.join(cwd, '*.p12')):
+        for p12_file in glob.glob(os.path.join(cwd, "*.p12")):
             try:
                 os.remove(p12_file)
                 logger.debug(f"Removed {p12_file}")
@@ -93,6 +92,7 @@ def _wait_for_nss_shutdown(timeout=2.0):
         bool: True if ready, False if timeout reached
     """
     import time
+
     start_time = time.time()
     sleep_interval = 0.1
 
@@ -112,15 +112,9 @@ def _wait_for_nss_shutdown(timeout=2.0):
 def pytest_configure(config):
     """Configure pytest for python-nss-ng tests."""
     # Add custom markers
-    config.addinivalue_line(
-        "markers", "nss_init: mark test as requiring NSS initialization"
-    )
-    config.addinivalue_line(
-        "markers", "requires_db: mark test as requiring NSS database"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
+    config.addinivalue_line("markers", "nss_init: mark test as requiring NSS initialization")
+    config.addinivalue_line("markers", "requires_db: mark test as requiring NSS database")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
     config.addinivalue_line(
         "markers", "allow_insecure: mark test as allowing insecure/legacy configurations"
     )
@@ -139,6 +133,7 @@ def setup_test_environment():
 
     # If running tests in-tree, add the build directory to path
     from util import get_build_dir
+
     build_dir = get_build_dir()
     if build_dir and os.path.exists(build_dir):
         print(f"\nUsing local libraries from build directory: {build_dir}")
@@ -152,7 +147,7 @@ def setup_test_environment():
     import glob
 
     # Remove any .p12 files left in test directory
-    for p12_file in glob.glob(os.path.join(test_dir, '*.p12')):
+    for p12_file in glob.glob(os.path.join(test_dir, "*.p12")):
         try:
             os.remove(p12_file)
             logger.debug(f"Cleaned up {p12_file}")
@@ -162,7 +157,7 @@ def setup_test_environment():
     # Also clean up from repo root if different from test directory
     cwd = os.getcwd()
     if cwd != test_dir:
-        for p12_file in glob.glob(os.path.join(cwd, '*.p12')):
+        for p12_file in glob.glob(os.path.join(cwd, "*.p12")):
             try:
                 os.remove(p12_file)
                 logger.debug(f"Cleaned up {p12_file} from repo root")
@@ -182,35 +177,34 @@ def test_certs(setup_test_environment):
     With pytest-xdist, each worker process gets its own session,
     so each worker will have its own pki directory.
     """
-    import setup_certs
     import shutil
-    import time
-    import hashlib
+
+    import setup_certs
 
     # Create a session-scoped temporary directory for PKI
     test_dir = os.path.dirname(os.path.abspath(__file__))
 
     # For xdist workers, use worker-specific directory
     # For single-process mode, just use 'pki'
-    worker_id = os.environ.get('PYTEST_XDIST_WORKER')
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER")
     if worker_id:
-        pki_dir = os.path.join(test_dir, f'pki_{worker_id}')
+        pki_dir = os.path.join(test_dir, f"pki_{worker_id}")
     else:
-        pki_dir = os.path.join(test_dir, 'pki')
+        pki_dir = os.path.join(test_dir, "pki")
 
     # Clean up any existing PKI directory with error handling
     if os.path.exists(pki_dir):
         shutil.rmtree(pki_dir, onerror=_rmtree_onerror)
 
     # Set up certificates - run setup_certs directly
-    result = setup_certs.setup_certs(['--db-dir', pki_dir, '--no-trusted-certs'])
+    result = setup_certs.setup_certs(["--db-dir", pki_dir, "--no-trusted-certs"])
 
     if result != 0:
         raise RuntimeError(f"setup_certs failed with return code {result} for {pki_dir}")
 
     # Verify database was created successfully
-    cert9_db = os.path.join(pki_dir, 'cert9.db')
-    key4_db = os.path.join(pki_dir, 'key4.db')
+    cert9_db = os.path.join(pki_dir, "cert9.db")
+    key4_db = os.path.join(pki_dir, "key4.db")
 
     if not (os.path.exists(cert9_db) and os.path.exists(key4_db)):
         raise RuntimeError(f"Database files not created in {pki_dir}")
@@ -218,17 +212,15 @@ def test_certs(setup_test_environment):
     # Verify we can actually list certificates from the database
     try:
         import subprocess
+
         certutil_result = subprocess.run(
-            ['certutil', '-d', f'sql:{pki_dir}', '-L'],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["certutil", "-d", f"sql:{pki_dir}", "-L"], capture_output=True, text=True, timeout=5
         )
         if certutil_result.returncode != 0:
             raise RuntimeError(f"Database verification failed: {certutil_result.stderr}")
 
         # Check that test_user certificate exists
-        if 'test_user' not in certutil_result.stdout:
+        if "test_user" not in certutil_result.stdout:
             raise RuntimeError(f"test_user certificate not found in {pki_dir}")
 
         logger.debug(f"Successfully created and verified test certificates in {pki_dir}")
@@ -251,7 +243,7 @@ def nss_db_dir(test_certs):
     Returns the path to the 'sql:pki' database that tests expect.
     This fixture depends on test_certs which creates the database.
     """
-    return f'sql:{test_certs}'
+    return f"sql:{test_certs}"
 
 
 @pytest.fixture(scope="session")
@@ -273,14 +265,14 @@ def nss_initialized(nss_db_dir):
         logger.error(f"Failed to initialize NSS with {nss_db_dir}: {e}")
         # Try to provide diagnostic information
         import subprocess
+
         try:
             certutil_result = subprocess.run(
-                ['certutil', '-d', nss_db_dir, '-L'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["certutil", "-d", nss_db_dir, "-L"], capture_output=True, text=True, timeout=5
             )
-            logger.error(f"Database state: {certutil_result.stdout if certutil_result.returncode == 0 else certutil_result.stderr}")
+            logger.error(
+                f"Database state: {certutil_result.stdout if certutil_result.returncode == 0 else certutil_result.stderr}"
+            )
         except Exception:
             pass
         raise
@@ -350,8 +342,9 @@ def nss_clean_state(nss_db_dir):
         def _clean_nss(self, nss_clean_state):
             pass
     """
-    import nss.nss as nss
     import time
+
+    import nss.nss as nss
 
     # Only shutdown if NSS is initialized
     if nss.nss_is_initialized():
@@ -370,6 +363,7 @@ def nss_clean_state(nss_db_dir):
                     # Last attempt failed - log but continue
                     # Some tests may have leaked NSS resources
                     import sys
+
                     print(f"Warning: NSS shutdown failed after 3 attempts: {e}", file=sys.stderr)
 
         # Wait for NSS to fully clean up internal state
@@ -382,11 +376,12 @@ def nss_clean_state(nss_db_dir):
     except Exception as e:
         # If initialization fails, skip the test rather than error
         import pytest
+
         pytest.skip(f"NSS re-initialization failed (state too corrupted): {e}")
 
     # Return the certdb for convenience
     certdb = nss.get_default_certdb()
-    yield certdb
+    return certdb
 
     # No cleanup needed - the session-level fixture will handle final shutdown
 
@@ -427,21 +422,18 @@ def tls_config(request):
         assert tls_config['allow_insecure'] == True
     """
     config = {
-        'min_tls_version': 'TLS1.2',
-        'max_tls_version': 'TLS1.3',
-        'allow_insecure': False,
-        'min_key_size': 2048,
+        "min_tls_version": "TLS1.2",
+        "max_tls_version": "TLS1.3",
+        "allow_insecure": False,
+        "min_key_size": 2048,
     }
 
     # Check if test is marked with allow_insecure
-    if request.node.get_closest_marker('allow_insecure'):
-        config['allow_insecure'] = True
-        config['min_tls_version'] = 'TLS1.0'
+    if request.node.get_closest_marker("allow_insecure"):
+        config["allow_insecure"] = True
+        config["min_tls_version"] = "TLS1.0"
 
     return config
-
-
-
 
 
 def pytest_collection_modifyitems(config, items):
@@ -470,6 +462,7 @@ def pytest_report_header(config):
     # Try to get NSS version if available
     try:
         import nss.nss as nss
+
         nss.nss_init_nodb()
         version = nss.nss_get_version()
         nss.nss_shutdown()

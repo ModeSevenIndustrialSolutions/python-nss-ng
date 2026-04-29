@@ -1,11 +1,22 @@
-from __future__ import absolute_import
-from __future__ import print_function
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
+
+# This example predates Python 3 in places: it imports a plain TCP
+# socket via ``io.Socket.import_tcp_socket`` and assigns the result
+# back into an ``ssl.SSLSocket``-typed variable, and similarly mixes
+# ``str`` and ``bytes`` payloads on send/recv. Modernising the code
+# to satisfy strict mypy would change observable behaviour and is
+# out of scope for the tooling sync.
+#
+# mypy: ignore-errors
+# pyright: reportOptionalSubscript=false, reportAttributeAccessIssue=false, reportArgumentType=false, reportCallIssue=false
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import warnings
+
 warnings.simplefilter( "always", DeprecationWarning)
 
 import argparse
@@ -13,10 +24,10 @@ import getpass
 import os
 import sys
 
-from nss.error import NSPRError
 import nss.io as io
 import nss.nss as nss
 import nss.ssl as ssl
+from nss.error import NSPRError
 
 # -----------------------------------------------------------------------------
 NO_CLIENT_CERT             = 0
@@ -38,7 +49,7 @@ timeout_secs = 3
 
 def password_callback(slot, retry, password):
     if password: return password
-    return getpass.getpass("Enter password: ");
+    return getpass.getpass("Enter password: ")
 
 def handshake_callback(sock):
     print("-- handshake complete --")
@@ -145,7 +156,7 @@ def Client():
     # Get the IP Address of our server
     try:
         addr_info = io.AddrInfo(options.hostname)
-    except Exception as e:
+    except Exception:
         print("could not resolve host address \"%s\"" % options.hostname)
         return
 
@@ -243,7 +254,7 @@ def Server():
         # Get our certificate and private key
         server_cert = nss.find_cert_from_nickname(options.server_nickname, options.password)
         priv_key = nss.find_key_by_any_cert(server_cert, options.password)
-        server_cert_kea = server_cert.find_kea_type();
+        server_cert_kea = server_cert.find_kea_type()
 
         print("server cert:\n%s" % server_cert)
 

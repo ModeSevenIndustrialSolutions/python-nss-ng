@@ -182,8 +182,71 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"test_*.py" = ["E402", "S101", "S105", "S106"]  # Allow asserts and hardcoded passwords in tests
-"doc/examples/*.py" = ["T201", "S105", "S106"]  # Allow prints and test passwords in examples
+# Tests use unittest-style assertions, %-formatting, broad excepts in
+# teardown/cleanup, and intentionally bind unused locals to exercise
+# the C extension's reference handling. Relax style/lint rules that
+# would otherwise force large stylistic rewrites of legacy tests.
+"test/**/*.py" = [
+    "E402",   # module level import not at top of file
+    "E722",   # bare except (intentional in cleanup paths)
+    "S101",   # assert detected
+    "S105",   # hardcoded password string
+    "S106",   # hardcoded password func arg
+    "S108",   # probable insecure use of /tmp
+    "S110",   # try-except-pass (intentional in cleanup)
+    "S602",   # subprocess with shell=True (test harness)
+    "S603",   # subprocess call: untrusted input
+    "S607",   # starting a process with a partial executable path
+    "B007",   # loop control variable not used
+    "B904",   # raise from in except (legacy)
+    "F401",   # unused import (some imports exercise C ext side effects)
+    "F841",   # local variable assigned but never used (ref-counting tests)
+    "PT003",  # scope='function' implied
+    "PT009",  # use plain assert (legacy unittest-style tests)
+    "PT011",  # pytest.raises too broad
+    "PT012",  # pytest.raises block contains multiple statements
+    "PT027",  # use pytest.raises instead of unittest assertion
+    "RET504", # unnecessary assignment before return
+    "RUF059", # unused unpacked variable
+    "SIM102", # nested if
+    "SIM103", # needless bool
+    "SIM105", # use contextlib.suppress
+    "SIM108", # use ternary
+    "SIM113", # use enumerate
+    "SIM115", # use context manager
+    "SIM117", # nested with statements
+    "UP031",  # %-format -> f-string (legacy test output)
+    "UP038",  # isinstance tuple syntax
+
+]
+"doc/examples/*.py" = [
+    "T201",   # print found
+    "S105",   # hardcoded password
+    "S106",   # hardcoded password func arg
+    "UP031",  # legacy %-formatting in example output
+    # Additional relaxations for legacy demonstration scripts.
+    # These examples predate modern Python style and intentionally
+    # use idioms (Python 2 future imports, single-letter loop
+    # variables, terse one-liners, broad excepts) that we don't
+    # want to rewrite just to satisfy lint.
+    "E402",   # module-level import not at top of file
+    "E701",   # multiple statements on one line (colon)
+    "E703",   # statement ends with a semicolon
+    "E741",   # ambiguous variable name (l, I, O)
+    "F401",   # unused import
+    "F841",   # unused local variable
+    "I001",   # un-sorted / un-formatted import block
+    "RET504", # unnecessary assignment before return
+    "RET505", # unnecessary else after return
+    "S110",   # try-except-pass
+    "S112",   # try-except-continue
+    "SIM102", # nested if
+    "SIM105", # use contextlib.suppress
+    "SIM108", # use ternary
+    "UP010",  # unnecessary __future__ import
+    "UP024",  # replace aliased exceptions with builtins
+    "UP032",  # use f-string instead of format
+]
 "test/setup_certs.py" = ["S603", "S607"]  # Allow subprocess calls in cert setup
 
 [tool.ruff.lint.isort]
@@ -199,7 +262,21 @@ strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
 check_untyped_defs = true
-exclude = ["mutants/"]
+# Exclude legacy NSPR socket / SSL example scripts and the matching
+# integration tests from mypy. These predate Python 3 in places
+# (six.moves imports, str/bytes mixing, Socket vs SSLSocket
+# assignments) and exist primarily as historical documentation /
+# integration coverage of the NSS API surface. Cleaning them up to
+# satisfy strict typing would require a full Py3 modernisation
+# pass and is out of scope for the tooling sync. ``exclude`` is
+# given as a multi-line regex matching file paths relative to the
+# project root.
+exclude = [
+    "^mutants/",
+    "^doc/examples/",
+    "^test/test_client_server\\.py$",
+    "^test/test_zzz_ocsp\\.py$",
+]
 
 # Ignore missing imports for C extension modules
 [[tool.mypy.overrides]]
@@ -213,8 +290,16 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "test.*"
-# Allow intentional type errors in tests that verify runtime type checking
-disable_error_code = ["arg-type", "call-arg"]
+# Allow intentional type errors in tests that verify runtime type
+# checking (arg-type / call-arg). Legacy NSPR socket / SSL idioms
+# in the older integration tests are handled by the file-path
+# ``exclude`` above rather than per-module overrides, because the
+# test directory has no ``__init__.py`` and module-name patterns
+# do not reliably match.
+disable_error_code = [
+    "arg-type",
+    "call-arg",
+]
 
 [tool.mutmut]
 paths_to_mutate = "src/deprecations.py:src/secure_logging.py:src/nss_context.py"

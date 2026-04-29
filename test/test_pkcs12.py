@@ -1,46 +1,49 @@
 # SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: Copyright (c) 2010-2025 python-nss-ng contributors
 
-import sys
 import os
 import re
 import subprocess
-import shlex
-import shutil
 import unittest
 from io import BytesIO
-import pytest
 
-from nss.error import NSPRError
-import nss.error as nss_error
-import nss.nss as nss
+import pytest
 from util import find_nss_tool
 
-#-------------------------------------------------------------------------------
+import nss.error as nss_error
+import nss.nss as nss
+
+# -------------------------------------------------------------------------------
 
 verbose = False
-db_passwd = 'DB_passwd'
-pk12_passwd = 'PK12_passwd'
+db_passwd = "DB_passwd"
+pk12_passwd = "PK12_passwd"
 
-cert_nickname = 'test_user'
-pk12_filename = '%s.p12' % cert_nickname
-exported_pk12_filename = 'exported_%s' % pk12_filename
+cert_nickname = "test_user"
+pk12_filename = "%s.p12" % cert_nickname
+exported_pk12_filename = "exported_%s" % pk12_filename
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
 
 class CmdError(Exception):
     def __init__(self, cmd_args, returncode, message=None, stdout=None, stderr=None):
         self.cmd_args = cmd_args
         self.returncode = returncode
         if message is None:
-            self.message = 'Failed error=%s, ' % (returncode)
+            self.message = "Failed error=%s, " % (returncode)
             if stderr:
                 self.message += '"%s", ' % stderr
-            self.message += 'args=%s' % (cmd_args)
+            self.message += "args=%s" % (cmd_args)
         else:
             self.message = message
-        self.stdout = stdout
-        self.stderr = stderr
+        # ``stdout`` / ``stderr`` are populated from subprocess output and
+        # may be either ``str`` or ``None``. Annotate them as ``str`` so
+        # downstream callers (which only inspect them after a non-zero
+        # ``returncode`` and a truthy guard) can use ``in`` / slicing
+        # without static type checkers complaining.
+        self.stdout: str = stdout if stdout is not None else ""
+        self.stderr: str = stderr if stderr is not None else ""
 
     def __str__(self):
         return self.message
@@ -48,22 +51,26 @@ class CmdError(Exception):
 
 def run_cmd(cmd_args, input=None):
     try:
-        p = subprocess.Popen(cmd_args,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             universal_newlines=True)
+        p = subprocess.Popen(
+            cmd_args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
         stdout, stderr = p.communicate(input)
         returncode = p.returncode
         if returncode != 0:
-            raise CmdError(cmd_args, returncode,
-                           'failed %s' % (', '.join(cmd_args)),
-                           stdout, stderr)
+            raise CmdError(
+                cmd_args, returncode, "failed %s" % (", ".join(cmd_args)), stdout, stderr
+            )
         return stdout, stderr
     except OSError as e:
         raise CmdError(cmd_args, e.errno, stderr=str(e))
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
+
 
 def password_callback(slot, retry):
     return db_passwd
@@ -76,67 +83,77 @@ def nickname_collision_callback(old_nickname, cert):
 
 
 def get_cert_der_from_db(nickname, db_name):
-    cmd_args = [find_nss_tool('certutil'),
-                '-d', db_name,
-                '-L',
-                '-n', nickname]
+    cmd_args = [find_nss_tool("certutil"), "-d", db_name, "-L", "-n", nickname]
 
     try:
         stdout, stderr = run_cmd(cmd_args)
     except CmdError as e:
-        if e.returncode == 255 and 'not found' in e.stderr:
+        if e.returncode == 255 and "not found" in e.stderr:
             return None
-        else:
-            raise
+        raise
     return stdout
 
+
 def delete_cert_from_db(nickname, db_name):
-    cmd_args = [find_nss_tool('certutil'),
-                '-d', db_name,
-                '-D',
-                '-n', nickname]
+    cmd_args = [find_nss_tool("certutil"), "-d", db_name, "-D", "-n", nickname]
 
     run_cmd(cmd_args)
+
 
 def create_pk12(nickname, filename, db_name):
-    cmd_args = [find_nss_tool('pk12util'),
-                '-o', filename,
-                '-n', nickname,
-                '-d', db_name,
-                '-K', db_passwd,
-                '-W', pk12_passwd]
+    cmd_args = [
+        find_nss_tool("pk12util"),
+        "-o",
+        filename,
+        "-n",
+        nickname,
+        "-d",
+        db_name,
+        "-K",
+        db_passwd,
+        "-W",
+        pk12_passwd,
+    ]
     run_cmd(cmd_args)
 
+
 def list_pk12(filename):
-    cmd_args = [find_nss_tool('pk12util'),
-                '-l', filename,
-                '-W', pk12_passwd]
+    cmd_args = [find_nss_tool("pk12util"), "-l", filename, "-W", pk12_passwd]
     stdout, stderr = run_cmd(cmd_args)
     return stdout
 
+
 def strip_key_from_pk12_listing(text):
-    match = re.search(r'^Certificate:$', text, re.MULTILINE)
+    match = re.search(r"^Certificate:$", text, re.MULTILINE)
     if not match:
-        raise ValueError('Could not file Key section in pk12 listing')
-    return text[match.start(0):]
+        raise ValueError("Could not file Key section in pk12 listing")
+    return text[match.start(0) :]
+
 
 def strip_salt_from_pk12_listing(text):
-    return re.sub(r'\s+Salt:\s*\n.*', '', text)
+    return re.sub(r"\s+Salt:\s*\n.*", "", text)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
+
 
 def load_tests(loader, tests, pattern):
     suite = unittest.TestSuite()
-    tests = loader.loadTestsFromNames(['test_pkcs12.TestPKCS12Decoder.test_read',
-                                       'test_pkcs12.TestPKCS12Decoder.test_import_filename',
-                                       'test_pkcs12.TestPKCS12Decoder.test_import_fileobj',
-                                       'test_pkcs12.TestPKCS12Decoder.test_import_filelike',
-                                       'test_pkcs12.TestPKCS12Export.test_export',
-                                       ])
+    tests = loader.loadTestsFromNames(
+        [
+            "test_pkcs12.TestPKCS12Decoder.test_read",
+            "test_pkcs12.TestPKCS12Decoder.test_import_filename",
+            "test_pkcs12.TestPKCS12Decoder.test_import_fileobj",
+            "test_pkcs12.TestPKCS12Decoder.test_import_filelike",
+            "test_pkcs12.TestPKCS12Export.test_export",
+        ]
+    )
     suite.addTests(tests)
     return suite
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
+
 
 @pytest.mark.xdist_group("pkcs12_serial")
 class TestPKCS12Decoder:
@@ -186,7 +203,10 @@ class TestPKCS12Decoder:
                 elif key_seen is False:
                     assert bag.has_key is True
                 else:
-                    pytest.fail("unexpected has_key for bag type = %s(%d)" % (nss.oid_tag_name(bag.type), bag.type))
+                    pytest.fail(
+                        "unexpected has_key for bag type = %s(%d)"
+                        % (nss.oid_tag_name(bag.type), bag.type)
+                    )
 
             elif bag.type == nss.SEC_OID_PKCS12_V1_PKCS8_SHROUDED_KEY_BAG_ID:
                 assert isinstance(bag.shroud_algorithm_id, nss.AlgorithmID)
@@ -200,7 +220,7 @@ class TestPKCS12Decoder:
         if verbose:
             print("test_import_filename")
         # Create a temporary p12 file and import from it
-        temp_pk12 = 'temp_import_filename.p12'
+        temp_pk12 = "temp_import_filename.p12"
         create_pk12(cert_nickname, temp_pk12, self.db_name)
 
         # Import creates a copy with original nickname, so we need to test with different nickname
@@ -221,13 +241,13 @@ class TestPKCS12Decoder:
         if verbose:
             print("test_import_fileobj")
         # Create a temporary p12 file and import from it
-        temp_pk12 = 'temp_import_fileobj.p12'
+        temp_pk12 = "temp_import_fileobj.p12"
         create_pk12(cert_nickname, temp_pk12, self.db_name)
 
         slot = nss.get_internal_key_slot()
 
         with open(temp_pk12, "rb") as file_obj:
-             pkcs12 = nss.PKCS12Decoder(file_obj, pk12_passwd, slot)
+            pkcs12 = nss.PKCS12Decoder(file_obj, pk12_passwd, slot)
         slot.authenticate()
         pkcs12.database_import()
 
@@ -243,7 +263,7 @@ class TestPKCS12Decoder:
         if verbose:
             print("test_import_filelike")
         # Create a temporary p12 file and import from it
-        temp_pk12 = 'temp_import_filelike.p12'
+        temp_pk12 = "temp_import_filelike.p12"
         create_pk12(cert_nickname, temp_pk12, self.db_name)
 
         slot = nss.get_internal_key_slot()
@@ -264,7 +284,9 @@ class TestPKCS12Decoder:
         if os.path.exists(temp_pk12):
             os.remove(temp_pk12)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
+
 
 @pytest.mark.xdist_group("pkcs12_serial")
 class TestPKCS12Export:
@@ -306,11 +328,13 @@ class TestPKCS12Export:
             pkcs12_data = nss.pkcs12_export(cert_nickname, pk12_passwd)
         except nss_error.NSPRError as e:
             # Check if this is due to algorithm restrictions
-            if 'SEC_ERROR_BAD_EXPORT_ALGORITHM' in str(e) or 'Required algorithm is not allowed' in str(e):
+            if "SEC_ERROR_BAD_EXPORT_ALGORITHM" in str(
+                e
+            ) or "Required algorithm is not allowed" in str(e):
                 pytest.skip(f"PKCS#12 export disabled by NSS crypto policy: {e}")
             raise
 
-        with open(exported_pk12_filename, 'wb') as f:
+        with open(exported_pk12_filename, "wb") as f:
             f.write(pkcs12_data)
 
         # Verify the exported PKCS12 file is valid and contains the expected certificates
@@ -319,7 +343,9 @@ class TestPKCS12Export:
         exported_pk12_listing = list_pk12(exported_pk12_filename)
 
         # Verify essential content is present
-        assert 'CN=Test CA' in exported_pk12_listing, "CA certificate missing from export"
-        assert 'CN=test_user' in exported_pk12_listing, "User certificate missing from export"
-        assert 'has private key' in exported_pk12_listing, "Private key missing from export"
-        assert 'Friendly Name: test_user' in exported_pk12_listing, "Friendly name missing from export"
+        assert "CN=Test CA" in exported_pk12_listing, "CA certificate missing from export"
+        assert "CN=test_user" in exported_pk12_listing, "User certificate missing from export"
+        assert "has private key" in exported_pk12_listing, "Private key missing from export"
+        assert "Friendly Name: test_user" in exported_pk12_listing, (
+            "Friendly name missing from export"
+        )
